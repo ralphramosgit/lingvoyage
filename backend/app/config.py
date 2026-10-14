@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     elevenlabs_voice_id_hotel: str = ""
     elevenlabs_tts_model: str = "eleven_flash_v2_5"
     elevenlabs_stt_model: str = "scribe_v2"
+    elevenlabs_realtime_stt_model: str = "scribe_v2_realtime"
 
     anthropic_api_key: str = ""
     anthropic_model: str = "claude-haiku-5-5"

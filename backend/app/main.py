@@ -89,6 +89,11 @@ class TtsResponse(BaseModel):
     audio_mime: AudioMime = "audio/mpeg"
 
 
+class LiveTokenResponse(BaseModel):
+    token: str
+    model_id: str
+
+
 class StartRequest(BaseModel):
     scenario_id: str
 
@@ -183,6 +188,13 @@ def text_to_speech(body: TtsRequest, _user: AuthUser = Depends(require_user)) ->
         raise ApiError(422, "invalid_request", "text: must not be blank.")
     audio = speech.synthesize(text)
     return TtsResponse(audio_base64=base64.b64encode(audio).decode("ascii"))
+
+
+@app.post("/speech/live-token", response_model=LiveTokenResponse)
+def live_token(_user: AuthUser = Depends(require_user)) -> LiveTokenResponse:
+    """Token for live captions while the learner records. The recording itself still goes
+    through /conversation/turn, whose transcript is the one the character answers."""
+    return LiveTokenResponse(token=speech.create_live_token(), model_id=get_settings().elevenlabs_realtime_stt_model)
 
 
 @app.post("/conversation/start", response_model=TurnResponse)

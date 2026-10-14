@@ -1,0 +1,51 @@
+# Publishes the app to the EAS "preview" channel (what teammates open in Expo Go) on every push
+# to main that changes mobile/. Same as running `eas update --channel preview --environment preview`
+# by hand (guide 10). Needs the EXPO_TOKEN repository secret. Backend changes are not deployed here.
+name: Publish app update
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/eas-update.yml'
+  workflow_dispatch: # "Run workflow" button on GitHub, to republish main by hand
+
+# One publish at a time; if several pushes queue up, only the newest waiting one runs.
+concurrency:
+  group: eas-update-preview
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - run: npm ci
+
+      # Don't publish code that fails the same checks you run locally.
+      - run: npm run typecheck
+      - run: npm run lint
+
+      # The EXPO_PUBLIC_* values come from the EAS "preview" environment on expo.dev, not from .env.
+      - name: Publish to the preview channel
+        run: eas update --channel preview --environment preview --message "$(git log -1 --pretty=%s)" --non-interactive

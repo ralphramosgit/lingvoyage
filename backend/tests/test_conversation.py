@@ -13,6 +13,9 @@ FAKE_MP3 = b"ID3fake-mp3-bytes"
 
 def _reply(**overrides: object) -> TutorReply:
     values: dict[str, object] = {
+        "learner_hanzi": "",
+        "learner_pinyin": "",
+        "learner_english": "",
         "hanzi": "你好！几位？",
         "pinyin": "Nǐ hǎo! Jǐ wèi?",
         "english": "Hello! How many people?",
@@ -171,3 +174,20 @@ def test_tts_endpoint(authed_client: TestClient, fake_services: dict) -> None:
 def test_tts_text_length_limits(authed_client: TestClient, fake_services: dict) -> None:
     assert authed_client.post("/tts", json={"text": ""}).status_code == 422
     assert authed_client.post("/tts", json={"text": "a" * 201}).status_code == 422
+
+
+def test_live_token(authed_client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(speech, "create_live_token", lambda: "sutkn_test")
+    response = authed_client.post("/speech/live-token")
+    assert response.status_code == 200
+    assert response.json() == {"token": "sutkn_test", "model_id": "scribe_v2_realtime"}
+
+
+def test_live_token_failure_is_an_api_error(authed_client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    def broken() -> str:
+        raise ApiError(502, "live_token_failed", "Live captions are unavailable right now.")
+
+    monkeypatch.setattr(speech, "create_live_token", broken)
+    response = authed_client.post("/speech/live-token")
+    assert response.status_code == 502
+    assert response.json()["error"]["code"] == "live_token_failed"

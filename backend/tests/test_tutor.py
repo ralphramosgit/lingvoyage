@@ -20,6 +20,9 @@ def _scenario(scenario_id: str = "restaurant"):
 
 def _reply(**overrides: object) -> TutorReply:
     values: dict[str, object] = {
+        "learner_hanzi": "",
+        "learner_pinyin": "",
+        "learner_english": "",
         "hanzi": "好的。",
         "pinyin": "Hǎo de.",
         "english": "Okay.",
@@ -48,6 +51,9 @@ def test_strip_emojis_removes_emoji_and_keeps_chinese_and_pinyin() -> None:
 
 def test_finalize_strips_emojis_from_every_string() -> None:
     reply = _reply(
+        learner_hanzi="两位\U0001f44b",
+        learner_pinyin="liǎng wèi \U0001f44b",
+        learner_english="Two people \U0001f44b",
         hanzi="你好\U0001f60a",
         pinyin="Nǐ hǎo \U0001f60a",
         english="Hello \U0001f44b",
@@ -57,6 +63,9 @@ def test_finalize_strips_emojis_from_every_string() -> None:
         suggestions=[Phrase(hanzi="谢谢\U0001f64f", pinyin="xièxie \U0001f64f", english="Thanks \U0001f64f")],
     )
     result = finalize_reply(reply, _scenario(), [])
+    assert result.learner_hanzi == "两位"
+    assert result.learner_pinyin == "liǎng wèi"
+    assert result.learner_english == "Two people"
     assert result.hanzi == "你好"
     assert result.pinyin == "Nǐ hǎo"
     assert result.english == "Hello"
@@ -158,6 +167,7 @@ def test_system_prompt_includes_scene_goals_and_progress() -> None:
     assert "- [departure_time] Ask when the train to Hangzhou leaves" in prompt
     assert "Goals already completed: ask_politely" in prompt
     assert "Never use emojis" in prompt
+    assert '"learner_hanzi"' in prompt and '"learner_english"' in prompt
 
 
 def test_system_prompt_with_no_progress_says_none() -> None:

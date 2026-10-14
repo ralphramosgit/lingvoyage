@@ -30,6 +30,10 @@ class Phrase(BaseModel):
 
 
 class TutorReply(BaseModel):
+    # What the learner just said, shown under their message. All "" on the opening line.
+    learner_hanzi: str  # their words in Simplified Chinese, as said (not corrected), "" if no Chinese
+    learner_pinyin: str
+    learner_english: str  # meaning of their whole message, "" if it was all English
     hanzi: str  # the character's line, Simplified Chinese
     pinyin: str  # tone marks, words spaced
     english: str  # natural translation
@@ -100,7 +104,8 @@ Rules for every reply:
 8. "suggestions": exactly 3 short things the learner could say next, easiest first, each with hanzi, pinyin and english. At least one should move toward the next unfinished goal.
 9. "completed_goal_ids": every goal id completed so far, including earlier ones. A goal counts when the learner attempted it in Chinese or pinyin, even with mistakes. If they only used English, don't count it yet; teach the Chinese in "feedback" instead.
 10. "scenario_complete": true only when every goal is completed and your line in this reply is a natural goodbye.
-11. Never use emojis or emoticons. Don't mention being an AI or that this is a lesson unless the learner asks directly. If the learner goes off topic or says something inappropriate, politely steer back to the scene, in character."""
+11. Never use emojis or emoticons. Don't mention being an AI or that this is a lesson unless the learner asks directly. If the learner goes off topic or says something inappropriate, politely steer back to the scene, in character.
+12. "learner_hanzi", "learner_pinyin" and "learner_english" show the learner what they just said, under their message. "learner_hanzi": their last message in Simplified Chinese exactly as they said it, keeping their words and mistakes (write pinyin as characters, leave any English words as they are); "" if it had no Chinese or pinyin. "learner_pinyin": pinyin for "learner_hanzi" with tone marks, words separated by spaces. "learner_english": a natural English translation of their whole last message; "" if it was entirely in English. Use "" for all three on the opening line."""
 
 
 def build_messages(history: list[ChatLine], learner_text: str | None) -> list[MessageParam]:
@@ -143,6 +148,9 @@ def finalize_reply(reply: TutorReply, scenario: ScenarioDefinition, client_compl
         for p in reply.suggestions[:MAX_SUGGESTIONS]
     ]
     return TutorReply(
+        learner_hanzi=strip_emojis(reply.learner_hanzi),
+        learner_pinyin=strip_emojis(reply.learner_pinyin),
+        learner_english=strip_emojis(reply.learner_english),
         hanzi=strip_emojis(reply.hanzi),
         pinyin=strip_emojis(reply.pinyin),
         english=strip_emojis(reply.english),

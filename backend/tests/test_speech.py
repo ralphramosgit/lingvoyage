@@ -63,3 +63,37 @@ def test_tts_timeout_is_not_retried(monkeypatch: pytest.MonkeyPatch) -> None:
         speech.synthesize("你好")
     assert excinfo.value.code == "tts_timeout"
     assert len(calls) == 1
+
+
+def test_wav_recordings_are_uploaded_as_wav(monkeypatch: pytest.MonkeyPatch) -> None:
+    bodies: list[bytes] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        bodies.append(request.read())
+        return httpx.Response(200, json={"text": "两位"})
+
+    _mock_elevenlabs(monkeypatch, handler)
+    assert speech.transcribe(b"RIFF-fake", "audio/wav") == "两位"
+    assert b'filename="speech.wav"' in bodies[0]
+    assert b"Content-Type: audio/wav" in bodies[0]
+
+
+def test_live_token_comes_from_the_single_use_token_endpoint(monkeypatch: pytest.MonkeyPatch) -> None:
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(200, json={"token": "sutkn_123"})
+
+    _mock_elevenlabs(monkeypatch, handler)
+    assert speech.create_live_token() == "sutkn_123"
+    assert requests[0].method == "POST"
+    assert requests[0].url.path == "/v1/single-use-token/realtime_scribe"
+    assert requests[0].headers["xi-api-key"] == "sk_test"
+
+
+def test_live_token_error_is_mapped(monkeypatch: pytest.MonkeyPatch) -> None:
+    _mock_elevenlabs(monkeypatch, lambda request: httpx.Response(401, json={"detail": {"status": "invalid_api_key"}}))
+    with pytest.raises(speech.ApiError) as excinfo:
+        speech.create_live_token()
+    assert excinfo.value.code == "live_token_failed"

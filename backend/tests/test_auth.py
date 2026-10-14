@@ -8,6 +8,7 @@ PRIVATE_ENDPOINTS = [
     ("/tts", {"text": "你好"}),
     ("/conversation/start", {"scenario_id": "restaurant"}),
     ("/conversation/turn", {"scenario_id": "restaurant", "user_text": "ni hao"}),
+    ("/speech/live-token", {}),
 ]
 
 

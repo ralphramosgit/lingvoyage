@@ -100,7 +100,11 @@ def synthesize(text: str, voice_id: str | None = None) -> bytes:
 
 
 def _filename_for(mime: str) -> str:
-    return "speech.mp3" if mime in ("audio/mpeg", "audio/mp3") else "speech.m4a"
+    if mime in ("audio/mpeg", "audio/mp3"):
+        return "speech.mp3"
+    if mime in ("audio/wav", "audio/x-wav", "audio/wave"):
+        return "speech.wav"
+    return "speech.m4a"
 
 
 def transcribe(audio: bytes, audio_mime: str | None = None) -> str:
@@ -133,3 +137,31 @@ def transcribe(audio: bytes, audio_mime: str | None = None) -> str:
         raise ApiError(502, "stt_failed", "Speech recognition returned an unreadable response.")
     text = body.get("text") if isinstance(body, dict) else None
     return text.strip() if isinstance(text, str) else ""
+
+
+def create_live_token() -> str:
+    """A single-use, 15-minute token the app uses to stream the mic to ElevenLabs realtime
+    Speech to Text for live captions, without ever seeing the API key."""
+    api_key = _api_key()
+    try:
+        response = send_with_retry(
+            lambda: _http.post(
+                f"{ELEVENLABS_BASE_URL}/v1/single-use-token/realtime_scribe",
+                headers={"xi-api-key": api_key},
+                timeout=5.0,
+            ),
+            "ElevenLabs realtime token",
+        )
+    except httpx.HTTPError:
+        logger.exception("Could not get an ElevenLabs realtime token")
+        raise ApiError(502, "live_token_failed", "Live captions are unavailable right now.")
+
+    _raise_for_status("realtime Speech to Text", "live_token_failed", response)
+    try:
+        body = response.json()
+    except ValueError:
+        body = None
+    token = body.get("token") if isinstance(body, dict) else None
+    if not isinstance(token, str) or not token:
+        raise ApiError(502, "live_token_failed", "Live captions are unavailable right now.")
+    return token

@@ -93,6 +93,14 @@ The free project paused. Open the Supabase dashboard and click **Restore project
 - Hold the phone closer and speak for at least a second. Very short taps are ignored.
 - Beginners' Mandarin won't always transcribe perfectly; the character is told to be forgiving. Typing is the backup.
 
+**"Live captions aren't available" while recording**
+
+The words you see while recording come from ElevenLabs realtime Speech to Text, through a token from the backend's `/speech/live-token`. They are only a preview: the recording is still sent and transcribed normally when you tap the square, so turns keep working without them.
+
+- The Lambda backend is older than the app: redeploy it (guide 07, section 12). `/speech/live-token` returns 404 until you do.
+- The ElevenLabs key needs Speech to Text access (realtime uses the same permission), and the account needs credits. Live captions use credits on top of the normal transcription.
+- Check CloudWatch for `live_token_failed`.
+
 ## Claude API
 
 | Error                                  | Fix                                                                                          |

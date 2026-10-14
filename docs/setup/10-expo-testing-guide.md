@@ -28,7 +28,9 @@ You still use `npx expo start` for **your own** development (instant reloads whi
 
 ### If I change the code, do teammates get it automatically?
 
-**Not until you publish.** Saving files, committing or pushing to GitHub changes nothing for teammates; they keep getting the last version you published. When a change is ready:
+**Yes, once you push to `main`** (after the one-time setup in "Publishing automatically from GitHub" below). A GitHub Action runs the checks and publishes for you whenever a push to `main` changes something in `mobile/`. Saving files, committing, or pushing to another branch changes nothing for teammates.
+
+To publish by hand instead (for example from a branch, or before the automation is set up):
 
 ```bash
 eas update --channel preview --environment preview --message "What changed"
@@ -145,16 +147,35 @@ Expo Go remembers the project. Next time, open Expo Go and tap **Naviglot** unde
     npm run lint
     ```
 
-3. **Publish:**
+3. **Publish:** commit and push to `main`. The GitHub Action does the rest (next section); watch it under the repo's **Actions** tab. Or publish by hand:
 
     ```bash
     eas update --channel preview --environment preview --message "Short note about what changed"
     ```
 
-    It bundles the app on your PC (it creates a `dist/` folder, which is gitignored) and uploads it. Takes a minute or two. If "Computing the project fingerprints" is slow, you can skip that step by putting `EAS_SKIP_AUTO_FINGERPRINT=1 ` in front of the command.
+    By hand, it bundles the app on your PC (it creates a `dist/` folder, which is gitignored) and uploads it. Takes a minute or two. If "Computing the project fingerprints" is slow, you can skip that step by putting `EAS_SKIP_AUTO_FINGERPRINT=1 ` in front of the command.
 
 4. **Check the published version yourself:** stop `npx expo start`, scan the Option 1 QR code (or open it from Recently opened), and make sure your change is there.
 5. **Tell teammates** there's a new version. They swipe Expo Go closed and reopen Naviglot. If they still see the old one, reopen once more.
+
+---
+
+## Publishing automatically from GitHub
+
+`.github/workflows/eas-update.yml` publishes to the `preview` channel on every push to `main` that touches `mobile/`. It runs `npm ci`, `npm run typecheck` and `npm run lint` first, and if any of them fail, nothing is published. The update's message is the commit's first line. Pushes that only change `backend/` or `docs/` don't publish anything.
+
+### One-time setup
+
+1. **Make an Expo token for GitHub.** On [expo.dev](https://expo.dev), switch to the **naviglot-team** account > **Settings** > **Access tokens**. Under **Robot users**, add a robot (name it `github-actions`, role **Developer**), then create a token for it and copy it. It's shown only once. (A personal access token from your own account also works, but it stops working if you leave the team.)
+2. **Give it to GitHub.** On GitHub: the `naviglot` repo > **Settings** > **Secrets and variables** > **Actions** > **New repository secret**. Name: `EXPO_TOKEN`, value: the token. Never paste it anywhere else.
+3. **Push the workflow file to `main`.** That push runs it once. Check the **Actions** tab: the "Publish app update" run should end green, and a new update shows up under expo.dev > naviglot-test > **Updates**.
+
+### Day to day
+
+- Push to `main` → about 3 to 5 minutes later, teammates get the new version when they reopen Naviglot.
+- **Republish without a code change** (for example after changing an `EXPO_PUBLIC_*` value on Expo): GitHub > **Actions** > **Publish app update** > **Run workflow**.
+- **A run failed:** open it in the Actions tab. A red typecheck or lint step means the code has an error (run the same command locally to see it). A red publish step that mentions authentication means the `EXPO_TOKEN` secret is missing or expired.
+- **Backend changes still go up by hand** (guide 07, section 12). If an app change needs new backend code, deploy the backend **before** pushing to `main`, or teammates may briefly get an app that calls a route Lambda doesn't have yet.
 
 ---
 
