@@ -11,7 +11,7 @@ import { File } from 'expo-file-system';
 import * as Haptics from 'expo-haptics';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { invalidatePlaybackMode, stopPlayback } from '@/lib/audio';
+import { invalidatePlaybackMode, stopPlayback, waitForAudioSessionToSettle } from '@/lib/audio';
 
 // Mono AAC in an .m4a container at 64 kbps: clear enough for speech recognition, small to upload.
 const RECORDING_OPTIONS: RecordingOptions = {
@@ -83,6 +83,8 @@ export function useVoiceRecorder() {
       setPermission('granted');
 
       stopPlayback();
+      // Let expo-audio's delayed session shutdown (after playback) pass before we record.
+      await waitForAudioSessionToSettle();
       await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
       invalidatePlaybackMode();
       await recorder.prepareToRecordAsync();
@@ -105,6 +107,14 @@ export function useVoiceRecorder() {
       if (busy.current) return { status: 'cancelled' };
       busy.current = true;
       const durationMs = Date.now() - startedAt.current;
+      // recorder.isRecording reads the native recorder. If iOS stopped it early (e.g. the audio
+      // session was taken away), the file is near-empty: don't send silence.
+      let cutOff = false;
+      try {
+        cutOff = !recorder.isRecording;
+      } catch {
+        cutOff = false;
+      }
       try {
         await recorder.stop();
         setIsRecording(false);
@@ -119,6 +129,10 @@ export function useVoiceRecorder() {
         if (durationMs < MIN_RECORDING_MS) {
           deleteQuietly(uri);
           return { status: 'too_short' };
+        }
+        if (cutOff) {
+          deleteQuietly(uri);
+          return { status: 'error', message: 'The recording got cut off. Tap the mic and try again.' };
         }
         if (!uri) return { status: 'error', message: "The recording couldn't be saved. Try again." };
 

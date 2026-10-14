@@ -55,11 +55,31 @@ async function ensurePlaybackMode() {
   playbackModeReady = true;
 }
 
+// On iOS, expo-audio deactivates the audio session about 100 ms after a player pauses or
+// finishes, without checking for an active recorder. If recording starts inside that window,
+// iOS cuts it off after a fraction of a second. We note when that can happen and let the
+// recorder wait it out (see waitForAudioSessionToSettle).
+const SESSION_SETTLE_MS = 300;
+let lastSessionReleaseAt = 0;
+
+function markSessionRelease() {
+  lastSessionReleaseAt = Date.now();
+}
+
+/** Resolves once any pending audio-session deactivation from playback has happened. */
+export async function waitForAudioSessionToSettle() {
+  const wait = SESSION_SETTLE_MS - (Date.now() - lastSessionReleaseAt);
+  if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
+}
+
 function getPlayer(): AudioPlayer {
   if (!player) {
     player = createAudioPlayer(null, { updateInterval: 200 });
     statusSubscription = player.addListener('playbackStatusUpdate', (status: AudioStatus) => {
-      if (status.didJustFinish) setPlayback({ playingKey: null });
+      if (status.didJustFinish) {
+        markSessionRelease();
+        setPlayback({ playingKey: null });
+      }
     });
   }
   return player;
@@ -75,14 +95,18 @@ export function releasePlayer() {
 }
 
 export function stopPlayback() {
-  player?.pause();
+  // Pausing an idle player still schedules a session deactivation on iOS, so only pause if needed.
+  if (player?.playing) {
+    player.pause();
+    markSessionRelease();
+  }
   setPlayback({ playingKey: null });
 }
 
 export async function playUri(uri: string, options: { rate?: number; key?: string } = {}) {
   await ensurePlaybackMode();
   const audio = getPlayer();
-  audio.pause();
+  if (audio.playing) audio.pause();
   audio.replace({ uri });
   // 'high' pitch correction keeps slow replay sounding natural instead of deep.
   audio.setPlaybackRate(options.rate ?? 1, 'high');

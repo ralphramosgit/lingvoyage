@@ -21,5 +21,6 @@ lambda.zip
 
 # Logs and OS files
 *.log
+.debug/
 .DS_Store
 Thumbs.db
