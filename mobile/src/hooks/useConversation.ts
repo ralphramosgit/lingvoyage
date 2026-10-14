@@ -21,18 +21,30 @@ export type NpcMessage = {
   voiceUnavailable: boolean;
 };
 
+/** What the learner said, spelled out: in Chinese as said, its pinyin, and what it means in English. */
+export type Gloss = {
+  hanzi: string;
+  pinyin: string;
+  english: string;
+};
+
 export type LearnerMessage = {
   id: string;
   kind: 'learner';
   source: 'voice' | 'text';
   /** Null while a voice message is still being transcribed. */
   text: string | null;
+  /** Live captions from recording, shown until the real transcript arrives. */
+  preview: string | null;
+  gloss: Gloss | null;
   pending: boolean;
   failed: boolean;
   feedback: Feedback | null;
 };
 
-export type TurnInput = { type: 'text'; text: string } | { type: 'audio'; base64: string; mime: string };
+export type TurnInput =
+  | { type: 'text'; text: string }
+  | { type: 'audio'; base64: string; mime: string; preview?: string };
 
 type RetryAction = { type: 'start' } | { type: 'turn'; input: TurnInput; learnerId: string };
 
@@ -95,6 +107,7 @@ function reducer(state: State, action: Action): State {
         return {
           ...message,
           text: action.transcript ?? message.text,
+          gloss: glossFrom(reply),
           pending: false,
           failed: false,
           feedback: hasFeedback
@@ -112,6 +125,14 @@ function reducer(state: State, action: Action): State {
       };
     }
   }
+}
+
+function glossFrom(reply: TutorReply): Gloss | null {
+  // `?? ''` because an older backend doesn't send these fields.
+  const hanzi = (reply.learner_hanzi ?? '').trim();
+  const pinyin = (reply.learner_pinyin ?? '').trim();
+  const english = (reply.learner_english ?? '').trim();
+  return hanzi || pinyin || english ? { hanzi, pinyin, english } : null;
 }
 
 /** Chat lines for the API: everything before `untilId`, npc lines as hanzi, no failed or pending turns. */
@@ -218,6 +239,8 @@ export function useConversation(scenario: Scenario | null, options: { autoPlay: 
             kind: 'learner',
             source: input.type === 'text' ? 'text' : 'voice',
             text: input.type === 'text' ? input.text : null,
+            preview: input.type === 'audio' && input.preview ? input.preview : null,
+            gloss: null,
             pending: true,
             failed: false,
             feedback: null,

@@ -41,6 +41,10 @@ export type Phrase = {
 };
 
 export type TutorReply = {
+  /** What the learner just said: in Chinese as said, its pinyin, and its English meaning. "" when not applicable. */
+  learner_hanzi: string;
+  learner_pinyin: string;
+  learner_english: string;
   hanzi: string;
   pinyin: string;
   english: string;
@@ -69,6 +73,11 @@ export type TurnResponse = {
 export type TtsResponse = {
   audio_base64: string;
   audio_mime: AudioMime;
+};
+
+export type LiveTokenResponse = {
+  token: string;
+  model_id: string;
 };
 
 type TurnBase = {

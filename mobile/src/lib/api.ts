@@ -1,4 +1,4 @@
-import type { ApiErrorBody, Scenario, TtsResponse, TurnRequest, TurnResponse } from '@/types/api';
+import type { ApiErrorBody, LiveTokenResponse, Scenario, TtsResponse, TurnRequest, TurnResponse } from '@/types/api';
 
 import { env } from './env';
 import { supabase } from './supabase';
@@ -92,6 +92,7 @@ async function request<T>(method: 'GET' | 'POST', path: string, options: Request
 export const api = {
   getScenarios: () => request<Scenario[]>('GET', '/scenarios'),
   tts: (text: string) => request<TtsResponse>('POST', '/tts', { body: { text }, auth: true }),
+  liveToken: () => request<LiveTokenResponse>('POST', '/speech/live-token', { auth: true }),
   startConversation: (scenarioId: string, signal?: AbortSignal) =>
     request<TurnResponse>('POST', '/conversation/start', { body: { scenario_id: scenarioId }, auth: true, signal }),
   sendTurn: (body: TurnRequest, signal?: AbortSignal) =>

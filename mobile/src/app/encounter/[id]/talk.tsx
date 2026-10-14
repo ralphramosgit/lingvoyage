@@ -20,14 +20,15 @@ import { CharacterAvatar } from '@/components/CharacterAvatar';
 import { ErrorState } from '@/components/ErrorState';
 import { IconButton } from '@/components/IconButton';
 import { Screen } from '@/components/Screen';
-import { ErrorRow, LearnerBubble, NoticeRow, NpcBubble, ThinkingBubble } from '@/components/talk/ChatBubbles';
-import { CompletionSheet } from '@/components/talk/CompletionSheet';
+import { ErrorRow, LearnerBubble, LiveBubble, NoticeRow, NpcBubble, ThinkingBubble } from '@/components/talk/ChatBubbles';
+import { CompleteBar, CompletionSheet } from '@/components/talk/CompletionSheet';
 import { GoalsPanel, GoalsPill } from '@/components/talk/Goals';
-import { InputBar, type InputMode } from '@/components/talk/InputBar';
+import { InputBar, type InputMode, type MicState } from '@/components/talk/InputBar';
 import { MicPermissionCard } from '@/components/talk/MicPermissionCard';
 import { SuggestionsRow } from '@/components/talk/SuggestionsRow';
 import { Text } from '@/components/Text';
 import { useConversation } from '@/hooks/useConversation';
+import { useLiveTranscript } from '@/hooks/useLiveTranscript';
 import { useScenario } from '@/hooks/useScenarios';
 import { MAX_RECORDING_MS, useVoiceRecorder } from '@/hooks/useVoiceRecorder';
 import { clearConversationAudio, releasePlayer } from '@/lib/audio';
@@ -46,7 +47,8 @@ export default function TalkScreen() {
   const { settings } = useSettings();
 
   const conversation = useConversation(scenario, { autoPlay: settings.autoPlay });
-  const recorder = useVoiceRecorder();
+  const live = useLiveTranscript();
+  const recorder = useVoiceRecorder({ onPcm: live.push });
 
   const [mode, setMode] = useState<InputMode>('voice');
   const [draft, setDraft] = useState('');
@@ -74,6 +76,13 @@ export default function TalkScreen() {
       void start();
     }
   }, [scenario, start]);
+
+  // Get a live-captions token ready once the scene is underway, so captions start right away.
+  const sceneStarted = messages.length > 0;
+  const prefetchLiveToken = live.prefetch;
+  useEffect(() => {
+    if (sceneStarted) prefetchLiveToken();
+  }, [sceneStarted, prefetchLiveToken]);
 
   // Free the shared player and this conversation's audio files when leaving.
   useEffect(
@@ -144,27 +153,30 @@ export default function TalkScreen() {
     }
   }, [conversation.hasProgress, complete]);
 
-  // Android back button gets the same confirmation (iOS swipe-back is off for this screen).
+  // Android back button closes the summary first, then gets the same confirmation as the
+  // header button (iOS swipe-back is off for this screen).
   useEffect(() => {
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
-      leave();
+      if (sheetVisible) setSheetVisible(false);
+      else leave();
       return true;
     });
     return () => subscription.remove();
-  }, [leave]);
+  }, [leave, sheetVisible]);
 
   const stopAndSend = useCallback(async () => {
     if (stopping.current) return;
     stopping.current = true;
     try {
+      const preview = live.end();
       const result = await recorder.finish('send');
       if (result.status === 'too_short') setHint('Hold on a little longer');
       else if (result.status === 'error') setHint(result.message);
-      else if (result.status === 'ok') await send({ type: 'audio', base64: result.base64, mime: result.mime });
+      else if (result.status === 'ok') await send({ type: 'audio', base64: result.base64, mime: result.mime, preview });
     } finally {
       stopping.current = false;
     }
-  }, [recorder, send]);
+  }, [live, recorder, send]);
 
   // Auto-stop (and send) at 30 seconds.
   useEffect(() => {
@@ -176,15 +188,20 @@ export default function TalkScreen() {
       await stopAndSend();
       return;
     }
-    if (thinking || complete) return;
+    if (recorder.status !== 'idle' || thinking || complete) return;
     setHint(null);
     const result = await recorder.start();
     if (result === 'denied' || result === 'blocked') setPermissionCard(result);
     else if (result === 'error') setHint("Couldn't start the microphone. Try again or type it.");
-    else if (result === 'started') setPermissionCard(null);
+    else if (result === 'streaming' || result === 'recording') {
+      setPermissionCard(null);
+      if (result === 'streaming') live.begin();
+      else live.markUnavailable();
+    }
   };
 
   const onCancelRecording = () => {
+    live.end();
     void recorder.finish('cancel');
   };
 
@@ -232,6 +249,12 @@ export default function TalkScreen() {
   const { character } = scenario;
   const suggestionsOn = suggestionsPref ?? conversation.learnerCount < 2;
   const showSuggestions = suggestionsOn && suggestions.length > 0 && !complete && !recorder.isRecording;
+
+  let micState: MicState = 'idle';
+  if (recorder.status === 'recording') micState = 'recording';
+  else if (recorder.status === 'starting') micState = 'starting';
+  else if (complete) micState = 'locked';
+  else if (thinking) micState = 'waiting';
 
   return (
     <View style={styles.flex}>
@@ -292,7 +315,7 @@ export default function TalkScreen() {
                   />
                 );
               case 'learner':
-                return <LearnerBubble key={message.id} message={message} />;
+                return <LearnerBubble key={message.id} message={message} showPinyin={settings.showPinyin} />;
               case 'error':
                 return <ErrorRow key={message.id} message={message} onRetry={() => retry(message.id)} disabled={thinking} />;
               case 'notice':
@@ -301,58 +324,76 @@ export default function TalkScreen() {
                 return null;
             }
           })}
+          {recorder.isRecording ? <LiveBubble text={live.text} status={live.status} /> : null}
           {thinking ? <ThinkingBubble avatarChar={character.avatar_char} tint={tint} name={character.name_english} /> : null}
         </ScrollView>
 
-        {/* Bottom area */}
-        <View style={styles.bottom}>
-          <View style={styles.column}>
-            {permissionCard ? (
-              <MicPermissionCard
-                blocked={permissionCard === 'blocked'}
-                onDismiss={() => setPermissionCard(null)}
-                onTypeInstead={() => {
-                  setPermissionCard(null);
-                  setMode('text');
-                }}
-                onTryAgain={() => {
-                  setPermissionCard(null);
-                  void onMicPress();
-                }}
-              />
-            ) : null}
-            {showSuggestions ? (
-              <SuggestionsRow suggestions={suggestions} onUse={onUseSuggestion} onError={setHint} />
-            ) : null}
-          </View>
+        {/* Bottom area: the input, or once the encounter is over, the complete bar */}
+        {complete ? (
           <View style={styles.inputDock}>
             <View style={styles.column}>
-              <InputBar
-                mode={mode}
-                onModeChange={(next) => {
-                  setMode(next);
-                  if (next === 'text') setTimeout(() => inputRef.current?.focus(), 50);
-                  else Keyboard.dismiss();
-                }}
-                busy={thinking}
-                locked={complete}
-                recording={recorder.isRecording}
-                elapsedMs={recorder.elapsedMs}
-                maxMs={MAX_RECORDING_MS}
-                onMicPress={() => void onMicPress()}
-                onCancelRecording={onCancelRecording}
-                draft={draft}
-                onDraftChange={setDraft}
-                onSend={() => void onSendText()}
-                suggestionsOn={suggestionsOn}
-                onToggleSuggestions={() => setSuggestionsPref(!suggestionsOn)}
-                hint={hint}
-                bottomInset={keyboardOpen ? 0 : insets.bottom}
-                inputRef={inputRef}
+              <CompleteBar
+                goalsDone={completedGoalIds.length}
+                goalsTotal={scenario.goals.length}
+                onShowSummary={() => setSheetVisible(true)}
+                onPracticeAgain={practiceAgain}
+                onDone={() => router.dismissTo('/')}
+                bottomInset={insets.bottom}
               />
             </View>
           </View>
-        </View>
+        ) : (
+          <View style={styles.bottom}>
+            <View style={styles.column}>
+              {permissionCard ? (
+                <MicPermissionCard
+                  blocked={permissionCard === 'blocked'}
+                  onDismiss={() => setPermissionCard(null)}
+                  onTypeInstead={() => {
+                    setPermissionCard(null);
+                    setMode('text');
+                  }}
+                  onTryAgain={() => {
+                    setPermissionCard(null);
+                    void onMicPress();
+                  }}
+                />
+              ) : null}
+              {showSuggestions ? (
+                <SuggestionsRow suggestions={suggestions} onUse={onUseSuggestion} onError={setHint} />
+              ) : null}
+            </View>
+            <View style={styles.inputDock}>
+              <View style={styles.column}>
+                <InputBar
+                  mode={mode}
+                  onModeChange={(next) => {
+                    setMode(next);
+                    if (next === 'text') setTimeout(() => inputRef.current?.focus(), 50);
+                    else Keyboard.dismiss();
+                  }}
+                  busy={thinking}
+                  locked={complete}
+                  micState={micState}
+                  micLevel={recorder.level}
+                  waitingFor={character.name_english}
+                  elapsedMs={recorder.elapsedMs}
+                  maxMs={MAX_RECORDING_MS}
+                  onMicPress={() => void onMicPress()}
+                  onCancelRecording={onCancelRecording}
+                  draft={draft}
+                  onDraftChange={setDraft}
+                  onSend={() => void onSendText()}
+                  suggestionsOn={suggestionsOn}
+                  onToggleSuggestions={() => setSuggestionsPref(!suggestionsOn)}
+                  hint={hint}
+                  bottomInset={keyboardOpen ? 0 : insets.bottom}
+                  inputRef={inputRef}
+                />
+              </View>
+            </View>
+          </View>
+        )}
       </KeyboardAvoidingView>
 
       {sheetVisible ? (
@@ -362,6 +403,7 @@ export default function TalkScreen() {
           linesPracticed={conversation.linesPracticed}
           characterName={character.name_english}
           onPracticeAgain={practiceAgain}
+          onReview={() => setSheetVisible(false)}
           onBack={() => router.dismissTo('/')}
           bottomInset={insets.bottom}
         />
