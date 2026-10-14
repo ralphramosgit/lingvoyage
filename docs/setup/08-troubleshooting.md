@@ -8,16 +8,19 @@ Find the symptom, try the fixes in order.
 
 **"Project is incompatible with this version of Expo Go"**
 Expo Go and your project are on different SDK versions. Expo Go tells you which one it needs. Inside `mobile/`:
+
 ```powershell
 npx expo install expo@latest --fix
 npx expo-doctor
 ```
+
 Then `npx expo start -c`.
 
 **Expo Go says you need to log in / won't load the project**
 You must be logged in with the **same Expo account** in the Expo Go app (avatar, top right) and in the terminal (`npx expo login`, check with `npx expo whoami`).
 
 **QR code opens Expo Go but it spins forever, or "Could not connect to development server"**
+
 1. Phone and PC on the same Wi-Fi? Wi-Fi set to **Private** on Windows (guide 01)?
 2. Allow Node.js through the firewall: Windows Security > Firewall & network protection > Allow an app through firewall > tick **Node.js** for Private.
 3. Use a tunnel, which works on almost any network: `npx expo start --tunnel`.
@@ -31,6 +34,7 @@ You must be logged in with the **same Expo account** in the Expo Go app (avatar,
 ## App can't reach the backend
 
 **"Network request failed" / requests time out**
+
 1. Is the backend running with `--host 0.0.0.0`?
 2. Does `http://YOUR_PC_LAN_IP:8000/health` load **in Safari on the iPhone**? If not, it's a network problem, not an app problem.
 3. Did your PC's IP change? Run `ipconfig`, update `EXPO_PUBLIC_API_URL`, then `npx expo start -c`.
@@ -39,6 +43,7 @@ You must be logged in with the **same Expo account** in the Expo Go app (avatar,
 
 **Network blocks my phone** (school, campus or hotel Wi-Fi often isolates devices)
 Pick one:
+
 - **Best:** deploy the backend to Lambda (guide 07) and use that URL. Then run Expo with `npx expo start --tunnel`.
 - **Quick:** a Cloudflare quick tunnel for the backend (no account needed). In a new terminal:
   ```powershell
@@ -48,6 +53,7 @@ Pick one:
 - **Last resort:** turn on your phone's Personal Hotspot and connect the PC to it.
 
 **Backend returns 401 Unauthorized**
+
 - You're not logged in, or the session expired: log out and back in.
 - `SUPABASE_URL` in `backend/.env` must be the **same project** as `EXPO_PUBLIC_SUPABASE_URL` in `mobile/.env`.
 
@@ -67,44 +73,46 @@ The free project paused. Open the Supabase dashboard and click **Restore project
 
 ## ElevenLabs
 
-| Error | Meaning | Fix |
-|---|---|---|
-| 401 | Bad key | Re-copy the key into `backend/.env` (and Lambda). |
-| 402 `paid_plan_required` | Voice Library voice on the free plan | Use a default voice, or upgrade to Starter. |
-| 403 / permission | Restricted key is missing a permission | Give the key Text to Speech and Speech to Text access. |
-| `quota_exceeded` | Out of credits this month | Check Usage; upgrade or wait for the reset. |
-| 429 | Too many requests at once | Free plan allows only a few at a time; wait and retry. |
+| Error                    | Meaning                                | Fix                                                    |
+| ------------------------ | -------------------------------------- | ------------------------------------------------------ |
+| 401                      | Bad key                                | Re-copy the key into `backend/.env` (and Lambda).      |
+| 402 `paid_plan_required` | Voice Library voice on the free plan   | Use a default voice, or upgrade to Starter.            |
+| 403 / permission         | Restricted key is missing a permission | Give the key Text to Speech and Speech to Text access. |
+| `quota_exceeded`         | Out of credits this month              | Check Usage; upgrade or wait for the reset.            |
+| 429                      | Too many requests at once              | Free plan allows only a few at a time; wait and retry. |
 
 **The character says nothing**
+
 - iPhone volume up (Naviglot plays even when the silent switch is on).
 - Bluetooth headphones connected somewhere else?
 - Check the backend terminal for an ElevenLabs error.
 
 **My speech comes back empty or wrong**
+
 - Allow the microphone: iPhone **Settings > Expo Go > Microphone** on (in Expo Go, the permission belongs to the Expo Go app).
 - Hold the phone closer and speak for at least a second. Very short taps are ignored.
 - Beginners' Mandarin won't always transcribe perfectly; the character is told to be forgiving. Typing is the backup.
 
 ## Claude API
 
-| Error | Fix |
-|---|---|
-| 401 | Wrong `ANTHROPIC_API_KEY`. |
-| 400 "credit balance is too low" | Add credit at platform.claude.com > Settings > Billing. |
+| Error                                  | Fix                                                                                          |
+| -------------------------------------- | -------------------------------------------------------------------------------------------- |
+| 401                                    | Wrong `ANTHROPIC_API_KEY`.                                                                   |
+| 400 "credit balance is too low"        | Add credit at platform.claude.com > Settings > Billing.                                      |
 | 400 mentioning `temperature` / `top_p` | Don't send sampling parameters to Claude Haiku 5.5; remove them from `backend/app/tutor.py`. |
-| 404 model | Model name must be exactly `claude-haiku-5-5`. |
-| 529 overloaded | Temporary. The backend retries once; try again. |
+| 404 model                              | Model name must be exactly `claude-haiku-5-5`.                                               |
+| 529 overloaded                         | Temporary. The backend retries once; try again.                                              |
 
 ## AWS Lambda
 
-| Symptom | Fix |
-|---|---|
-| **403 Forbidden** on the Function URL | Function URL resource policy needs both `lambda:InvokeFunctionUrl` and `lambda:InvokeFunction`. Easiest fix: delete the Function URL and recreate it in the console with auth type NONE. |
-| `Task timed out after 3.00 seconds` | Configuration > General > Timeout = 30 sec. |
-| `No module named 'pydantic_core._pydantic_core'` | The zip has Windows packages. Rebuild with `scripts\build_lambda.ps1` (it downloads Linux packages) and upload again. Architecture must be **x86_64**. |
-| `Runtime.ImportModuleError: No module named 'app'` | Handler must be `app.main.handler`, and `app/` must be at the **top level** of the zip (the script does this). |
-| `KeyError` / validation error about a setting | An environment variable is missing in Configuration > Environment variables. |
-| 500 errors | Monitor > View CloudWatch logs > newest stream shows the Python traceback. |
+| Symptom                                            | Fix                                                                                                                                                                                      |
+| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **403 Forbidden** on the Function URL              | Function URL resource policy needs both `lambda:InvokeFunctionUrl` and `lambda:InvokeFunction`. Easiest fix: delete the Function URL and recreate it in the console with auth type NONE. |
+| `Task timed out after 3.00 seconds`                | Configuration > General > Timeout = 30 sec.                                                                                                                                              |
+| `No module named 'pydantic_core._pydantic_core'`   | The zip has Windows packages. Rebuild with `scripts\build_lambda.ps1` (it downloads Linux packages) and upload again. Architecture must be **x86_64**.                                   |
+| `Runtime.ImportModuleError: No module named 'app'` | Handler must be `app.main.handler`, and `app/` must be at the **top level** of the zip (the script does this).                                                                           |
+| `KeyError` / validation error about a setting      | An environment variable is missing in Configuration > Environment variables.                                                                                                             |
+| 500 errors                                         | Monitor > View CloudWatch logs > newest stream shows the Python traceback.                                                                                                               |
 
 ## Still stuck?
 
