@@ -17,14 +17,16 @@ from fastapi import Header
 
 from app.config import get_settings
 from app.errors import ApiError, missing_setting
-from app.http_retry import send_with_retry
+from app.http_retry import RETRYABLE_ERRORS_AND_TIMEOUTS, send_with_retry
 
 logger = logging.getLogger("naviglot.auth")
 
 CACHE_TTL_SECONDS = 300
 CACHE_MAX_ENTRIES = 512
 
-_http = httpx.Client(timeout=10.0)
+# Supabase normally answers in well under a second. Two 5-second tries (the second on a fresh
+# connection) keep the worst case at 10 seconds but get past a request that got stuck.
+_http = httpx.Client(timeout=5.0)
 
 # sha256(token) -> (user_id, expires_at). Hashed so raw tokens never sit in memory longer than needed.
 _cache: "OrderedDict[str, tuple[str, float]]" = OrderedDict()
@@ -88,6 +90,7 @@ def verify_token(token: str) -> AuthUser:
                 },
             ),
             "Supabase Auth",
+            retry_on=RETRYABLE_ERRORS_AND_TIMEOUTS,
         )
     except httpx.HTTPError:
         logger.exception("Could not reach Supabase Auth to verify a token")

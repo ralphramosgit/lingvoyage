@@ -113,6 +113,8 @@ The free project paused. Open the Supabase dashboard and click **Restore project
 | `Runtime.ImportModuleError: No module named 'app'` | Handler must be `app.main.handler`, and `app/` must be at the **top level** of the zip (the script does this).                                                                           |
 | `KeyError` / validation error about a setting      | An environment variable is missing in Configuration > Environment variables.                                                                                                             |
 | 500 errors                                         | Monitor > View CloudWatch logs > newest stream shows the Python traceback.                                                                                                               |
+| App says **"Couldn't verify your login right now"** | The backend couldn't get an answer from Supabase Auth (logs show `httpx.ReadTimeout` under "Could not reach Supabase Auth"). The backend retries once on a fresh connection; if it still happens, check Configuration > General > **Memory = 512 MB** (at 128 MB the backend is starved: it needs about 150 MB) and Supabase's status page. |
+| Everything is slow, cold starts of 4+ seconds      | Memory is probably still the 128 MB default. Set it to 512 MB (guide 07, section 7). More memory also means more CPU.                                                                  |
 
 ## Still stuck?
 

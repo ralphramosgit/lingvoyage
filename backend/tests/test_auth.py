@@ -86,16 +86,32 @@ def test_dropped_connection_is_retried_once(monkeypatch: pytest.MonkeyPatch) -> 
     assert len(calls) == 2
 
 
-def test_supabase_timeout_is_not_retried(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_supabase_timeout_is_retried_once(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Seen on Lambda: one instance's login checks hung until the timeout while a fresh one worked.
     auth.clear_cache()
     calls: list[httpx.Request] = []
 
     def handler(request: httpx.Request) -> httpx.Response:
         calls.append(request)
-        raise httpx.ReadTimeout("slow", request=request)
+        if len(calls) == 1:
+            raise httpx.ReadTimeout("The read operation timed out", request=request)
+        return httpx.Response(200, json={"id": "user-abc"})
+
+    monkeypatch.setattr(auth, "_http", httpx.Client(transport=httpx.MockTransport(handler)))
+    assert auth.verify_token("good-token").id == "user-abc"
+    assert len(calls) == 2
+
+
+def test_supabase_timing_out_twice_is_503(monkeypatch: pytest.MonkeyPatch) -> None:
+    auth.clear_cache()
+    calls: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(request)
+        raise httpx.ReadTimeout("The read operation timed out", request=request)
 
     monkeypatch.setattr(auth, "_http", httpx.Client(transport=httpx.MockTransport(handler)))
     with pytest.raises(auth.ApiError) as excinfo:
         auth.verify_token("any")
     assert excinfo.value.status_code == 503
-    assert len(calls) == 1
+    assert len(calls) == 2
