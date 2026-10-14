@@ -1,0 +1,6 @@
+# Runtime dependencies only. This is what scripts/build_lambda.ps1 packages for AWS Lambda.
+fastapi==0.143.0
+mangum==0.22.0
+httpx==0.28.1
+anthropic==1.13.0
+pydantic-settings==2.15.0

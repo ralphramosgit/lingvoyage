@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+.venv/
+
+# Environment files (real keys never go in git)
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Build output
+build/
+dist/
+lambda.zip
+.expo/
+.expo-export-check/
+
+# Logs and OS files
+*.log
+.DS_Store
+Thumbs.db
