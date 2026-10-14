@@ -1,0 +1,68 @@
+import httpx
+import pytest
+from fastapi.testclient import TestClient
+
+from app import auth
+
+PRIVATE_ENDPOINTS = [
+    ("/tts", {"text": "你好"}),
+    ("/conversation/start", {"scenario_id": "restaurant"}),
+    ("/conversation/turn", {"scenario_id": "restaurant", "user_text": "ni hao"}),
+]
+
+
+@pytest.mark.parametrize(("path", "body"), PRIVATE_ENDPOINTS)
+def test_private_endpoints_need_a_token(client: TestClient, path: str, body: dict[str, str]) -> None:
+    response = client.post(path, json=body)
+    assert response.status_code == 401
+    assert response.json()["error"]["code"] == "unauthorized"
+
+
+def test_rejects_non_bearer_header(client: TestClient) -> None:
+    response = client.post("/tts", json={"text": "hi"}, headers={"Authorization": "Basic abc"})
+    assert response.status_code == 401
+
+
+def _mock_supabase(monkeypatch: pytest.MonkeyPatch, status: int, calls: list[httpx.Request]) -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(request)
+        if status == 200:
+            return httpx.Response(200, json={"id": "user-abc", "email": "a@b.co"})
+        return httpx.Response(status, json={"msg": "invalid JWT"})
+
+    monkeypatch.setattr(auth, "_http", httpx.Client(transport=httpx.MockTransport(handler)))
+
+
+def test_invalid_token_is_401(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[httpx.Request] = []
+    _mock_supabase(monkeypatch, 403, calls)
+    response = client.post("/tts", json={"text": "hi"}, headers={"Authorization": "Bearer bad-token"})
+    assert response.status_code == 401
+    assert len(calls) == 1
+
+
+def test_valid_token_is_verified_once_then_cached(monkeypatch: pytest.MonkeyPatch) -> None:
+    auth.clear_cache()
+    calls: list[httpx.Request] = []
+    _mock_supabase(monkeypatch, 200, calls)
+
+    assert auth.verify_token("good-token").id == "user-abc"
+    assert auth.verify_token("good-token").id == "user-abc"
+
+    assert len(calls) == 1
+    request = calls[0]
+    assert str(request.url) == "https://test-project.supabase.co/auth/v1/user"
+    assert request.headers["apikey"] == "sb_publishable_test"
+    assert request.headers["authorization"] == "Bearer good-token"
+
+
+def test_supabase_unreachable_is_503(monkeypatch: pytest.MonkeyPatch) -> None:
+    auth.clear_cache()
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectError("down", request=request)
+
+    monkeypatch.setattr(auth, "_http", httpx.Client(transport=httpx.MockTransport(handler)))
+    with pytest.raises(auth.ApiError) as excinfo:
+        auth.verify_token("any")
+    assert excinfo.value.status_code == 503
