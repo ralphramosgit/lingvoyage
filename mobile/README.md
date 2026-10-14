@@ -20,6 +20,7 @@ Scan the QR code with the iPhone Camera app to open it in Expo Go. Restart with 
 
 ```bash
 npx tsc --noEmit
+npx expo lint
 npx expo-doctor
 ```
 

@@ -158,7 +158,9 @@ export function useVoiceRecorder() {
   return {
     permission,
     isRecording,
-    elapsedMs: isRecording ? recorderState.durationMillis : 0,
+    // Only trust the polled duration once the poller sees this recording, so a stale value
+    // from the previous (possibly 30 s) recording can't trigger an instant auto-stop.
+    elapsedMs: isRecording && recorderState.isRecording ? recorderState.durationMillis : 0,
     start,
     finish,
   };

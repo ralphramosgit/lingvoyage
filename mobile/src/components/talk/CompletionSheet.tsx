@@ -29,38 +29,38 @@ export function CompletionSheet({
       <Animated.View entering={FadeIn.duration(motion.base)} style={styles.backdrop} />
       <Animated.View entering={SlideInDown.duration(motion.slow)} style={styles.sheetDock}>
         <View style={[styles.sheet, { paddingBottom: Math.max(bottomInset, spacing.lg) + spacing.sm }]}>
-        <View style={styles.handle} />
-        <Animated.View entering={ZoomIn.delay(motion.base).duration(motion.slow)} style={styles.award}>
-          <Award size={40} color="#A16207" strokeWidth={2} />
-        </Animated.View>
-        <Text variant="title" align="center" accessibilityRole="header">
-          Encounter complete
-        </Text>
-        <Text variant="body" color={colors.inkMuted} align="center">
-          Nice work with {characterName}. You practiced {linesPracticed} {linesPracticed === 1 ? 'line' : 'lines'} in
-          Mandarin.
-        </Text>
+          <View style={styles.handle} />
+          <Animated.View entering={ZoomIn.delay(motion.base).duration(motion.slow)} style={styles.award}>
+            <Award size={40} color="#A16207" strokeWidth={2} />
+          </Animated.View>
+          <Text variant="title" align="center" accessibilityRole="header">
+            Encounter complete
+          </Text>
+          <Text variant="body" color={colors.inkMuted} align="center">
+            Nice work with {characterName}. You practiced {linesPracticed} {linesPracticed === 1 ? 'line' : 'lines'} in
+            Mandarin.
+          </Text>
 
-        <View style={styles.goals}>
-          {goals.map((goal) => {
-            const done = completedIds.includes(goal.id);
-            return (
-              <View key={goal.id} style={styles.goalRow}>
-                <View style={[styles.check, done ? styles.checkDone : null]}>
-                  {done ? <Check size={14} color="#FFFFFF" strokeWidth={3} /> : null}
+          <View style={styles.goals}>
+            {goals.map((goal) => {
+              const done = completedIds.includes(goal.id);
+              return (
+                <View key={goal.id} style={styles.goalRow}>
+                  <View style={[styles.check, done ? styles.checkDone : null]}>
+                    {done ? <Check size={14} color="#FFFFFF" strokeWidth={3} /> : null}
+                  </View>
+                  <Text variant="bodyMedium" style={styles.flex}>
+                    {goal.label}
+                  </Text>
                 </View>
-                <Text variant="bodyMedium" style={styles.flex}>
-                  {goal.label}
-                </Text>
-              </View>
-            );
-          })}
-        </View>
+              );
+            })}
+          </View>
 
-        <View style={styles.actions}>
-          <Button label="Practice again" icon={RotateCcw} onPress={onPracticeAgain} />
-          <Button label="Back to Encounters" icon={ArrowLeft} variant="secondary" onPress={onBack} />
-        </View>
+          <View style={styles.actions}>
+            <Button label="Practice again" icon={RotateCcw} onPress={onPracticeAgain} />
+            <Button label="Back to Encounters" icon={ArrowLeft} variant="secondary" onPress={onBack} />
+          </View>
         </View>
       </Animated.View>
     </View>

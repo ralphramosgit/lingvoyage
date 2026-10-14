@@ -18,7 +18,7 @@ import { SpeakerButton } from '@/components/SpeakerButton';
 import { Text } from '@/components/Text';
 import { useScenario } from '@/hooks/useScenarios';
 import { stopPlayback } from '@/lib/audio';
-import { scenarioIcon, scenarioTint } from '@/lib/scenarioVisuals';
+import { ScenarioIcon, scenarioTint } from '@/lib/scenarioVisuals';
 import { colors, layout, motion, radii, shadows, spacing, tints } from '@/theme/theme';
 
 function goBack() {
@@ -56,7 +56,6 @@ export default function EncounterPrepScreen() {
 
   const tint = scenarioTint(scenario.id);
   const palette = tints[tint];
-  const Icon = scenarioIcon(scenario.icon);
   const { character } = scenario;
 
   return (
@@ -73,7 +72,7 @@ export default function EncounterPrepScreen() {
 
             <Animated.View entering={FadeInDown.duration(motion.base)} style={styles.hero}>
               <View style={[styles.heroTile, { backgroundColor: colors.surface }]}>
-                <Icon size={34} color={palette.fg} strokeWidth={2} />
+                <ScenarioIcon name={scenario.icon} size={34} color={palette.fg} strokeWidth={2} />
               </View>
               <Text variant="title" accessibilityRole="header">
                 {scenario.title}

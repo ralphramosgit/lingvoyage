@@ -41,7 +41,7 @@ def test_strip_emojis_removes_emoji_and_keeps_chinese_and_pinyin() -> None:
     assert strip_emojis("你好！\U0001f60a 欢迎光临 \U0001f35c") == "你好！ 欢迎光临"
     assert strip_emojis("Great job! \U0001f44d\U0001f3fd") == "Great job!"
     assert strip_emojis("Nǐ hǎo, huānyíng guānglín!") == "Nǐ hǎo, huānyíng guānglín!"
-    assert strip_emojis("Well done ❤️ ⭐") == "Well done"
+    assert strip_emojis("Well done \u2764\ufe0f \u2b50") == "Well done"
     assert strip_emojis("\U0001f1e8\U0001f1f3 中国") == "中国"
     assert strip_emojis("我叫……，请问？") == "我叫……，请问？"
 
@@ -53,7 +53,7 @@ def test_finalize_strips_emojis_from_every_string() -> None:
         english="Hello \U0001f44b",
         feedback="Nice \U0001f389",
         corrected_hanzi="两位\U0001f60a",
-        corrected_pinyin="liǎng wèi ✨",
+        corrected_pinyin="liǎng wèi \u2728",
         suggestions=[Phrase(hanzi="谢谢\U0001f64f", pinyin="xièxie \U0001f64f", english="Thanks \U0001f64f")],
     )
     result = finalize_reply(reply, _scenario(), [])

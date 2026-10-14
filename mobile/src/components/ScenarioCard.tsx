@@ -1,7 +1,7 @@
 import { ChevronRight, CircleCheck, Clock, Gauge, Lock, type LucideIcon, MapPin, Target } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 
-import { scenarioIcon, scenarioTint } from '@/lib/scenarioVisuals';
+import { ScenarioIcon, scenarioTint } from '@/lib/scenarioVisuals';
 import { colors, radii, spacing, tints } from '@/theme/theme';
 import type { Scenario } from '@/types/api';
 
@@ -33,7 +33,6 @@ export function ScenarioCard({
   onPress: () => void;
 }) {
   const tint = scenarioTint(scenario.id, index);
-  const Icon = scenarioIcon(scenario.icon);
   const palette = tints[tint];
   const { character } = scenario;
 
@@ -45,7 +44,7 @@ export function ScenarioCard({
       style={styles.card}>
       <View style={styles.top}>
         <View style={[styles.tile, { backgroundColor: palette.bg }]}>
-          <Icon size={28} color={palette.fg} strokeWidth={2} />
+          <ScenarioIcon name={scenario.icon} size={28} color={palette.fg} strokeWidth={2} />
         </View>
         <View style={styles.titles}>
           <Text variant="subheading">{scenario.title}</Text>

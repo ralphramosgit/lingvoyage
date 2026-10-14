@@ -32,9 +32,26 @@ export function useScenarios(): ScenariosState {
     }
   }, []);
 
+  // First load. State is only set from the promise callbacks, never synchronously in the effect.
   useEffect(() => {
-    if (cachedScenarios === null) void reload();
-  }, [reload]);
+    if (cachedScenarios !== null) return undefined;
+    let active = true;
+    api
+      .getScenarios()
+      .then((result) => {
+        cachedScenarios = result;
+        if (active) setScenarios(result);
+      })
+      .catch((caught: unknown) => {
+        if (active) setError(errorMessage(caught, "Couldn't load encounters."));
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   return { scenarios, loading, error, reload };
 }
