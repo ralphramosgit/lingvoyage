@@ -58,11 +58,44 @@ def test_valid_token_is_verified_once_then_cached(monkeypatch: pytest.MonkeyPatc
 
 def test_supabase_unreachable_is_503(monkeypatch: pytest.MonkeyPatch) -> None:
     auth.clear_cache()
+    calls: list[httpx.Request] = []
 
     def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(request)
         raise httpx.ConnectError("down", request=request)
 
     monkeypatch.setattr(auth, "_http", httpx.Client(transport=httpx.MockTransport(handler)))
     with pytest.raises(auth.ApiError) as excinfo:
         auth.verify_token("any")
     assert excinfo.value.status_code == 503
+    assert len(calls) == 2  # tried once more before giving up
+
+
+def test_dropped_connection_is_retried_once(monkeypatch: pytest.MonkeyPatch) -> None:
+    auth.clear_cache()
+    calls: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(request)
+        if len(calls) == 1:
+            raise httpx.RemoteProtocolError("Server disconnected without sending a response.", request=request)
+        return httpx.Response(200, json={"id": "user-abc"})
+
+    monkeypatch.setattr(auth, "_http", httpx.Client(transport=httpx.MockTransport(handler)))
+    assert auth.verify_token("good-token").id == "user-abc"
+    assert len(calls) == 2
+
+
+def test_supabase_timeout_is_not_retried(monkeypatch: pytest.MonkeyPatch) -> None:
+    auth.clear_cache()
+    calls: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(request)
+        raise httpx.ReadTimeout("slow", request=request)
+
+    monkeypatch.setattr(auth, "_http", httpx.Client(transport=httpx.MockTransport(handler)))
+    with pytest.raises(auth.ApiError) as excinfo:
+        auth.verify_token("any")
+    assert excinfo.value.status_code == 503
+    assert len(calls) == 1

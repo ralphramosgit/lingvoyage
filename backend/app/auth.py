@@ -17,6 +17,7 @@ from fastapi import Header
 
 from app.config import get_settings
 from app.errors import ApiError, missing_setting
+from app.http_retry import send_with_retry
 
 logger = logging.getLogger("naviglot.auth")
 
@@ -78,12 +79,15 @@ def verify_token(token: str) -> AuthUser:
         raise missing_setting("SUPABASE_PUBLISHABLE_KEY")
 
     try:
-        response = _http.get(
-            f"{settings.supabase_url}/auth/v1/user",
-            headers={
-                "apikey": settings.supabase_publishable_key,
-                "Authorization": f"Bearer {token}",
-            },
+        response = send_with_retry(
+            lambda: _http.get(
+                f"{settings.supabase_url}/auth/v1/user",
+                headers={
+                    "apikey": settings.supabase_publishable_key,
+                    "Authorization": f"Bearer {token}",
+                },
+            ),
+            "Supabase Auth",
         )
     except httpx.HTTPError:
         logger.exception("Could not reach Supabase Auth to verify a token")

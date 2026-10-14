@@ -64,6 +64,8 @@ The secret keys (ElevenLabs, Claude) only ever live on the backend. The phone on
 7. **06-run-on-your-iphone.md**: start the backend and the app, open it in Expo Go.
 8. **07-aws-deploy.md**: put the backend on Lambda so the app works anywhere (do this before the demo).
 9. **08-troubleshooting.md**: when something breaks.
+10. **09-share-with-teammates.md**: let teammates try the app in Expo Go on their own phones, with no coding setup and without your PC running.
+11. **10-expo-testing-guide.md**: day to day after that: getting the QR code, publishing new versions, undoing one, SDK upgrades.
 
 Keep a scratch note (not in the repo) as you go, with these values. You'll paste them into `.env` files in guide 05:
 

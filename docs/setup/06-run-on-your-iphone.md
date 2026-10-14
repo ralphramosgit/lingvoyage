@@ -82,7 +82,9 @@ Audio tips: Naviglot plays sound even when the iPhone's silent switch is on, but
 
 ## Running on a teammate's machine
 
-Each teammate repeats guide 01, gets the `.env` values from you privately, and runs the same two terminals. Each person's `EXPO_PUBLIC_API_URL` must point at **their own** PC's IP (or everyone points at the Lambda URL once guide 07 is done, which is simpler).
+Teammates who only want to try the app (not develop it) don't need any of this: use guide 09 instead.
+
+Each teammate who develops repeats guide 01, gets the `.env` values from you privately, and runs the same two terminals. Each person's `EXPO_PUBLIC_API_URL` must point at **their own** PC's IP (or everyone points at the Lambda URL once guide 07 is done, which is simpler).
 
 ---
 

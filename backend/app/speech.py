@@ -6,6 +6,7 @@ import httpx
 
 from app.config import get_settings
 from app.errors import ApiError, missing_setting
+from app.http_retry import send_with_retry
 
 logger = logging.getLogger("naviglot.speech")
 
@@ -76,11 +77,14 @@ def synthesize(text: str, voice_id: str | None = None) -> bytes:
         raise missing_setting("ELEVENLABS_VOICE_ID")
 
     try:
-        response = _http.post(
-            f"{ELEVENLABS_BASE_URL}/v1/text-to-speech/{voice}",
-            params={"output_format": TTS_OUTPUT_FORMAT},
-            headers={"xi-api-key": api_key},
-            json={"text": text, "model_id": settings.elevenlabs_tts_model},
+        response = send_with_retry(
+            lambda: _http.post(
+                f"{ELEVENLABS_BASE_URL}/v1/text-to-speech/{voice}",
+                params={"output_format": TTS_OUTPUT_FORMAT},
+                headers={"xi-api-key": api_key},
+                json={"text": text, "model_id": settings.elevenlabs_tts_model},
+            ),
+            "ElevenLabs Text to Speech",
         )
     except httpx.TimeoutException:
         logger.exception("ElevenLabs Text to Speech timed out")
@@ -106,11 +110,14 @@ def transcribe(audio: bytes, audio_mime: str | None = None) -> str:
     mime = audio_mime or "audio/mp4"
 
     try:
-        response = _http.post(
-            f"{ELEVENLABS_BASE_URL}/v1/speech-to-text",
-            headers={"xi-api-key": api_key},
-            data={"model_id": settings.elevenlabs_stt_model, "tag_audio_events": "false"},
-            files={"file": (_filename_for(mime), audio, mime)},
+        response = send_with_retry(
+            lambda: _http.post(
+                f"{ELEVENLABS_BASE_URL}/v1/speech-to-text",
+                headers={"xi-api-key": api_key},
+                data={"model_id": settings.elevenlabs_stt_model, "tag_audio_events": "false"},
+                files={"file": (_filename_for(mime), audio, mime)},
+            ),
+            "ElevenLabs Speech to Text",
         )
     except httpx.TimeoutException:
         logger.exception("ElevenLabs Speech to Text timed out")
