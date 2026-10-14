@@ -24,8 +24,11 @@ Realistic hackathon cost: **$0**, apart from tiny CloudWatch log storage that th
 ## 2. Secure it (5 minutes, do not skip)
 
 1. **Turn on MFA for the root user**: top-right account menu > **Security credentials** > **Assign MFA device** > Authenticator app.
-2. **Make a day-to-day admin user** so you don't use root: search **IAM** > **Users** > **Create user** > name `naviglot-admin` > tick **Provide user access to the AWS Management Console** > next > **Attach policies directly** > `AdministratorAccess` > create. Save the sign-in URL and password, and sign in as this user from now on.
-3. **Zero-spend budget alert**: search **Budgets** > **Create budget** > **Use a template** > **Zero spend budget** > enter your email > create. You'll get an email the moment anything costs a cent.
+2. **Make a day-to-day admin user** so you don't use root: search **IAM** > **Users** > **Create user** > name `naviglot-admin` > tick **Provide user access to the AWS Management Console** > next > **Attach policies directly** > search and tick **`AdministratorAccess`** (that one policy only) > create. Save the sign-in URL and password, and sign in as this user from now on.
+   - Why full admin: creating the function also creates its execution role and function URL, which needs IAM permissions. A "smaller" combination that works (`AWSLambda_FullAccess` + `IAMFullAccess`) isn't really safer, because `IAMFullAccess` can grant itself anything.
+   - **Turn on MFA for this user too**: IAM > Users > `naviglot-admin` > **Security credentials** > **Assign MFA device**.
+   - **Don't create access keys** for this user. If you later want the AWS CLI, make a separate deploy-only key (section 12).
+3. **Zero-spend budget alert**: search **Budgets** > **Create budget** > **Use a template** > **Zero spend budget** > enter your email > create. You'll get an email the moment anything costs a cent. (Do this as root, or first let IAM users see billing: as root, account menu > **Account** > **IAM user and role access to Billing information** > **Activate**.)
 
 ## 3. Pick a region
 
@@ -60,7 +63,14 @@ cd $HOME\Documents\naviglot\backend
 .\scripts\build_lambda.ps1
 ```
 
-You get `backend\lambda.zip` (roughly 15 to 30 MB). It's git-ignored.
+From **Git Bash** instead (same script, run through PowerShell):
+
+```bash
+cd ~/Documents/naviglot/backend
+powershell -ExecutionPolicy Bypass -File scripts/build_lambda.ps1
+```
+
+You get `backend\lambda.zip` (about 6 MB). It's git-ignored, and it contains only `app/` and the Linux packages: your `.env` is never in it.
 
 ## 5. Create the Lambda function
 
@@ -78,8 +88,10 @@ When you create the URL with auth type NONE in the console, AWS automatically ad
 
 ## 6. Upload the code and set the handler
 
-1. **Code** tab > **Upload from** > **.zip file** > choose `backend\lambda.zip` > **Save**.
-2. Scroll to **Runtime settings** > **Edit** > Handler: `app.main.handler` > **Save**.
+1. **Code** tab > in the **Code source** panel, open the **Update** dropdown (top right, next to "Open in Visual Studio Code") > **.zip file** > choose `backend\lambda.zip` > **Save**. Older versions of the console call this button **Upload from**.
+   - Don't drag the zip into the code editor's file explorer: that just adds `lambda.zip` as a file instead of unpacking it.
+   - After the upload, the explorer shows an `app/` folder and many package folders, and the sample `lambda_function.py` is gone.
+2. Scroll down the **Code** tab to **Runtime settings** > **Edit** > Handler: `app.main.handler` > **Save**.
 
 (`app/main.py` ends with `handler = Mangum(app, lifespan="off")`; that's what this points to.)
 
@@ -94,9 +106,11 @@ When you create the URL with auth type NONE in the console, AWS automatically ad
 
 ## 8. Environment variables
 
-**Configuration** > **Environment variables** > **Edit** > add every line from your `backend/.env`, same names and values, except:
+**Configuration** > **Environment variables** > **Edit** > **Add environment variable** for every line of your `backend/.env`, same names and values, except:
 
 - `APP_ENV` = `production`
+
+That's 12 variables: `APP_ENV`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID`, `ELEVENLABS_VOICE_ID_RESTAURANT`, `ELEVENLABS_VOICE_ID_TRAIN`, `ELEVENLABS_VOICE_ID_HOTEL`, `ELEVENLABS_TTS_MODEL`, `ELEVENLABS_STT_MODEL`, `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`. The three per-character voice IDs are optional; skip any that are empty in your `.env`. No quotes, no spaces around values.
 
 **Save**. (Guide 05 explains why secrets live here and not in the app.)
 
@@ -104,7 +118,10 @@ When you create the URL with auth type NONE in the console, AWS automatically ad
 
 1. **Configuration** > **Function URL**: copy the URL (like `https://abc123xyz.lambda-url.us-west-2.on.aws/`).
 2. In your browser, open that URL followed by `health`, e.g. `https://abc123xyz.lambda-url.us-west-2.on.aws/health`. You should see `{"status":"ok"}`.
-3. Open `.../docs` to see the API page, now served from AWS.
+3. Open `.../scenarios`: you should see the three Encounters (restaurant, train, hotel) as JSON.
+4. Open `.../docs` to see the API page, now served from AWS. Trying `/tts` or `/conversation/...` from there returns **401**: that's correct, those need a logged-in user from the app.
+
+The very first request after a deploy (or after a quiet spell) takes a second or two longer while Lambda starts up. That's normal.
 
 Save the URL in your scratch note as `LAMBDA_FUNCTION_URL` (without the trailing slash).
 
@@ -129,9 +146,30 @@ cd $HOME\Documents\naviglot\backend
 .\scripts\build_lambda.ps1
 ```
 
-Then Lambda > **Code** > **Upload from** > **.zip file** again.
+(Git Bash: `powershell -ExecutionPolicy Bypass -File scripts/build_lambda.ps1` from `backend/`.)
 
-Optional, faster: install the AWS CLI (`winget install --id Amazon.AWSCLI -e`), run `aws configure` with an access key for your admin user, then deploy with one command:
+Then Lambda > **Code** > **Update** dropdown > **.zip file** again. Environment variables, memory, timeout and handler stay as they are.
+
+Optional, faster: deploy from the command line with the AWS CLI.
+
+1. Install it: `winget install --id Amazon.AWSCLI -e`, then open a new terminal.
+2. Make a **deploy-only** user so the key on your PC can't do anything else: IAM > **Users** > **Create user** > name `naviglot-deploy` (no console access) > **Attach policies directly** > **Create policy** > **JSON**, paste the policy below (put your 12-digit account ID in place of `ACCOUNT_ID`), name it `naviglot-deploy`, then attach it to the user.
+
+   ```json
+   {
+     "Version": "2012-10-17",
+     "Statement": [
+       {
+         "Effect": "Allow",
+         "Action": ["lambda:UpdateFunctionCode", "lambda:GetFunction", "lambda:GetFunctionConfiguration"],
+         "Resource": "arn:aws:lambda:us-west-2:ACCOUNT_ID:function:naviglot-api"
+       }
+     ]
+   }
+   ```
+
+3. `naviglot-deploy` > **Security credentials** > **Create access key** > **Command Line Interface (CLI)**. Run `aws configure` and paste the key ID and secret (region `us-west-2`, output `json`). Never commit or share these.
+4. Deploy with one command from `backend/`:
 
 ```powershell
 aws lambda update-function-code --function-name naviglot-api --zip-file fileb://lambda.zip --region us-west-2
