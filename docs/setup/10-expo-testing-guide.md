@@ -6,6 +6,42 @@ How testing works in this project now that it's set up: where to get the QR code
 
 ---
 
+## The permanent QR code (bookmark this)
+
+This is the one QR code to give teammates. It always opens the **newest** published version, so nobody ever needs a new one after a publish (only after an Expo SDK upgrade).
+
+**Link (open it in a browser to see the QR code):**
+
+```
+https://qr.expo.dev/eas-update?projectId=1660c178-9893-4137-847a-6051488a096f&runtimeVersion=exposdk%3A57.0.0&channel=preview
+```
+
+**The QR code itself** (scan it straight off this page with an iPhone camera):
+
+<img src="naviglot-qr.svg" alt="Naviglot permanent QR code for Expo Go, preview channel" width="240">
+
+> **Don't share the "Preview" QR codes from expo.dev.** Every **Preview** button on the Expo site belongs to one single update, and a new one appears with every publish. Whoever scans one stays on that old version forever. The Expo site has no button for the permanent code; it comes from the link above.
+
+### How to rebuild the link yourself
+
+The link isn't stored on expo.dev. It's Expo's QR code service ([docs](https://docs.expo.dev/more/qr-codes/), "Update by device traits") filled in with three values from this project:
+
+```
+https://qr.expo.dev/eas-update?projectId=PROJECT_ID&runtimeVersion=RUNTIME&channel=CHANNEL
+```
+
+| Fill in | Value | Where to find it |
+|---|---|---|
+| `PROJECT_ID` | `1660c178-9893-4137-847a-6051488a096f` | expo.dev > **naviglot-test** > **Details** (top right) > Project ID, or `mobile/app.json` > `extra.eas.projectId` |
+| `RUNTIME` | `exposdk%3A57.0.0` | The **Runtime** shown on any update (`exposdk:57.0.0`). In a link, `:` is written `%3A` |
+| `CHANNEL` | `preview` | The channel every publish goes to (the GitHub Action uses `--channel preview`) |
+
+Paste the finished link into Chrome's address bar and press Enter: the page is just the QR code. Right-click > **Save image as** to send it. Add `&format=url` to the end to get the plain `exp://` address inside the code instead.
+
+**After an Expo SDK upgrade** (say to 58), change `57` to `58` in the link, and replace `naviglot-qr.svg` in this folder with the new code (open the new link, then save the page as `naviglot-qr.svg`).
+
+---
+
 ## Quick answers
 
 ### Do I have to run `npx expo start` for teammates?

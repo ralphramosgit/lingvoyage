@@ -115,7 +115,9 @@ If it asks to install or configure anything, say yes. When it finishes it prints
 3. Scan it with your iPhone Camera and tap the banner. It should open in Expo Go and start Naviglot. **Fix any problem before you invite people** (see "When something goes wrong" below).
 4. Save the QR code image (right-click > Save image) to send to teammates. Ask one teammate to try it before you send it to everyone. Their test is the one that proves the organization access works.
 
-Backup: any member can also open expo.dev > the project > **Updates** > latest update > **Preview** and scan the QR code shown there ([Expo docs](https://docs.expo.dev/review/share-previews-with-your-team/)).
+This link and the QR code image are also saved at the top of guide 10 ("The permanent QR code").
+
+Don't use the **Preview** QR code on an update's page on expo.dev for this. It opens only that one update, so whoever scans it never gets newer versions ([Expo docs](https://docs.expo.dev/review/share-previews-with-your-team/)). It's fine for a one-off look at a specific update.
 
 ---
 
