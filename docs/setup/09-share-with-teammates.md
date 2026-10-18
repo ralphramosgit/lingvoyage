@@ -26,7 +26,7 @@ Before you start: the backend must be on Lambda (guide 07), and `mobile/.env` mu
 ## 1. Create the organization and invite teammates
 
 1. Go to **expo.dev** and sign in.
-2. Account menu (top left) > **Create organization**. Name it, for example `naviglot-team`. Organizations are free.
+2. Account menu (top left) > **Create organization**. Name it, for example `lingvoyage-team`. Organizations are free.
 3. In the organization: **Settings > Members > Invite**. Enter each teammate's email.
    - Role: **Viewer** is enough to open the app. If a teammate can't load it later, change them to **Developer**.
 4. Each teammate accepts the email invite and creates a free Expo account if they don't have one.
@@ -40,7 +40,7 @@ In `mobile/app.json`, add an `owner` line inside `"expo"`:
   "expo": {
     "name": "Naviglot",
     "slug": "naviglot",
-    "owner": "naviglot-team",
+    "owner": "lingvoyage-team",
     ...
 ```
 
@@ -49,10 +49,10 @@ Then update the EAS CLI (yours may be old) and link the project:
 ```bash
 npm install -g eas-cli
 eas login            # same Expo account you use in Expo Go
-eas init --account naviglot-team --non-interactive   # links @naviglot-team/<slug>, or creates it if missing
+eas init --account lingvoyage-team --non-interactive   # links @lingvoyage-team/<slug>, or creates it if missing
 ```
 
-If you already created the project on expo.dev, set `slug` in `app.json` to that project's name first. Otherwise `eas init` makes a second project. (This repo uses `naviglot-test`.) `eas init` also rewrites `app.json` and adds `extra.eas.projectId` and a few defaults; that's expected.
+If you already created the project on expo.dev, set `slug` in `app.json` to that project's name first. Otherwise `eas init` makes a second project. (This repo uses `lingvoyage`.) `eas init` also rewrites `app.json` and adds `extra.eas.projectId` and a few defaults; that's expected.
 
 ## 3. Make uploads loadable in Expo Go
 
@@ -73,7 +73,7 @@ Why: Expo Go only loads uploads made for its own SDK, which here is `exposdk:57.
 
 `mobile/.env` never leaves your PC (it's gitignored), but `eas update` reads its settings from Expo. Add the same three values there:
 
-1. expo.dev > `naviglot-team` > **naviglot** > **Environment variables** > **Add variable**.
+1. expo.dev > `lingvoyage-team` > **naviglot** > **Environment variables** > **Add variable**.
 2. Add each of these, with the value from `mobile/.env`. Tick the **preview** environment and choose **Plain text** visibility:
    - `EXPO_PUBLIC_SUPABASE_URL`
    - `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
@@ -109,8 +109,8 @@ If it asks to install or configure anything, say yes. When it finishes it prints
     https://qr.expo.dev/eas-update?projectId=YOUR_PROJECT_ID&runtimeVersion=exposdk%3A57.0.0&channel=preview
     ```
 
-    For this repo's project (`naviglot-team/naviglot-test`) that's:
-    https://qr.expo.dev/eas-update?projectId=1660c178-9893-4137-847a-6051488a096f&runtimeVersion=exposdk%3A57.0.0&channel=preview
+    For this repo's project (`lingvoyage-team/lingvoyage`) that's:
+    https://qr.expo.dev/eas-update?projectId=8df178cb-b14c-46da-8d18-090c3317ad28&runtimeVersion=exposdk%3A57.0.0&channel=preview
 
 3. Scan it with your iPhone Camera and tap the banner. It should open in Expo Go and start Naviglot. **Fix any problem before you invite people** (see "When something goes wrong" below).
 4. Save the QR code image (right-click > Save image) to send to teammates. Ask one teammate to try it before you send it to everyone. Their test is the one that proves the organization access works.

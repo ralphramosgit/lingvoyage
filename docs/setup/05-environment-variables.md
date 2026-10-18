@@ -109,7 +109,7 @@ Don't paste keys in the repo, a group chat that's saved forever, or a Google Doc
 
 On Lambda there's no `.env` file. The same names go into the function's settings:
 
-1. AWS Console > **Lambda** > your function `naviglot-api`.
+1. AWS Console > **Lambda** > your function `lingvoyage-api`.
 2. **Configuration** tab > **Environment variables** > **Edit**.
 3. **Add environment variable** for each line of `backend/.env` (same names, same values), but set `APP_ENV=production`.
 4. **Save**.

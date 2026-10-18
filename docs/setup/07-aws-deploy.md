@@ -76,7 +76,7 @@ You get `backend\lambda.zip` (about 6 MB). It's git-ignored, and it contains onl
 
 1. Console search > **Lambda** > **Create function**.
 2. **Author from scratch**:
-   - Function name: `naviglot-api`
+   - Function name: `lingvoyage-api`
    - Runtime: **Python 3.13**
    - Architecture: **x86_64** (must match the `--platform` in the build script)
 3. Expand **Additional configurations**:
@@ -137,7 +137,7 @@ Then `npx expo start -c` and run through the demo again. Now the backend works o
 
 ## 11. Logs (when something fails)
 
-Lambda > `naviglot-api` > **Monitor** > **View CloudWatch logs** > open the newest log stream. Python errors and tracebacks show up here.
+Lambda > `lingvoyage-api` > **Monitor** > **View CloudWatch logs** > open the newest log stream. Python errors and tracebacks show up here.
 
 ## 12. Redeploying after code changes
 
@@ -162,7 +162,7 @@ Optional, faster: deploy from the command line with the AWS CLI.
        {
          "Effect": "Allow",
          "Action": ["lambda:UpdateFunctionCode", "lambda:GetFunction", "lambda:GetFunctionConfiguration"],
-         "Resource": "arn:aws:lambda:us-west-2:ACCOUNT_ID:function:naviglot-api"
+         "Resource": "arn:aws:lambda:us-west-2:ACCOUNT_ID:function:lingvoyage-api"
        }
      ]
    }
@@ -172,7 +172,7 @@ Optional, faster: deploy from the command line with the AWS CLI.
 4. Deploy with one command from `backend/`:
 
 ```powershell
-aws lambda update-function-code --function-name naviglot-api --zip-file fileb://lambda.zip --region us-west-2
+aws lambda update-function-code --function-name lingvoyage-api --zip-file fileb://lambda.zip --region us-west-2
 ```
 
 ## 13. Keeping costs at zero

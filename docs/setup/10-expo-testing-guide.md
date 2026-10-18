@@ -13,12 +13,12 @@ This is the one QR code to give teammates. It always opens the **newest** publis
 **Link (open it in a browser to see the QR code):**
 
 ```
-https://qr.expo.dev/eas-update?projectId=1660c178-9893-4137-847a-6051488a096f&runtimeVersion=exposdk%3A57.0.0&channel=preview
+https://qr.expo.dev/eas-update?projectId=8df178cb-b14c-46da-8d18-090c3317ad28&runtimeVersion=exposdk%3A57.0.0&channel=preview
 ```
 
 **The QR code itself** (scan it straight off this page with an iPhone camera):
 
-<img src="naviglot-qr.svg" alt="Naviglot permanent QR code for Expo Go, preview channel" width="240">
+<img src="lingvoyage-qr.svg" alt="Lingvoyage permanent QR code for Expo Go, preview channel" width="240">
 
 > **Don't share the "Preview" QR codes from expo.dev.** Every **Preview** button on the Expo site belongs to one single update, and a new one appears with every publish. Whoever scans one stays on that old version forever. The Expo site has no button for the permanent code; it comes from the link above.
 
@@ -32,13 +32,13 @@ https://qr.expo.dev/eas-update?projectId=PROJECT_ID&runtimeVersion=RUNTIME&chann
 
 | Fill in | Value | Where to find it |
 |---|---|---|
-| `PROJECT_ID` | `1660c178-9893-4137-847a-6051488a096f` | expo.dev > **naviglot-test** > **Details** (top right) > Project ID, or `mobile/app.json` > `extra.eas.projectId` |
+| `PROJECT_ID` | `8df178cb-b14c-46da-8d18-090c3317ad28` | expo.dev > **lingvoyage** > **Details** (top right) > Project ID, or `mobile/app.json` > `extra.eas.projectId` |
 | `RUNTIME` | `exposdk%3A57.0.0` | The **Runtime** shown on any update (`exposdk:57.0.0`). In a link, `:` is written `%3A` |
 | `CHANNEL` | `preview` | The channel every publish goes to (the GitHub Action uses `--channel preview`) |
 
 Paste the finished link into Chrome's address bar and press Enter: the page is just the QR code. Right-click > **Save image as** to send it. Add `&format=url` to the end to get the plain `exp://` address inside the code instead.
 
-**After an Expo SDK upgrade** (say to 58), change `57` to `58` in the link, and replace `naviglot-qr.svg` in this folder with the new code (open the new link, then save the page as `naviglot-qr.svg`).
+**After an Expo SDK upgrade** (say to 58), change `57` to `58` in the link, and replace `lingvoyage-qr.svg` in this folder with the new code (open the new link, then save the page as `lingvoyage-qr.svg`).
 
 ---
 
@@ -94,9 +94,9 @@ Exceptions:
 | Thing | Value |
 |---|---|
 | Expo account (yours) | `ralphramosxpo` |
-| Organization | `naviglot-team` (teammates join this) |
-| Project | `naviglot-test` ([dashboard](https://expo.dev/accounts/naviglot-team/projects/naviglot-test)) |
-| Project ID | `1660c178-9893-4137-847a-6051488a096f` (in `app.json` > `extra.eas.projectId`) |
+| Organization | `lingvoyage-team` (teammates join this) |
+| Project | `lingvoyage` ([dashboard](https://expo.dev/accounts/lingvoyage-team/projects/lingvoyage)) |
+| Project ID | `8df178cb-b14c-46da-8d18-090c3317ad28` (in `app.json` > `extra.eas.projectId`) |
 | Channel / branch | `preview` (where every test version goes) |
 | Runtime version | `exposdk:57.0.0` (from `"runtimeVersion": { "policy": "sdkVersion" }`) |
 | Settings for published versions | EAS **preview** environment (3 `EXPO_PUBLIC_*` variables) |
@@ -115,7 +115,7 @@ Words you'll see:
 
 | | Local dev (`npx expo start`) | Published (`eas update`) |
 |---|---|---|
-| Who can open it | You, on a phone that can reach your PC | Members of `naviglot-team`, anywhere |
+| Who can open it | You, on a phone that can reach your PC | Members of `lingvoyage-team`, anywhere |
 | Your PC must be on | Yes | No |
 | Code changes show | Instantly (hot reload) | Only after you publish |
 | Settings come from | `mobile/.env` | EAS **preview** environment on expo.dev |
@@ -131,13 +131,13 @@ Rule of thumb: work with `npx expo start`, and publish when something is ready f
 
 Open this in your PC's browser:
 
-https://qr.expo.dev/eas-update?projectId=1660c178-9893-4137-847a-6051488a096f&runtimeVersion=exposdk%3A57.0.0&channel=preview
+https://qr.expo.dev/eas-update?projectId=8df178cb-b14c-46da-8d18-090c3317ad28&runtimeVersion=exposdk%3A57.0.0&channel=preview
 
 It's Expo's QR code service ([docs](https://docs.expo.dev/more/qr-codes/)). It draws a QR code from three values in the link:
 
 | Part of the link | Meaning |
 |---|---|
-| `projectId=1660c178-...` | Which project (`naviglot-test`) |
+| `projectId=8df178cb-...` | Which project (`lingvoyage`) |
 | `runtimeVersion=exposdk%3A57.0.0` | Which Expo Go can open it (`%3A` is just `:` written for a URL) |
 | `channel=preview` | Which channel to load the latest update from |
 
@@ -148,12 +148,12 @@ To share it: right-click the QR code > **Save image as**, then send the image. T
 Want the plain address inside the QR code? Add `&format=url` to the link. It returns:
 
 ```
-exp://u.expo.dev/1660c178-9893-4137-847a-6051488a096f?runtime-version=exposdk%3A57.0.0&channel-name=preview
+exp://u.expo.dev/8df178cb-b14c-46da-8d18-090c3317ad28?runtime-version=exposdk%3A57.0.0&channel-name=preview
 ```
 
 ### Option 2: on the website
 
-1. Go to [expo.dev](https://expo.dev) > **naviglot-team** > **naviglot-test** > **Updates**.
+1. Go to [expo.dev](https://expo.dev) > **lingvoyage-team** > **lingvoyage** > **Updates**.
 2. Click an update (for example "First test version").
 3. Click **Preview** to show its QR code.
 
@@ -202,9 +202,9 @@ Expo Go remembers the project. Next time, open Expo Go and tap **Naviglot** unde
 
 ### One-time setup
 
-1. **Make an Expo token for GitHub.** On [expo.dev](https://expo.dev), switch to the **naviglot-team** account > **Settings** > **Access tokens**. Under **Robot users**, add a robot (name it `github-actions`, role **Developer**), then create a token for it and copy it. It's shown only once. (A personal access token from your own account also works, but it stops working if you leave the team.)
+1. **Make an Expo token for GitHub.** On [expo.dev](https://expo.dev), switch to the **lingvoyage-team** account > **Settings** > **Access tokens**. Under **Robot users**, add a robot (name it `github-actions`, role **Developer**), then create a token for it and copy it. It's shown only once. (A personal access token from your own account also works, but it stops working if you leave the team.)
 2. **Give it to GitHub.** On GitHub: the `naviglot` repo > **Settings** > **Secrets and variables** > **Actions** > **New repository secret**. Name: `EXPO_TOKEN`, value: the token. Never paste it anywhere else.
-3. **Push the workflow file to `main`.** That push runs it once. Check the **Actions** tab: the "Publish app update" run should end green, and a new update shows up under expo.dev > naviglot-test > **Updates**.
+3. **Push the workflow file to `main`.** That push runs it once. Check the **Actions** tab: the "Publish app update" run should end green, and a new update shows up under expo.dev > lingvoyage > **Updates**.
 
 ### Day to day
 
@@ -250,7 +250,7 @@ Before adding a library, check its page on [docs.expo.dev](https://docs.expo.dev
 | Where | What's there | Used by |
 |---|---|---|
 | `mobile/.env` (your PC only, gitignored) | 3 `EXPO_PUBLIC_*` values | `npx expo start` |
-| expo.dev > naviglot-test > **Environment variables** > preview | The same 3 values | `eas update --environment preview` |
+| expo.dev > lingvoyage > **Environment variables** > preview | The same 3 values | `eas update --environment preview` |
 | AWS Lambda > Configuration > Environment variables | The real secrets (Claude, ElevenLabs, Supabase server keys) | The backend |
 
 **The published version uses the values stored on Expo, not your `.env`.** If you change a value in `.env` (for example a new Lambda URL), change it on Expo too, then publish:
@@ -270,7 +270,7 @@ Never put a real secret in an `EXPO_PUBLIC_*` variable. Everything in those ends
 - **Expo Go runs one SDK version.** The App Store's Expo Go updates itself on phones, and when it moves past SDK 57, Naviglot stops opening until you upgrade (next section). Android users can get a specific SDK's Expo Go from [expo.dev/go](https://expo.dev/go).
 - **The microphone prompt says "Expo Go".** In Expo Go, iOS asks on behalf of Expo Go, not Naviglot. That's normal.
 - **`expo-updates` does nothing inside Expo Go.** It's installed so `eas update` works. Local dev with `npx expo start` is unchanged.
-- **Don't change `slug` or `owner` in `app.json`.** They must match the project on expo.dev (`naviglot-test` in `naviglot-team`), or EAS commands refuse to run.
+- **Don't change `slug` or `owner` in `app.json`.** They must match the project on expo.dev (`lingvoyage` in `lingvoyage-team`), or EAS commands refuse to run.
 - **Don't change `runtimeVersion`.** With any policy other than `sdkVersion`, updates get labels like `1.0.0`, and Expo Go won't open them.
 
 ---
@@ -290,7 +290,7 @@ You'll know because Expo Go (or a teammate) says the project needs a different S
 4. **Make a new permanent link.** The old one asks for SDK 57. Change `57` to `58` in the link and send the new QR code to everyone:
 
     ```
-    https://qr.expo.dev/eas-update?projectId=1660c178-9893-4137-847a-6051488a096f&runtimeVersion=exposdk%3A58.0.0&channel=preview
+    https://qr.expo.dev/eas-update?projectId=8df178cb-b14c-46da-8d18-090c3317ad28&runtimeVersion=exposdk%3A58.0.0&channel=preview
     ```
 
 5. Teammates update Expo Go from the App Store or Play Store and scan the new code.
@@ -299,7 +299,7 @@ You'll know because Expo Go (or a teammate) says the project needs a different S
 
 ## Managing teammates
 
-- **Add someone:** expo.dev > **naviglot-team** > **Settings** > **Members** > **Invite**. Viewer is enough; use Developer if Viewer can't load it.
+- **Add someone:** expo.dev > **lingvoyage-team** > **Settings** > **Members** > **Invite**. Viewer is enough; use Developer if Viewer can't load it.
 - **Remove someone:** same page. Once they're no longer a member, Expo Go stops loading the app for them.
 - **Instructions to send them:** section 7 of guide 09.
 - Expo's free plan covers updates for 1,000 users a month ([pricing](https://expo.dev/pricing)). Every voice turn a teammate takes uses your Claude and ElevenLabs credits through Lambda, so check those usage pages while people are testing.
