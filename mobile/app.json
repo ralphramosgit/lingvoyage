@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "Naviglot",
-    "slug": "naviglot-test",
-    "owner": "naviglot-team",
+    "name": "Lingvoyage",
+    "slug": "lingvoyage",
+    "owner": "lingvoyage-team",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "naviglot",
+    "scheme": "lingvoyage",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true
@@ -20,10 +20,6 @@
       },
       "predictiveBackGestureEnabled": false,
       "permissions": [
-        "android.permission.RECORD_AUDIO",
-        "android.permission.MODIFY_AUDIO_SETTINGS",
-        "android.permission.FOREGROUND_SERVICE",
-        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
         "android.permission.RECORD_AUDIO",
         "android.permission.MODIFY_AUDIO_SETTINGS",
         "android.permission.FOREGROUND_SERVICE",
@@ -47,7 +43,7 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "Naviglot uses the microphone so you can speak with characters in Encounters."
+          "microphonePermission": "Lingvoyage uses the microphone so you can speak with characters in Encounters."
         }
       ],
       "expo-asset"
@@ -59,14 +55,14 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "1660c178-9893-4137-847a-6051488a096f"
+        "projectId": "8df178cb-b14c-46da-8d18-090c3317ad28"
       }
     },
     "runtimeVersion": {
       "policy": "sdkVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/1660c178-9893-4137-847a-6051488a096f"
+      "url": "https://u.expo.dev/8df178cb-b14c-46da-8d18-090c3317ad28"
     }
   }
 }
