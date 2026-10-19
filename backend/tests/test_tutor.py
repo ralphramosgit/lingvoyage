@@ -181,8 +181,11 @@ def test_system_prompt_includes_scene_goals_and_progress() -> None:
 
 def test_system_prompt_follows_the_script_and_keeps_roles_apart() -> None:
     prompt = build_system_prompt(_scenario("airport"), [])
-    assert "1. You open: 你好！需要帮忙吗？" in prompt
-    assert "The traveler asks where the bus or the DiDi is. You: 巴士在那里。" in prompt
+    assert "1. You open: 你好！欢迎来成都！你找什么？" in prompt
+    assert "Then ask: 你要去哪里？" in prompt
+    assert "巴士在五号门外面。" in prompt
+    assert "end every reply with one short, easy question for the traveler" in prompt
+    assert "never just 在那里 on its own" in prompt
     assert "- [place] + 在哪里？ (Where is [place]?)" in prompt
     assert "don't use them to ask the traveler anything" in prompt
     assert "never ask the traveler the questions that are theirs to ask you" in prompt
