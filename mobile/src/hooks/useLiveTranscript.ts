@@ -2,18 +2,40 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { api } from '@/lib/api';
 import { bytesToBase64, PCM_SAMPLE_RATE } from '@/lib/pcm';
+import type { Scenario } from '@/types/api';
 
 // Live captions while the learner records: the mic's PCM goes straight to ElevenLabs realtime
-// Speech to Text with a single-use token from our backend. Captions are only a preview; the
-// recording is still sent to /conversation/turn, and that transcript is the one that counts.
+// Speech to Text with a single-use token from our backend. Captions are only a preview; when the
+// learner stops, the recording goes to /speech/transcribe, and that transcript is the one they
+// check and send.
 
 const REALTIME_URL = 'wss://api.elevenlabs.io/v1/speech-to-text/realtime';
 // Tokens are single-use and expire after 15 minutes; one is kept ready so captions start quickly.
 const TOKEN_MAX_AGE_MS = 12 * 60 * 1000;
 // Audio captured while the socket connects (100 ms chunks), sent once it opens.
 const MAX_QUEUED_CHUNKS = 100;
+// Realtime limits: at most 50 keyterms of 20 characters.
+const MAX_KEYTERMS = 50;
+const MAX_KEYTERM_LENGTH = 20;
+const KEYTERM_PUNCTUATION = /[。，！？、；：…?!.,;:]/g;
 
 export type LiveStatus = 'idle' | 'connecting' | 'live' | 'unavailable';
+
+/** Tells ElevenLabs which language to hear and which phrases to expect. */
+export type SpeechHints = { languageCode: string; keyterms: string[] };
+
+/**
+ * The scene's language (never auto-detected, so accented Mandarin isn't heard as English or
+ * another language) and its key phrases. Same rules as backend/app/speech.py; keep them in sync.
+ */
+export function speechHints(scenario: Pick<Scenario, 'language' | 'key_phrases'>): SpeechHints {
+  const keyterms: string[] = [];
+  for (const phrase of scenario.key_phrases) {
+    const term = phrase.hanzi.replace(KEYTERM_PUNCTUATION, '').replace(/\s+/g, ' ').trim();
+    if (term && term.length <= MAX_KEYTERM_LENGTH && !keyterms.includes(term)) keyterms.push(term);
+  }
+  return { languageCode: scenario.language.split('-')[0].toLowerCase(), keyterms: keyterms.slice(0, MAX_KEYTERMS) };
+}
 
 type Token = { token: string; modelId: string; fetchedAt: number };
 
@@ -87,7 +109,7 @@ export function useLiveTranscript() {
   }, [closeSocket]);
 
   /** Call right after the mic stream starts. Audio pushed before the socket opens is queued. */
-  const begin = useCallback(() => {
+  const begin = useCallback((hints: SpeechHints) => {
     session.current += 1;
     const id = session.current;
     closeSocket();
@@ -118,6 +140,8 @@ export function useLiveTranscript() {
         `token=${encodeURIComponent(token.token)}`,
         `audio_format=pcm_${PCM_SAMPLE_RATE}`,
         'commit_strategy=manual',
+        `language_code=${encodeURIComponent(hints.languageCode)}`,
+        ...hints.keyterms.map((term) => `keyterms=${encodeURIComponent(term)}`),
       ].join('&');
       const socket = new WebSocket(`${REALTIME_URL}?${query}`);
       socketRef.current = socket;
@@ -170,7 +194,7 @@ export function useLiveTranscript() {
     fail();
   }, [fail, show]);
 
-  /** Stops captions and returns the last text shown, to use as a preview while the turn is sent. */
+  /** Stops captions and returns the last text shown, to keep showing while the recording is transcribed. */
   const end = useCallback((): string => {
     session.current += 1;
     active.current = false;

@@ -141,6 +141,8 @@ Lambda > `lingvoyage-api` > **Monitor** > **View CloudWatch logs** > open the ne
 
 ## 12. Redeploying after code changes
 
+Easiest: let GitHub do it on every push to `main` (guide 12). By hand:
+
 ```powershell
 cd $HOME\Documents\lingvoyage\backend
 .\scripts\build_lambda.ps1

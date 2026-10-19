@@ -130,9 +130,9 @@ then `npx expo start -c`. Now the app works on any network, including school Wi-
 
 When you eventually make real builds with EAS (outside Expo Go), you'll set the same `EXPO_PUBLIC_` variables as **EAS environment variables** on expo.dev instead of a local file. Still never put secret keys there.
 
-### 3. GitHub (optional, for later)
+### 3. GitHub
 
-If you add automatic deploys with GitHub Actions, store AWS credentials and API keys under **repo Settings > Secrets and variables > Actions**. Not needed for the hackathon.
+The two GitHub Actions keep their settings under **repo Settings > Secrets and variables > Actions**: `EXPO_TOKEN` for publishing the app (guide 10) and `AWS_DEPLOY_ROLE_ARN` for deploying the backend (guide 12). The backend deploy signs in to AWS with a temporary key, so no AWS access key or API key is stored in GitHub.
 
 ---
 

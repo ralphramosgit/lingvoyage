@@ -1,4 +1,13 @@
-import type { ApiErrorBody, LiveTokenResponse, Scenario, TtsResponse, TurnRequest, TurnResponse } from '@/types/api';
+import type {
+  ApiErrorBody,
+  LiveTokenResponse,
+  Scenario,
+  TranscribeRequest,
+  TranscribeResponse,
+  TtsResponse,
+  TurnRequest,
+  TurnResponse,
+} from '@/types/api';
 
 import { env } from './env';
 import { supabase } from './supabase';
@@ -93,6 +102,8 @@ export const api = {
   getScenarios: () => request<Scenario[]>('GET', '/scenarios'),
   tts: (text: string) => request<TtsResponse>('POST', '/tts', { body: { text }, auth: true }),
   liveToken: () => request<LiveTokenResponse>('POST', '/speech/live-token', { auth: true }),
+  transcribe: (body: TranscribeRequest, signal?: AbortSignal) =>
+    request<TranscribeResponse>('POST', '/speech/transcribe', { body, auth: true, signal }),
   startConversation: (scenarioId: string, signal?: AbortSignal) =>
     request<TurnResponse>('POST', '/conversation/start', { body: { scenario_id: scenarioId }, auth: true, signal }),
   sendTurn: (body: TurnRequest, signal?: AbortSignal) =>

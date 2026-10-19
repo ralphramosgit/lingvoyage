@@ -91,11 +91,16 @@ The free project paused. Open the Supabase dashboard and click **Restore project
 
 - Allow the microphone: iPhone **Settings > Expo Go > Microphone** on (in Expo Go, the permission belongs to the Expo Go app).
 - Hold the phone closer and speak for at least a second. Very short taps are ignored.
-- Beginners' Mandarin won't always transcribe perfectly; the character is told to be forgiving. Typing is the backup.
+- Beginners' Mandarin won't always transcribe perfectly. Nothing is sent until you tap send, so if the words above the mic are wrong, tap **Re-record**. Typing is the backup.
+- Speech recognition is locked to Mandarin and leans toward the scene's key phrases, so it doesn't guess another language. If it can't find any Mandarin in the recording (for example you spoke English), it says "That didn't sound like Mandarin" instead of sending English.
+
+**"Not found" after you stop recording**
+
+The app sends your recording to the backend's `/speech/transcribe` to show you the words before sending. A Lambda backend older than the app doesn't have it: redeploy it (guide 07, section 12).
 
 **"Live captions aren't available" while recording**
 
-The words you see while recording come from ElevenLabs realtime Speech to Text, through a token from the backend's `/speech/live-token`. They are only a preview: the recording is still sent and transcribed normally when you tap the square, so turns keep working without them.
+The words you see while recording come from ElevenLabs realtime Speech to Text, through a token from the backend's `/speech/live-token`. They are only a preview: when you tap the square, the recording is transcribed again by `/speech/transcribe`, and those are the words you check and send. Recording keeps working without live captions.
 
 - The Lambda backend is older than the app: redeploy it (guide 07, section 12). `/speech/live-token` returns 404 until you do.
 - The ElevenLabs key needs Speech to Text access (realtime uses the same permission), and the account needs credits. Live captions use credits on top of the normal transcription.

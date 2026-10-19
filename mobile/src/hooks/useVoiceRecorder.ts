@@ -160,9 +160,9 @@ export function useVoiceRecorder(options: { onPcm?: (pcm: Uint8Array) => void } 
     }
   }, [recorder, stream]);
 
-  /** Stops recording. 'send' returns the audio as base64; 'cancel' discards it. */
+  /** Stops recording. 'keep' returns the audio as base64; 'cancel' discards it. */
   const finish = useCallback(
-    async (how: 'send' | 'cancel'): Promise<RecordingResult> => {
+    async (how: 'keep' | 'cancel'): Promise<RecordingResult> => {
       const current = mode.current;
       if (busy.current || !current) return { status: 'cancelled' };
       busy.current = true;

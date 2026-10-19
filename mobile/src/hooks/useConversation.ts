@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useReducer, useRef } from 'react';
 
-import { api, ApiError, errorMessage } from '@/lib/api';
+import { api, errorMessage } from '@/lib/api';
 import { clearConversationAudio, playUri, saveBase64Audio, stopPlayback } from '@/lib/audio';
-import type { ChatLine, Phrase, Scenario, TurnRequest, TurnResponse, TutorReply } from '@/types/api';
+import type { ChatLine, Phrase, Scenario, TurnResponse, TutorReply } from '@/types/api';
 
 const MAX_HISTORY_LINES = 30;
-export const NO_SPEECH_MESSAGE = "We didn't catch that. Try again or type it.";
 
 export type Feedback = {
   feedback: string;
@@ -32,26 +31,21 @@ export type LearnerMessage = {
   id: string;
   kind: 'learner';
   source: 'voice' | 'text';
-  /** Null while a voice message is still being transcribed. */
-  text: string | null;
-  /** Live captions from recording, shown until the real transcript arrives. */
-  preview: string | null;
+  text: string;
   gloss: Gloss | null;
   pending: boolean;
   failed: boolean;
   feedback: Feedback | null;
 };
 
-export type TurnInput =
-  | { type: 'text'; text: string }
-  | { type: 'audio'; base64: string; mime: string; preview?: string };
+/** What the learner typed, or the transcript of their recording that they checked before sending. */
+export type TurnInput = { type: 'text' | 'voice'; text: string };
 
 type RetryAction = { type: 'start' } | { type: 'turn'; input: TurnInput; learnerId: string };
 
 export type ErrorMessage = { id: string; kind: 'error'; message: string; retry: RetryAction };
-export type NoticeMessage = { id: string; kind: 'notice'; message: string };
 
-export type ChatMessage = NpcMessage | LearnerMessage | ErrorMessage | NoticeMessage;
+export type ChatMessage = NpcMessage | LearnerMessage | ErrorMessage;
 
 type State = {
   messages: ChatMessage[];
@@ -78,7 +72,7 @@ type Action =
   | { type: 'remove'; id: string }
   | { type: 'remove_errors' }
   | { type: 'update_learner'; id: string; patch: Partial<LearnerMessage> }
-  | { type: 'reply'; npc: NpcMessage; learnerId?: string; transcript: string | null };
+  | { type: 'reply'; npc: NpcMessage; learnerId?: string };
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
@@ -106,7 +100,6 @@ function reducer(state: State, action: Action): State {
         const hasFeedback = reply.feedback.trim() !== '' || reply.corrected_hanzi.trim() !== '';
         return {
           ...message,
-          text: action.transcript ?? message.text,
           gloss: glossFrom(reply),
           pending: false,
           failed: false,
@@ -142,7 +135,7 @@ function buildHistory(messages: ChatMessage[], untilId?: string): ChatLine[] {
   const lines: ChatLine[] = [];
   for (const message of before) {
     if (message.kind === 'npc') lines.push({ role: 'npc', text: message.reply.hanzi });
-    if (message.kind === 'learner' && message.text && !message.failed && !message.pending) {
+    if (message.kind === 'learner' && !message.failed && !message.pending) {
       lines.push({ role: 'learner', text: message.text });
     }
   }
@@ -178,7 +171,6 @@ export function useConversation(scenario: Scenario | null, options: { autoPlay: 
       dispatch({
         type: 'reply',
         learnerId,
-        transcript: response.transcript,
         npc: { id: npcId, kind: 'npc', reply: response.reply, audioUri, voiceUnavailable: audioUri === null },
       });
       if (audioUri && autoPlayRef.current) {
@@ -221,7 +213,7 @@ export function useConversation(scenario: Scenario | null, options: { autoPlay: 
     }
   }, [scenario, begin, end, applyResponse, nextId]);
 
-  /** Sends the learner's text or recording. On retry, pass the existing learner message id. */
+  /** Sends the learner's text or checked voice transcript. On retry, pass the existing learner message id. */
   const send = useCallback(
     async (input: TurnInput, retryLearnerId?: string): Promise<boolean> => {
       if (!scenario || inFlight.current) return false;
@@ -237,9 +229,8 @@ export function useConversation(scenario: Scenario | null, options: { autoPlay: 
           message: {
             id: learnerId,
             kind: 'learner',
-            source: input.type === 'text' ? 'text' : 'voice',
-            text: input.type === 'text' ? input.text : null,
-            preview: input.type === 'audio' && input.preview ? input.preview : null,
+            source: input.type,
+            text: input.text,
             gloss: null,
             pending: true,
             failed: false,
@@ -248,11 +239,12 @@ export function useConversation(scenario: Scenario | null, options: { autoPlay: 
         });
       }
 
-      const base = { scenario_id: scenario.id, history, completed_goal_ids: state.completedGoalIds };
-      const body: TurnRequest =
-        input.type === 'text'
-          ? { ...base, user_text: input.text }
-          : { ...base, audio_base64: input.base64, audio_mime: input.mime };
+      const body = {
+        scenario_id: scenario.id,
+        history,
+        completed_goal_ids: state.completedGoalIds,
+        user_text: input.text,
+      };
 
       const controller = begin();
       try {
@@ -261,11 +253,6 @@ export function useConversation(scenario: Scenario | null, options: { autoPlay: 
         return true;
       } catch (error) {
         if (controller.signal.aborted) return false;
-        if (error instanceof ApiError && error.code === 'no_speech') {
-          dispatch({ type: 'remove', id: learnerId });
-          dispatch({ type: 'add', message: { id: nextId(), kind: 'notice', message: NO_SPEECH_MESSAGE } });
-          return false;
-        }
         dispatch({ type: 'update_learner', id: learnerId, patch: { pending: false, failed: true } });
         dispatch({
           type: 'add',

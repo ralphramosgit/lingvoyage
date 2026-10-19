@@ -80,6 +80,16 @@ export type LiveTokenResponse = {
   model_id: string;
 };
 
+export type TranscribeRequest = {
+  scenario_id: string;
+  audio_base64: string;
+  audio_mime: string;
+};
+
+export type TranscribeResponse = {
+  transcript: string;
+};
+
 type TurnBase = {
   scenario_id: string;
   history: ChatLine[];

@@ -1,6 +1,6 @@
-import { CircleAlert, Info, Languages, Lightbulb, Mic, RotateCcw, Turtle, Volume2, VolumeX } from 'lucide-react-native';
+import { CircleAlert, Languages, Lightbulb, Mic, RotateCcw, Turtle, Volume2, VolumeX } from 'lucide-react-native';
 import { useEffect } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, {
   FadeIn,
   FadeInDown,
@@ -19,8 +19,7 @@ import { IconButton } from '@/components/IconButton';
 import { PressableScale } from '@/components/PressableScale';
 import { SpeakerButton } from '@/components/SpeakerButton';
 import { Text } from '@/components/Text';
-import type { ErrorMessage, LearnerMessage, NoticeMessage, NpcMessage } from '@/hooks/useConversation';
-import type { LiveStatus } from '@/hooks/useLiveTranscript';
+import type { ErrorMessage, LearnerMessage, NpcMessage } from '@/hooks/useConversation';
 import { playUri, SLOW_RATE, usePlayback } from '@/lib/audio';
 import { colors, motion, radii, shadows, spacing, type TintName } from '@/theme/theme';
 
@@ -143,11 +142,10 @@ export function NpcBubble({
 // ---------------------------------------------------------------------------
 
 export function LearnerBubble({ message, showPinyin }: { message: LearnerMessage; showPinyin: boolean }) {
-  const transcribing = message.source === 'voice' && message.text === null;
   const { gloss } = message;
-  const glossHanzi = gloss?.hanzi && message.text && !sameWords(gloss.hanzi, message.text) ? gloss.hanzi : '';
-  const glossPinyin = showPinyin && gloss?.pinyin && message.text && !sameWords(gloss.pinyin, message.text) ? gloss.pinyin : '';
-  const glossEnglish = gloss?.english && message.text && !sameWords(gloss.english, message.text) ? gloss.english : '';
+  const glossHanzi = gloss?.hanzi && !sameWords(gloss.hanzi, message.text) ? gloss.hanzi : '';
+  const glossPinyin = showPinyin && gloss?.pinyin && !sameWords(gloss.pinyin, message.text) ? gloss.pinyin : '';
+  const glossEnglish = gloss?.english && !sameWords(gloss.english, message.text) ? gloss.english : '';
 
   return (
     <Animated.View entering={FadeInDown.duration(motion.base)} style={styles.learnerColumn}>
@@ -156,24 +154,13 @@ export function LearnerBubble({ message, showPinyin }: { message: LearnerMessage
           <View style={styles.voiceLabel}>
             <Mic size={12} color={colors.sky700} />
             <Text variant="tiny" color={colors.sky700}>
-              {transcribing ? (message.pending ? 'Sending your voice' : 'Not sent') : 'You said'}
+              You said
             </Text>
-            {transcribing && message.pending ? <ActivityIndicator size="small" color={colors.sky700} /> : null}
           </View>
         ) : null}
-        {message.text !== null ? (
-          <Text variant="hanzi" style={styles.learnerText} selectable>
-            {message.text}
-          </Text>
-        ) : message.preview ? (
-          <Text variant="hanzi" color={colors.inkMuted} selectable>
-            {message.preview}
-          </Text>
-        ) : (
-          <Text variant="body" color={colors.inkMuted}>
-            {message.failed ? 'Voice message not sent' : '...'}
-          </Text>
-        )}
+        <Text variant="hanzi" style={styles.learnerText} selectable>
+          {message.text}
+        </Text>
 
         {glossHanzi || glossPinyin ? (
           <Animated.View entering={FadeIn.duration(motion.base)} style={styles.gloss}>
@@ -198,52 +185,6 @@ export function LearnerBubble({ message, showPinyin }: { message: LearnerMessage
         ) : null}
       </View>
       {message.feedback ? <FeedbackCard feedback={message.feedback} /> : null}
-    </Animated.View>
-  );
-}
-
-function PulseDot() {
-  const reduceMotion = useReducedMotion();
-  const opacity = useSharedValue(1);
-
-  useEffect(() => {
-    if (reduceMotion) return;
-    opacity.set(withRepeat(withSequence(withTiming(0.25, { duration: 500 }), withTiming(1, { duration: 500 })), -1, false));
-  }, [opacity, reduceMotion]);
-
-  const style = useAnimatedStyle(() => ({ opacity: opacity.get() }));
-  return <Animated.View style={[styles.liveDot, style]} />;
-}
-
-/** What the learner is saying right now, while they record. */
-export function LiveBubble({ text, status }: { text: string; status: LiveStatus }) {
-  let placeholder = 'Start speaking. Your words show up here.';
-  if (status === 'unavailable') placeholder = "Live captions aren't available right now, but your voice is still being recorded.";
-  else if (status === 'idle' || status === 'connecting') placeholder = 'Start speaking...';
-
-  return (
-    <Animated.View
-      entering={FadeInDown.duration(motion.fast)}
-      style={styles.learnerColumn}
-      accessibilityLiveRegion="polite"
-      accessibilityLabel={text ? `Hearing: ${text}` : 'Listening'}>
-      <View style={[styles.bubble, styles.liveBubble]}>
-        <View style={styles.voiceLabel}>
-          <PulseDot />
-          <Text variant="tiny" color={colors.danger}>
-            Listening
-          </Text>
-        </View>
-        {text ? (
-          <Text variant="hanzi" style={styles.learnerText}>
-            {text}
-          </Text>
-        ) : (
-          <Text variant="caption" color={colors.inkMuted}>
-            {placeholder}
-          </Text>
-        )}
-      </View>
     </Animated.View>
   );
 }
@@ -282,7 +223,7 @@ function FeedbackCard({ feedback }: { feedback: NonNullable<LearnerMessage['feed
 }
 
 // ---------------------------------------------------------------------------
-// Thinking, errors, notices
+// Thinking, errors
 // ---------------------------------------------------------------------------
 
 function Dot({ index }: { index: number }) {
@@ -333,17 +274,6 @@ export function ErrorRow({ message, onRetry, disabled }: { message: ErrorMessage
   );
 }
 
-export function NoticeRow({ message }: { message: NoticeMessage }) {
-  return (
-    <Animated.View entering={FadeIn.duration(motion.base)} style={styles.notice} accessibilityLiveRegion="polite">
-      <Info size={16} color={colors.inkMuted} />
-      <Text variant="caption" color={colors.inkMuted}>
-        {message.message}
-      </Text>
-    </Animated.View>
-  );
-}
-
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   npcRow: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, maxWidth: '100%' },
@@ -381,15 +311,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: LEARNER_DIVIDER,
   },
-  liveBubble: {
-    backgroundColor: colors.sky50,
-    borderWidth: 1.5,
-    borderStyle: 'dashed',
-    borderColor: colors.sky500,
-    borderBottomRightRadius: spacing.xs,
-    minWidth: 160,
-  },
-  liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.danger },
   feedback: {
     // A fixed width, not maxWidth: with only a max, the card sizes to its content and the
     // flex: 1 text inside collapses into a thin column.
@@ -416,17 +337,5 @@ const styles = StyleSheet.create({
     backgroundColor: '#FEF2F2',
     borderWidth: 1,
     borderColor: '#FBD5D5',
-  },
-  notice: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'center',
-    gap: spacing.xs + 2,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: radii.full,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.line,
   },
 });

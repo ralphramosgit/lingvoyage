@@ -211,7 +211,7 @@ Expo Go remembers the project. Next time, open Expo Go and tap **Lingvoyage** un
 - Push to `main` → about 3 to 5 minutes later, teammates get the new version when they reopen Lingvoyage.
 - **Republish without a code change** (for example after changing an `EXPO_PUBLIC_*` value on Expo): GitHub > **Actions** > **Publish app update** > **Run workflow**.
 - **A run failed:** open it in the Actions tab. A red typecheck or lint step means the code has an error (run the same command locally to see it). A red publish step that mentions authentication means the `EXPO_TOKEN` secret is missing or expired.
-- **Backend changes still go up by hand** (guide 07, section 12). If an app change needs new backend code, deploy the backend **before** pushing to `main`, or teammates may briefly get an app that calls a route Lambda doesn't have yet.
+- **Backend changes deploy through their own GitHub Action** (guide 12), or by hand (guide 07, section 12). If an app change needs new backend code, get the backend live **before** pushing the app change to `main`, or teammates may briefly get an app that calls a route Lambda doesn't have yet.
 
 ---
 

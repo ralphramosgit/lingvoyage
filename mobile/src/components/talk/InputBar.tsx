@@ -1,6 +1,6 @@
-import { Keyboard, Lightbulb, Mic, SendHorizontal, Square, X } from 'lucide-react-native';
-import { type Ref, useEffect } from 'react';
-import { ActivityIndicator, Platform, StyleSheet, TextInput, View } from 'react-native';
+import { Keyboard, Lightbulb, type LucideIcon, Mic, RotateCcw, SendHorizontal, Square, X } from 'lucide-react-native';
+import { type ReactNode, type Ref, useEffect } from 'react';
+import { ActivityIndicator, Platform, StyleSheet, TextInput, View, type ViewStyle } from 'react-native';
 import Animated, {
   cancelAnimation,
   FadeIn,
@@ -20,17 +20,28 @@ import { colors, fonts, radii, spacing } from '@/theme/theme';
 const MIC_SIZE = 76;
 
 /**
- * idle: ready, tap to talk. starting: opening the mic. recording: listening, tap to send.
+ * idle: ready, tap to talk. starting: opening the mic. recording: listening, tap to stop.
+ * checking: the recording is being transcribed. review: the learner checks the words, tap to send.
  * waiting: the character is answering. locked: the encounter is over.
  */
-export type MicState = 'idle' | 'starting' | 'recording' | 'waiting' | 'locked';
+export type MicState = 'idle' | 'starting' | 'recording' | 'checking' | 'review' | 'waiting' | 'locked';
 
 function formatElapsed(ms: number): string {
   const seconds = Math.floor(ms / 1000);
   return `0:${String(Math.min(seconds, 59)).padStart(2, '0')}`;
 }
 
-function MicButton({ state, level, onPress }: { state: MicState; level: SharedValue<number>; onPress: () => void }) {
+function MicButton({
+  state,
+  canSend,
+  level,
+  onPress,
+}: {
+  state: MicState;
+  canSend: boolean;
+  level: SharedValue<number>;
+  onPress: () => void;
+}) {
   const reduceMotion = useReducedMotion();
   const pulse = useSharedValue(0);
   const recording = state === 'recording';
@@ -56,21 +67,29 @@ function MicButton({ state, level, onPress }: { state: MicState; level: SharedVa
     transform: [{ scale: 1.06 + level.get() * 0.32 }],
   }));
 
-  const disabled = state === 'starting' || state === 'waiting' || state === 'locked';
-  const look =
-    state === 'recording'
-      ? styles.micRecording
-      : state === 'idle'
-        ? null
-        : state === 'starting'
-          ? styles.micStarting
-          : styles.micDisabled;
+  const disabled =
+    state === 'starting' || state === 'checking' || state === 'waiting' || state === 'locked' || (state === 'review' && !canSend);
+  let look: ViewStyle | null = null;
+  if (state === 'recording') look = styles.micRecording;
+  else if (state === 'starting') look = styles.micStarting;
+  else if (state === 'checking' || (state === 'review' && canSend)) look = styles.micSend;
+  else if (state !== 'idle') look = styles.micDisabled;
 
   let label = 'Start recording';
-  if (state === 'recording') label = 'Stop and send';
+  if (state === 'recording') label = 'Stop recording';
   else if (state === 'starting') label = 'Starting the microphone';
+  else if (state === 'checking') label = 'Checking what you said';
+  else if (state === 'review') label = canSend ? 'Send' : 'Send, unavailable';
   else if (state === 'waiting') label = 'Microphone, waiting for a reply';
   else if (state === 'locked') label = 'Microphone, encounter complete';
+
+  let icon: ReactNode;
+  if (state === 'recording') icon = <Square size={26} color="#FFFFFF" fill="#FFFFFF" strokeWidth={2} />;
+  else if (state === 'review') icon = <SendHorizontal size={30} color={canSend ? '#FFFFFF' : colors.inkMuted} strokeWidth={2.4} />;
+  else if (state === 'checking') icon = <ActivityIndicator color="#FFFFFF" />;
+  else if (state === 'starting' || state === 'waiting') {
+    icon = <ActivityIndicator color={state === 'starting' ? colors.ink : colors.inkMuted} />;
+  } else icon = <Mic size={32} color={state === 'locked' ? colors.inkMuted : colors.ink} strokeWidth={2.4} />;
 
   return (
     <View style={styles.micWrap}>
@@ -82,29 +101,39 @@ function MicButton({ state, level, onPress }: { state: MicState; level: SharedVa
         scaleTo={0.94}
         accessibilityRole="button"
         accessibilityLabel={label}
-        accessibilityHint={state === 'idle' ? 'Tap, speak, then tap again to send' : undefined}
-        accessibilityState={{ disabled, busy: state === 'starting' || state === 'waiting' }}
+        accessibilityHint={state === 'idle' ? "Tap, speak, then tap again. You'll see the words before sending." : undefined}
+        accessibilityState={{ disabled, busy: state === 'starting' || state === 'checking' || state === 'waiting' }}
         style={[styles.mic, look]}>
-        {state === 'recording' ? (
-          <Square size={26} color="#FFFFFF" fill="#FFFFFF" strokeWidth={2} />
-        ) : state === 'starting' || state === 'waiting' ? (
-          <ActivityIndicator color={state === 'starting' ? colors.ink : colors.inkMuted} />
-        ) : (
-          <Mic size={32} color={state === 'locked' ? colors.inkMuted : colors.ink} strokeWidth={2.4} />
-        )}
+        {icon}
       </PressableScale>
     </View>
   );
 }
 
-function micStatusText(state: MicState, waitingFor: string): string {
+/** A side button with a word under it, for actions an icon alone doesn't explain. */
+function SideAction({ icon, label, onPress }: { icon: LucideIcon; label: string; onPress: () => void }) {
+  return (
+    <View style={styles.sideAction}>
+      <IconButton icon={icon} accessibilityLabel={label} onPress={onPress} variant="surface" />
+      <Text variant="tiny" color={colors.inkMuted} importantForAccessibility="no" accessibilityElementsHidden>
+        {label}
+      </Text>
+    </View>
+  );
+}
+
+function micStatusText(state: MicState, waitingFor: string, canSend: boolean): string {
   switch (state) {
     case 'idle':
       return 'Tap the mic to speak';
     case 'starting':
       return 'Starting the mic...';
     case 'recording':
-      return 'Listening. Tap the square to send';
+      return "Listening. Tap the square when you're done";
+    case 'checking':
+      return 'Checking what you said...';
+    case 'review':
+      return canSend ? 'Tap send, or re-record to try again' : 'Re-record to try again';
     case 'waiting':
       return `Waiting for ${waitingFor}...`;
     case 'locked':
@@ -126,6 +155,11 @@ export function InputBar({
   maxMs,
   onMicPress,
   onCancelRecording,
+  transcript,
+  canSendVoice,
+  onSendVoice,
+  onRerecord,
+  onDiscardVoice,
   draft,
   onDraftChange,
   onSend,
@@ -150,6 +184,13 @@ export function InputBar({
   maxMs: number;
   onMicPress: () => void;
   onCancelRecording: () => void;
+  /** What the mic heard (live captions, then the words to check), shown above the mic. */
+  transcript: ReactNode;
+  /** In review, the words are ready to send. */
+  canSendVoice: boolean;
+  onSendVoice: () => void;
+  onRerecord: () => void;
+  onDiscardVoice: () => void;
   draft: string;
   onDraftChange: (text: string) => void;
   onSend: () => void;
@@ -161,6 +202,7 @@ export function InputBar({
 }) {
   const disabled = busy || locked;
   const recording = micState === 'recording';
+  const reviewing = micState === 'checking' || micState === 'review';
   const lightbulb = (
     <IconButton
       icon={Lightbulb}
@@ -184,10 +226,13 @@ export function InputBar({
 
       {mode === 'voice' ? (
         <>
+          {transcript}
           <View style={styles.voiceRow}>
             <View style={styles.side}>
               {recording ? (
                 <IconButton icon={X} accessibilityLabel="Cancel recording" onPress={onCancelRecording} variant="surface" />
+              ) : reviewing ? (
+                <SideAction icon={X} label="Discard" onPress={onDiscardVoice} />
               ) : (
                 <IconButton
                   icon={Keyboard}
@@ -199,10 +244,17 @@ export function InputBar({
               )}
             </View>
 
-            <MicButton state={micState} level={micLevel} onPress={onMicPress} />
+            <MicButton
+              state={micState}
+              canSend={canSendVoice}
+              level={micLevel}
+              onPress={micState === 'review' ? onSendVoice : onMicPress}
+            />
 
             <View style={[styles.side, styles.sideRight]}>
-              {recording ? (
+              {reviewing ? (
+                <SideAction icon={RotateCcw} label="Re-record" onPress={onRerecord} />
+              ) : recording ? (
                 <View style={styles.timer} accessibilityLabel={`Recording, ${Math.floor(elapsedMs / 1000)} seconds`}>
                   <View style={styles.recDot} />
                   <Text style={styles.timerText}>{formatElapsed(elapsedMs)}</Text>
@@ -222,7 +274,7 @@ export function InputBar({
             numberOfLines={1}
             style={styles.micStatus}
             accessibilityLiveRegion="polite">
-            {micStatusText(micState, waitingFor)}
+            {micStatusText(micState, waitingFor, canSendVoice)}
           </Text>
         </>
       ) : (
@@ -279,6 +331,7 @@ const styles = StyleSheet.create({
   voiceRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   side: { width: 96, alignItems: 'flex-start', justifyContent: 'center' },
   sideRight: { alignItems: 'flex-end' },
+  sideAction: { alignItems: 'center', gap: 2, minWidth: 64 },
   micWrap: { width: MIC_SIZE + 24, height: MIC_SIZE + 24, alignItems: 'center', justifyContent: 'center' },
   micRing: {
     position: 'absolute',
@@ -301,6 +354,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   micRecording: { backgroundColor: colors.danger, shadowColor: colors.danger, shadowOpacity: 0.35 },
+  micSend: { backgroundColor: colors.sky600, shadowColor: colors.sky600, shadowOpacity: 0.3 },
   micStarting: { backgroundColor: colors.sun300 },
   micDisabled: { backgroundColor: '#E8EDF2', shadowOpacity: 0, elevation: 0 },
   micStatus: { marginTop: -spacing.xs },

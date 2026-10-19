@@ -20,16 +20,18 @@ import { CharacterAvatar } from '@/components/CharacterAvatar';
 import { ErrorState } from '@/components/ErrorState';
 import { IconButton } from '@/components/IconButton';
 import { Screen } from '@/components/Screen';
-import { ErrorRow, LearnerBubble, LiveBubble, NoticeRow, NpcBubble, ThinkingBubble } from '@/components/talk/ChatBubbles';
+import { ErrorRow, LearnerBubble, NpcBubble, ThinkingBubble } from '@/components/talk/ChatBubbles';
 import { CompleteBar, CompletionSheet } from '@/components/talk/CompletionSheet';
 import { GoalsPanel, GoalsPill } from '@/components/talk/Goals';
 import { InputBar, type InputMode, type MicState } from '@/components/talk/InputBar';
 import { MicPermissionCard } from '@/components/talk/MicPermissionCard';
 import { SuggestionsRow } from '@/components/talk/SuggestionsRow';
+import { VoiceTranscript, type VoiceTranscriptState } from '@/components/talk/VoiceTranscript';
 import { Text } from '@/components/Text';
 import { useConversation } from '@/hooks/useConversation';
-import { useLiveTranscript } from '@/hooks/useLiveTranscript';
+import { speechHints, useLiveTranscript } from '@/hooks/useLiveTranscript';
 import { useScenario } from '@/hooks/useScenarios';
+import { useVoiceDraft } from '@/hooks/useVoiceDraft';
 import { MAX_RECORDING_MS, useVoiceRecorder } from '@/hooks/useVoiceRecorder';
 import { clearConversationAudio, releasePlayer } from '@/lib/audio';
 import { recordEncounter } from '@/lib/progress';
@@ -49,6 +51,7 @@ export default function TalkScreen() {
   const conversation = useConversation(scenario, { autoPlay: settings.autoPlay });
   const live = useLiveTranscript();
   const recorder = useVoiceRecorder({ onPcm: live.push });
+  const voice = useVoiceDraft(scenario?.id);
 
   const [mode, setMode] = useState<InputMode>('voice');
   const [draft, setDraft] = useState('');
@@ -164,45 +167,56 @@ export default function TalkScreen() {
     return () => subscription.remove();
   }, [leave, sheetVisible]);
 
-  const stopAndSend = useCallback(async () => {
+  // Stopping doesn't send: the recording is transcribed and shown in the input bar, and the
+  // learner sends it, records again or discards it.
+  const stopRecording = useCallback(async () => {
     if (stopping.current) return;
     stopping.current = true;
     try {
       const preview = live.end();
-      const result = await recorder.finish('send');
+      const result = await recorder.finish('keep');
       if (result.status === 'too_short') setHint('Hold on a little longer');
       else if (result.status === 'error') setHint(result.message);
-      else if (result.status === 'ok') await send({ type: 'audio', base64: result.base64, mime: result.mime, preview });
+      else if (result.status === 'ok') voice.check({ base64: result.base64, mime: result.mime }, preview);
     } finally {
       stopping.current = false;
     }
-  }, [live, recorder, send]);
+  }, [live, recorder, voice]);
 
-  // Auto-stop (and send) at 30 seconds.
+  // Auto-stop at 30 seconds.
   useEffect(() => {
-    if (recorder.isRecording && recorder.elapsedMs >= MAX_RECORDING_MS) void stopAndSend();
-  }, [recorder.isRecording, recorder.elapsedMs, stopAndSend]);
+    if (recorder.isRecording && recorder.elapsedMs >= MAX_RECORDING_MS) void stopRecording();
+  }, [recorder.isRecording, recorder.elapsedMs, stopRecording]);
 
-  const onMicPress = async () => {
-    if (recorder.isRecording) {
-      await stopAndSend();
-      return;
-    }
-    if (recorder.status !== 'idle' || thinking || complete) return;
+  const startRecording = async () => {
+    if (!scenario || recorder.status !== 'idle' || thinking || complete) return;
+    voice.clear();
     setHint(null);
     const result = await recorder.start();
     if (result === 'denied' || result === 'blocked') setPermissionCard(result);
     else if (result === 'error') setHint("Couldn't start the microphone. Try again or type it.");
     else if (result === 'streaming' || result === 'recording') {
       setPermissionCard(null);
-      if (result === 'streaming') live.begin();
+      if (result === 'streaming') live.begin(speechHints(scenario));
       else live.markUnavailable();
     }
+  };
+
+  const onMicPress = async () => {
+    if (recorder.isRecording) await stopRecording();
+    else await startRecording();
   };
 
   const onCancelRecording = () => {
     live.end();
     void recorder.finish('cancel');
+  };
+
+  const onSendVoice = async () => {
+    if (voice.draft?.status !== 'ready' || thinking || complete) return;
+    const { text } = voice.draft;
+    voice.clear();
+    await send({ type: 'voice', text });
   };
 
   const onSendText = async () => {
@@ -224,6 +238,7 @@ export default function TalkScreen() {
     setSuggestionsPref(null);
     setGoalsOpen(false);
     setDraft('');
+    voice.clear();
     progressSaved.current = false;
     previousGoalCount.current = 0;
     reset();
@@ -248,13 +263,22 @@ export default function TalkScreen() {
   const tint = scenarioTint(scenario.id);
   const { character } = scenario;
   const suggestionsOn = suggestionsPref ?? conversation.learnerCount < 2;
-  const showSuggestions = suggestionsOn && suggestions.length > 0 && !complete && !recorder.isRecording;
+  const showSuggestions = suggestionsOn && suggestions.length > 0 && !complete && !recorder.isRecording && !voice.draft;
 
   let micState: MicState = 'idle';
   if (recorder.status === 'recording') micState = 'recording';
   else if (recorder.status === 'starting') micState = 'starting';
   else if (complete) micState = 'locked';
   else if (thinking) micState = 'waiting';
+  else if (voice.draft) micState = voice.draft.status === 'checking' ? 'checking' : 'review';
+
+  let transcript: VoiceTranscriptState | null = null;
+  if (recorder.isRecording) transcript = { phase: 'listening', text: live.text, live: live.status };
+  else if (voice.draft?.status === 'checking') transcript = { phase: 'checking', text: voice.draft.preview };
+  else if (voice.draft?.status === 'ready') transcript = { phase: 'ready', text: voice.draft.text };
+  else if (voice.draft?.status === 'failed') {
+    transcript = { phase: 'failed', message: voice.draft.message, onRetry: voice.draft.canRetry ? voice.retry : undefined };
+  }
 
   return (
     <View style={styles.flex}>
@@ -294,7 +318,9 @@ export default function TalkScreen() {
           contentContainerStyle={[styles.column, styles.chat]}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="interactive"
-          onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}>
+          onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
+          // The chat shrinks when the transcript shows in the input bar; keep the last line in view.
+          onLayout={() => scrollRef.current?.scrollToEnd({ animated: true })}>
           {messages.map((message) => {
             switch (message.kind) {
               case 'npc':
@@ -318,13 +344,10 @@ export default function TalkScreen() {
                 return <LearnerBubble key={message.id} message={message} showPinyin={settings.showPinyin} />;
               case 'error':
                 return <ErrorRow key={message.id} message={message} onRetry={() => retry(message.id)} disabled={thinking} />;
-              case 'notice':
-                return <NoticeRow key={message.id} message={message} />;
               default:
                 return null;
             }
           })}
-          {recorder.isRecording ? <LiveBubble text={live.text} status={live.status} /> : null}
           {thinking ? <ThinkingBubble avatarChar={character.avatar_char} tint={tint} name={character.name_english} /> : null}
         </ScrollView>
 
@@ -381,6 +404,11 @@ export default function TalkScreen() {
                   maxMs={MAX_RECORDING_MS}
                   onMicPress={() => void onMicPress()}
                   onCancelRecording={onCancelRecording}
+                  transcript={transcript ? <VoiceTranscript state={transcript} /> : null}
+                  canSendVoice={voice.draft?.status === 'ready'}
+                  onSendVoice={() => void onSendVoice()}
+                  onRerecord={() => void startRecording()}
+                  onDiscardVoice={voice.clear}
                   draft={draft}
                   onDraftChange={setDraft}
                   onSend={() => void onSendText()}

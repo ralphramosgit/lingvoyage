@@ -67,6 +67,7 @@ The secret keys (ElevenLabs, Claude) only ever live on the backend. The phone on
 10. **09-share-with-teammates.md**: let teammates try the app in Expo Go on their own phones, with no coding setup and without your PC running.
 11. **10-expo-testing-guide.md**: day to day after that: getting the QR code, publishing new versions, undoing one, SDK upgrades.
 12. **11-rebrand-to-lingvoyage.md**: renaming the app from Naviglot to Lingvoyage on GitHub, Supabase, AWS Lambda and Expo.
+13. **12-auto-deploy-backend.md**: have GitHub deploy the backend to Lambda on every push to `main`, with no AWS key stored anywhere.
 
 Keep a scratch note (not in the repo) as you go, with these values. You'll paste them into `.env` files in guide 05:
 
