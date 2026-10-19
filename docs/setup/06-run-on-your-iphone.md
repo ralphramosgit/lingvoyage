@@ -1,4 +1,4 @@
-# 06. Run Naviglot on your iPhone (local backend + Expo Go)
+# 06. Run Lingvoyage on your iPhone (local backend + Expo Go)
 
 Do this after Claude Code has built the project and you've filled in both `.env` files (guide 05).
 
@@ -9,7 +9,7 @@ You'll use **two PowerShell windows** (or two terminals in VS Code: Terminal > N
 ## Terminal 1: the backend
 
 ```powershell
-cd $HOME\Documents\naviglot\backend
+cd $HOME\Documents\lingvoyage\backend
 
 # First time only: create and fill the virtual environment
 py -3.13 -m venv .venv
@@ -39,7 +39,7 @@ If step 3 works, the app will be able to reach the backend. If it times out:
 - Allow the port through Windows Firewall. In PowerShell **run as administrator**:
 
 ```powershell
-New-NetFirewallRule -DisplayName "Naviglot API (dev)" -Direction Inbound -Protocol TCP -LocalPort 8000 -Action Allow -Profile Private
+New-NetFirewallRule -DisplayName "Lingvoyage API (dev)" -Direction Inbound -Protocol TCP -LocalPort 8000 -Action Allow -Profile Private
 ```
 
 - Still nothing? Your network probably blocks device-to-device traffic (common on school Wi-Fi). Jump to "Network blocks my phone" in guide 08.
@@ -47,7 +47,7 @@ New-NetFirewallRule -DisplayName "Naviglot API (dev)" -Direction Inbound -Protoc
 ## Terminal 2: the app
 
 ```powershell
-cd $HOME\Documents\naviglot\mobile
+cd $HOME\Documents\lingvoyage\mobile
 
 # First time only
 npm install
@@ -78,7 +78,7 @@ Useful keys in the Expo terminal: `r` reloads the app, `j` opens the debugger, `
 8. Kill and reopen Expo Go: you should still be logged in and go straight to Encounters.
 9. **Profile** tab > **Log out** > you're back on Welcome.
 
-Audio tips: Naviglot plays sound even when the iPhone's silent switch is on, but check the volume buttons. Speak clearly about 20 to 30 cm from the phone.
+Audio tips: Lingvoyage plays sound even when the iPhone's silent switch is on, but check the volume buttons. Speak clearly about 20 to 30 cm from the phone.
 
 ## Running on a teammate's machine
 

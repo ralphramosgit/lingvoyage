@@ -54,10 +54,10 @@ export default function SignInScreen() {
         <PressableScale
           onPress={() => router.replace('/sign-up')}
           accessibilityRole="link"
-          accessibilityLabel="New to Naviglot? Create an account"
+          accessibilityLabel="New to Lingvoyage? Create an account"
           style={styles.switchLink}>
           <Text variant="body" color={colors.inkMuted}>
-            New to Naviglot?{' '}
+            New to Lingvoyage?{' '}
             <Text variant="bodyStrong" color={colors.sky700}>
               Create an account
             </Text>

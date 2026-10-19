@@ -20,7 +20,7 @@ from app import speech  # noqa: E402
 from app.config import ENV_FILE, get_settings  # noqa: E402
 from app.errors import ApiError  # noqa: E402
 
-TEST_SENTENCE = "Ni hao, welcome to Naviglot."
+TEST_SENTENCE = "Ni hao, welcome to Lingvoyage."
 
 results: list[bool] = []
 
@@ -137,7 +137,7 @@ def main() -> int:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
     env_note = "found" if ENV_FILE.exists() else "not found, using environment variables only"
-    print(f"Naviglot key check (backend/.env {env_note})\n")
+    print(f"Lingvoyage key check (backend/.env {env_note})\n")
     check_supabase()
     check_elevenlabs()
     check_claude()

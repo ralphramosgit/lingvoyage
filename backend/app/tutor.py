@@ -14,7 +14,7 @@ from app.config import get_settings
 from app.errors import ApiError, missing_setting
 from app.scenarios import ScenarioDefinition
 
-logger = logging.getLogger("naviglot.tutor")
+logger = logging.getLogger("lingvoyage.tutor")
 
 MAX_TOKENS = 2000
 REQUEST_TIMEOUT_SECONDS = 15.0

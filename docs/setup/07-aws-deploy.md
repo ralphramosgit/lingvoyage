@@ -24,9 +24,9 @@ Realistic hackathon cost: **$0**, apart from tiny CloudWatch log storage that th
 ## 2. Secure it (5 minutes, do not skip)
 
 1. **Turn on MFA for the root user**: top-right account menu > **Security credentials** > **Assign MFA device** > Authenticator app.
-2. **Make a day-to-day admin user** so you don't use root: search **IAM** > **Users** > **Create user** > name `naviglot-admin` > tick **Provide user access to the AWS Management Console** > next > **Attach policies directly** > search and tick **`AdministratorAccess`** (that one policy only) > create. Save the sign-in URL and password, and sign in as this user from now on.
+2. **Make a day-to-day admin user** so you don't use root: search **IAM** > **Users** > **Create user** > name `lingvoyage-admin` > tick **Provide user access to the AWS Management Console** > next > **Attach policies directly** > search and tick **`AdministratorAccess`** (that one policy only) > create. Save the sign-in URL and password, and sign in as this user from now on.
    - Why full admin: creating the function also creates its execution role and function URL, which needs IAM permissions. A "smaller" combination that works (`AWSLambda_FullAccess` + `IAMFullAccess`) isn't really safer, because `IAMFullAccess` can grant itself anything.
-   - **Turn on MFA for this user too**: IAM > Users > `naviglot-admin` > **Security credentials** > **Assign MFA device**.
+   - **Turn on MFA for this user too**: IAM > Users > `lingvoyage-admin` > **Security credentials** > **Assign MFA device**.
    - **Don't create access keys** for this user. If you later want the AWS CLI, make a separate deploy-only key (section 12).
 3. **Zero-spend budget alert**: search **Budgets** > **Create budget** > **Use a template** > **Zero spend budget** > enter your email > create. You'll get an email the moment anything costs a cent. (Do this as root, or first let IAM users see billing: as root, account menu > **Account** > **IAM user and role access to Billing information** > **Activate**.)
 
@@ -59,14 +59,14 @@ Write-Host "Created backend\lambda.zip"
 Run it:
 
 ```powershell
-cd $HOME\Documents\naviglot\backend
+cd $HOME\Documents\lingvoyage\backend
 .\scripts\build_lambda.ps1
 ```
 
 From **Git Bash** instead (same script, run through PowerShell):
 
 ```bash
-cd ~/Documents/naviglot/backend
+cd ~/Documents/lingvoyage/backend
 powershell -ExecutionPolicy Bypass -File scripts/build_lambda.ps1
 ```
 
@@ -142,7 +142,7 @@ Lambda > `lingvoyage-api` > **Monitor** > **View CloudWatch logs** > open the ne
 ## 12. Redeploying after code changes
 
 ```powershell
-cd $HOME\Documents\naviglot\backend
+cd $HOME\Documents\lingvoyage\backend
 .\scripts\build_lambda.ps1
 ```
 
@@ -153,7 +153,7 @@ Then Lambda > **Code** > **Update** dropdown > **.zip file** again. Environment 
 Optional, faster: deploy from the command line with the AWS CLI.
 
 1. Install it: `winget install --id Amazon.AWSCLI -e`, then open a new terminal.
-2. Make a **deploy-only** user so the key on your PC can't do anything else: IAM > **Users** > **Create user** > name `naviglot-deploy` (no console access) > **Attach policies directly** > **Create policy** > **JSON**, paste the policy below (put your 12-digit account ID in place of `ACCOUNT_ID`), name it `naviglot-deploy`, then attach it to the user.
+2. Make a **deploy-only** user so the key on your PC can't do anything else: IAM > **Users** > **Create user** > name `lingvoyage-deploy` (no console access) > **Attach policies directly** > **Create policy** > **JSON**, paste the policy below (put your 12-digit account ID in place of `ACCOUNT_ID`), name it `lingvoyage-deploy`, then attach it to the user.
 
    ```json
    {
@@ -168,7 +168,7 @@ Optional, faster: deploy from the command line with the AWS CLI.
    }
    ```
 
-3. `naviglot-deploy` > **Security credentials** > **Create access key** > **Command Line Interface (CLI)**. Run `aws configure` and paste the key ID and secret (region `us-west-2`, output `json`). Never commit or share these.
+3. `lingvoyage-deploy` > **Security credentials** > **Create access key** > **Command Line Interface (CLI)**. Run `aws configure` and paste the key ID and secret (region `us-west-2`, output `json`). Never commit or share these.
 4. Deploy with one command from `backend/`:
 
 ```powershell

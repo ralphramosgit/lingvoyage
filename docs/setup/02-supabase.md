@@ -15,7 +15,7 @@ What the app uses Supabase for:
 1. Go to **supabase.com** > **Start your project** > sign in with GitHub.
 2. **New project**:
    - Organization: your personal org is fine.
-   - Name: `naviglot`
+   - Name: `lingvoyage`
    - Database password: click **Generate**, then save it in your scratch note (you won't need it for this app, but you can't see it again).
    - Region: **West US (North California)** is the closest to Hawaii. Any US region is fine.
    - If you see security options for the **Data API**, leave the Data API **enabled**. Leave "automatically expose new tables" **off** (that's the new default); the SQL below grants access explicitly.
@@ -54,7 +54,7 @@ Turn this back on before a real launch (and set up custom SMTP under Authenticat
 
 ```sql
 -- =========================================================
--- Naviglot schema v1
+-- Lingvoyage schema v1
 -- =========================================================
 
 -- 1) Profiles: one row per user, created automatically on sign-up

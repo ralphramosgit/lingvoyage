@@ -152,7 +152,7 @@ export default function ProfileScreen() {
       <Animated.View entering={FadeInDown.duration(motion.base).delay(240)} style={styles.section}>
         <Button label="Log out" icon={LogOut} variant="danger" onPress={confirmSignOut} loading={signingOut} />
         <Text variant="caption" color={colors.inkMuted} align="center" style={styles.version}>
-          Naviglot v{version}
+          Lingvoyage v{version}
         </Text>
       </Animated.View>
     </Screen>

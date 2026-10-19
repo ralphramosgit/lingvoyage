@@ -4,7 +4,7 @@ import { useSyncExternalStore } from 'react';
 
 import { api } from './api';
 
-const AUDIO_DIR = 'naviglot-audio';
+const AUDIO_DIR = 'lingvoyage-audio';
 export const SLOW_RATE = 0.75;
 
 // ---------------------------------------------------------------------------
@@ -115,7 +115,7 @@ export async function playUri(uri: string, options: { rate?: number; key?: strin
 }
 
 // ---------------------------------------------------------------------------
-// Files under Paths.cache/naviglot-audio
+// Files under Paths.cache/lingvoyage-audio
 // ---------------------------------------------------------------------------
 
 function audioDirectory(): Directory {

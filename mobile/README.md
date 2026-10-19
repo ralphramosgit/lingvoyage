@@ -1,4 +1,4 @@
-# Naviglot mobile app
+# Lingvoyage mobile app
 
 Expo SDK 57 app (Expo Router, TypeScript) that runs in **Expo Go** on iPhone.
 

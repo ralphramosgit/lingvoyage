@@ -1,6 +1,6 @@
-# Naviglot setup: start here
+# Lingvoyage setup: start here
 
-Naviglot (Navigate + glot) helps travelers learn the language of where they're going. The hackathon version is Mandarin Chinese, taught in English, with one main feature: **Encounters**, where you talk (by voice or by typing) to an AI character in a travel scene and hear them answer in a real Mandarin voice.
+Lingvoyage (language + voyage) helps travelers learn the language of where they're going. The hackathon version is Mandarin Chinese, taught in English, with one main feature: **Encounters**, where you talk (by voice or by typing) to an AI character in a travel scene and hear them answer in a real Mandarin voice.
 
 These guides get every account, key and tool ready so Claude Code can build the app in one go. Do them in order. Total time is roughly 60 to 90 minutes, most of it waiting for installs and sign-ups.
 
@@ -15,7 +15,7 @@ See `docs/architecture.png`. In words:
 ```
 iPhone (Expo Go)
   ├── Supabase Auth ......... sign up / log in, profile, progress (direct from the app)
-  └── Naviglot API (Python) .. one backend you own, running on your PC now, AWS Lambda later
+  └── Lingvoyage API (Python) .. one backend you own, running on your PC now, AWS Lambda later
          ├── ElevenLabs Speech-to-Text (Scribe v2) .. your voice  -> text
          ├── Claude API (Haiku 5.5) ................. the character's brain (reply, corrections, hints)
          └── ElevenLabs Text-to-Speech (Flash v2.5) .. reply text -> Mandarin voice
@@ -85,7 +85,7 @@ LAMBDA_FUNCTION_URL=
 ## Repo layout Claude Code will create
 
 ```
-naviglot/                 <- your GitHub repo
+lingvoyage/                 <- your GitHub repo
 ├── mobile/               Expo app (React Native + TypeScript)
 ├── backend/              FastAPI app (Python 3.13), deployable to AWS Lambda
 ├── docs/

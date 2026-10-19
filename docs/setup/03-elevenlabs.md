@@ -1,6 +1,6 @@
 # 03. ElevenLabs (the character's voice + hearing you)
 
-Naviglot uses two ElevenLabs APIs, both called **only from the backend**:
+Lingvoyage uses two ElevenLabs APIs, both called **only from the backend**:
 
 | What | Model | Used for |
 |---|---|---|
@@ -21,7 +21,7 @@ The free plan doesn't include a commercial license. That's fine for a class proj
 
 1. Go to **elevenlabs.io/app/settings/api-keys** (or: bottom-left of the dashboard > **Developers** > **API Keys**).
 2. **Create API Key**.
-   - Name: `naviglot-backend`
+   - Name: `lingvoyage-backend`
    - Turn **Restrict Key** on, then set:
      - **Text to Speech**: Access
      - **Speech to Text**: Access
@@ -77,9 +77,9 @@ $env:ELEVENLABS_API_KEY = "sk_paste_your_key"
 $env:ELEVENLABS_VOICE_ID = "paste_voice_id"
 
 $headers = @{ "xi-api-key" = $env:ELEVENLABS_API_KEY }
-$body = @{ text = "Hello from Naviglot. Ni hao!"; model_id = "eleven_flash_v2_5" } | ConvertTo-Json
+$body = @{ text = "Hello from Lingvoyage. Ni hao!"; model_id = "eleven_flash_v2_5" } | ConvertTo-Json
 # Resolves the real Desktop even when OneDrive has moved it
-$out = Join-Path ([Environment]::GetFolderPath("Desktop")) "naviglot-test.mp3"
+$out = Join-Path ([Environment]::GetFolderPath("Desktop")) "lingvoyage-test.mp3"
 
 Invoke-RestMethod `
   -Uri "https://api.elevenlabs.io/v1/text-to-speech/$($env:ELEVENLABS_VOICE_ID)?output_format=mp3_44100_64" `

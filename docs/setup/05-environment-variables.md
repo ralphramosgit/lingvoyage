@@ -30,7 +30,7 @@ code .env
 EXPO_PUBLIC_SUPABASE_URL=https://abcdefghijkl.supabase.co
 EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxxxxxxxxxxxxxxx
 
-# Naviglot backend. No trailing slash.
+# Lingvoyage backend. No trailing slash.
 # Local backend on your PC (use YOUR_PC_LAN_IP from guide 01, not localhost):
 EXPO_PUBLIC_API_URL=http://192.168.1.23:8000
 # After deploying to AWS (guide 07), switch to:

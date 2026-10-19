@@ -13,7 +13,7 @@ export const DEFAULT_SETTINGS: Settings = {
   autoPlay: true,
 };
 
-const STORAGE_KEY = 'naviglot.settings.v1';
+const STORAGE_KEY = 'lingvoyage.settings.v1';
 
 type SettingsContextValue = {
   settings: Settings;

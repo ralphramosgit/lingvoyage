@@ -29,7 +29,7 @@ export default function WelcomeScreen() {
 
             <Animated.View entering={FadeInDown.duration(motion.slow).delay(80)} style={styles.titles}>
               <Text variant="display" color="#FFFFFF" align="center" accessibilityRole="header">
-                Naviglot
+                Lingvoyage
               </Text>
               <Text variant="heading" color="#FFFFFF" align="center">
                 Speak your way around the world.

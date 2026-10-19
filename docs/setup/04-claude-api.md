@@ -1,6 +1,6 @@
 # 04. Claude API (the character's brain)
 
-ElevenLabs gives the character a voice, but something has to decide **what the character says**, notice your mistakes and suggest what to say next. That's the LLM. Naviglot uses **Claude Haiku 5.5** (`claude-haiku-5-5`):
+ElevenLabs gives the character a voice, but something has to decide **what the character says**, notice your mistakes and suggest what to say next. That's the LLM. Lingvoyage uses **Claude Haiku 5.5** (`claude-haiku-5-5`):
 
 - Fastest current Claude model, built for high-volume, latency-sensitive work.
 - Cheap: from $0.10 per million input tokens and $0.50 per million output tokens. One conversation turn costs a small fraction of a cent.
@@ -19,7 +19,7 @@ The key is used **only by the backend**.
 ## 2. Create an API key
 
 1. **Settings > API Keys** > **Create Key**.
-2. Name: `naviglot-backend` (default workspace is fine).
+2. Name: `lingvoyage-backend` (default workspace is fine).
 3. Copy the key (starts with `sk-ant-`). It's only shown once.
 4. Save it in your scratch note as `ANTHROPIC_API_KEY`.
 

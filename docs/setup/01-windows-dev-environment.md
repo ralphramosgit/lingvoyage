@@ -62,8 +62,8 @@ Under **Wireless LAN adapter Wi-Fi**, copy the **IPv4 Address** (looks like `192
 
 ```powershell
 cd $HOME\Documents
-git clone https://github.com/<your-username>/<your-repo>.git naviglot
-cd naviglot
+git clone https://github.com/<your-username>/<your-repo>.git lingvoyage
+cd lingvoyage
 ```
 
 Copy the `docs` folder (the one this guide is in) into the root of the repo, then:

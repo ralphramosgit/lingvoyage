@@ -50,14 +50,14 @@ Paste the finished link into Chrome's address bar and press Enter: the page is j
 
 When a teammate scans the QR code, Expo Go on their phone downloads that copy and runs it **on their phone**. The app then talks to Supabase and your Lambda backend directly, so your PC can be off.
 
-It also isn't a "build": there's no app file to install. Expo Go is the installed app, and Naviglot loads inside it.
+It also isn't a "build": there's no app file to install. Expo Go is the installed app, and Lingvoyage loads inside it.
 
 ```
 Your PC  --eas update-->  Expo's servers (store the files)
                                  |
                           downloads when opened
                                  v
-Teammate's phone: Expo Go runs Naviglot  -->  Supabase + Lambda backend
+Teammate's phone: Expo Go runs Lingvoyage  -->  Supabase + Lambda backend
 ```
 
 You still use `npx expo start` for **your own** development (instant reloads while you code). It has nothing to do with what teammates see.
@@ -75,7 +75,7 @@ eas update --channel preview --environment preview --message "What changed"
 After that:
 
 - **No new QR code.** The permanent link (Option 1 below) always loads the newest published version.
-- **Teammates just reopen the app.** They swipe Expo Go closed and tap Naviglot under Recently opened. If they still see the old version, they reopen once more.
+- **Teammates just reopen the app.** They swipe Expo Go closed and tap Lingvoyage under Recently opened. If they still see the old version, they reopen once more.
 - **Nothing else changes for you.** Same command every time.
 
 Exceptions:
@@ -169,7 +169,7 @@ eas update:list --branch preview
 
 ### After the first scan
 
-Expo Go remembers the project. Next time, open Expo Go and tap **Naviglot** under **Recently opened**. Because the first scan used the channel link, it loads the newest version.
+Expo Go remembers the project. Next time, open Expo Go and tap **Lingvoyage** under **Recently opened**. Because the first scan used the channel link, it loads the newest version.
 
 ---
 
@@ -192,7 +192,7 @@ Expo Go remembers the project. Next time, open Expo Go and tap **Naviglot** unde
     By hand, it bundles the app on your PC (it creates a `dist/` folder, which is gitignored) and uploads it. Takes a minute or two. If "Computing the project fingerprints" is slow, you can skip that step by putting `EAS_SKIP_AUTO_FINGERPRINT=1 ` in front of the command.
 
 4. **Check the published version yourself:** stop `npx expo start`, scan the Option 1 QR code (or open it from Recently opened), and make sure your change is there.
-5. **Tell teammates** there's a new version. They swipe Expo Go closed and reopen Naviglot. If they still see the old one, reopen once more.
+5. **Tell teammates** there's a new version. They swipe Expo Go closed and reopen Lingvoyage. If they still see the old one, reopen once more.
 
 ---
 
@@ -203,12 +203,12 @@ Expo Go remembers the project. Next time, open Expo Go and tap **Naviglot** unde
 ### One-time setup
 
 1. **Make an Expo token for GitHub.** On [expo.dev](https://expo.dev), switch to the **lingvoyage-team** account > **Settings** > **Access tokens**. Under **Robot users**, add a robot (name it `github-actions`, role **Developer**), then create a token for it and copy it. It's shown only once. (A personal access token from your own account also works, but it stops working if you leave the team.)
-2. **Give it to GitHub.** On GitHub: the `naviglot` repo > **Settings** > **Secrets and variables** > **Actions** > **New repository secret**. Name: `EXPO_TOKEN`, value: the token. Never paste it anywhere else.
+2. **Give it to GitHub.** On GitHub: the `lingvoyage` repo > **Settings** > **Secrets and variables** > **Actions** > **New repository secret**. Name: `EXPO_TOKEN`, value: the token. Never paste it anywhere else.
 3. **Push the workflow file to `main`.** That push runs it once. Check the **Actions** tab: the "Publish app update" run should end green, and a new update shows up under expo.dev > lingvoyage > **Updates**.
 
 ### Day to day
 
-- Push to `main` → about 3 to 5 minutes later, teammates get the new version when they reopen Naviglot.
+- Push to `main` → about 3 to 5 minutes later, teammates get the new version when they reopen Lingvoyage.
 - **Republish without a code change** (for example after changing an `EXPO_PUBLIC_*` value on Expo): GitHub > **Actions** > **Publish app update** > **Run workflow**.
 - **A run failed:** open it in the Actions tab. A red typecheck or lint step means the code has an error (run the same command locally to see it). A red publish step that mentions authentication means the `EXPO_TOKEN` secret is missing or expired.
 - **Backend changes still go up by hand** (guide 07, section 12). If an app change needs new backend code, deploy the backend **before** pushing to `main`, or teammates may briefly get an app that calls a route Lambda doesn't have yet.
@@ -238,7 +238,7 @@ Then fix the bug and publish normally. (Commands mentioning "embedded" updates a
 | Backend code in `backend/` | Not needed: upload a new `lambda.zip` (guide 07). Everyone gets it instantly |
 | A new library that **Expo Go includes** (most `expo-*` packages) | Yes, install it with `npx expo install` |
 | A new library that needs its own native code (not in Expo Go) | **No.** It won't run in Expo Go at all. That means switching to real builds (end of guide 09) |
-| App icon, bundle ID, permission wording | Doesn't apply in Expo Go: the phone sees Expo Go, not Naviglot |
+| App icon, bundle ID, permission wording | Doesn't apply in Expo Go: the phone sees Expo Go, not Lingvoyage |
 | Expo SDK version | Only together with a new QR link (next section) |
 
 Before adding a library, check its page on [docs.expo.dev](https://docs.expo.dev) or [reactnative.directory](https://reactnative.directory) for **Expo Go** support.
@@ -267,8 +267,8 @@ Never put a real secret in an `EXPO_PUBLIC_*` variable. Everything in those ends
 ## Things to know about Expo Go in this project
 
 - **Everyone must be signed in to Expo Go.** Since May 12, 2026, Expo Go only opens published updates for the project owner and members of its organization ([Expo changelog](https://expo.dev/changelog/expo-go-loading-changes-may-2026)). A teammate who isn't signed in, or used a different account, gets an error.
-- **Expo Go runs one SDK version.** The App Store's Expo Go updates itself on phones, and when it moves past SDK 57, Naviglot stops opening until you upgrade (next section). Android users can get a specific SDK's Expo Go from [expo.dev/go](https://expo.dev/go).
-- **The microphone prompt says "Expo Go".** In Expo Go, iOS asks on behalf of Expo Go, not Naviglot. That's normal.
+- **Expo Go runs one SDK version.** The App Store's Expo Go updates itself on phones, and when it moves past SDK 57, Lingvoyage stops opening until you upgrade (next section). Android users can get a specific SDK's Expo Go from [expo.dev/go](https://expo.dev/go).
+- **The microphone prompt says "Expo Go".** In Expo Go, iOS asks on behalf of Expo Go, not Lingvoyage. That's normal.
 - **`expo-updates` does nothing inside Expo Go.** It's installed so `eas update` works. Local dev with `npx expo start` is unchanged.
 - **Don't change `slug` or `owner` in `app.json`.** They must match the project on expo.dev (`lingvoyage` in `lingvoyage-team`), or EAS commands refuse to run.
 - **Don't change `runtimeVersion`.** With any policy other than `sdkVersion`, updates get labels like `1.0.0`, and Expo Go won't open them.

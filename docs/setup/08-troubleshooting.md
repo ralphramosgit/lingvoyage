@@ -83,7 +83,7 @@ The free project paused. Open the Supabase dashboard and click **Restore project
 
 **The character says nothing**
 
-- iPhone volume up (Naviglot plays even when the silent switch is on).
+- iPhone volume up (Lingvoyage plays even when the silent switch is on).
 - Bluetooth headphones connected somewhere else?
 - Check the backend terminal for an ElevenLabs error.
 

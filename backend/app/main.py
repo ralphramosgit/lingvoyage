@@ -1,4 +1,4 @@
-"""Naviglot API: FastAPI app that runs locally under uvicorn and on AWS Lambda via Mangum.
+"""Lingvoyage API: FastAPI app that runs locally under uvicorn and on AWS Lambda via Mangum.
 
 Route handlers are sync (`def`) on purpose: FastAPI runs them in a threadpool, and the
 sync httpx / anthropic clients avoid event-loop reuse problems under Mangum on Lambda.
@@ -26,12 +26,12 @@ from app.tutor import ChatLine, TutorReply
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 logging.getLogger().setLevel(logging.INFO)  # Lambda pre-installs a handler, so basicConfig may be a no-op there
-logger = logging.getLogger("naviglot")
+logger = logging.getLogger("lingvoyage")
 
 MAX_AUDIO_BYTES = 2 * 1024 * 1024
 AudioMime = Literal["audio/mpeg"]
 
-app = FastAPI(title="Naviglot API", version="1.0.0")
+app = FastAPI(title="Lingvoyage API", version="1.0.0")
 
 # Mobile app only, no cookies: any origin is fine.
 app.add_middleware(

@@ -549,7 +549,9 @@ Pick the store name and bundle ID (for example `com.yourname.lingvoyage`) then. 
 
 ## 9. "Naviglot" still in the code and docs (for your UI pass)
 
-These don't affect any platform. Change them whenever you do the UI. You can also ask Claude Code to "do part 9 of guide 11", leaving out whatever you want to design yourself.
+> **Done on October 18, 2026.** All of the below now says Lingvoyage. The new logo is `mobile/assets/images/lingvoyage-logo.png`; the app icon, splash, favicon and Android icons are made from it, `LogoMark` shows it, and `docs/architecture.png` was updated. The list stays here for reference. The only change for testers is that their three in-app settings (pinyin, English, auto-play) go back to the defaults once, because the settings key was renamed.
+
+These don't affect any platform.
 
 ### Shown in the app
 

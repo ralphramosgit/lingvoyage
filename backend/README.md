@@ -1,4 +1,4 @@
-# Naviglot API (backend)
+# Lingvoyage API (backend)
 
 FastAPI app (Python 3.13). Runs locally with uvicorn and on AWS Lambda (Function URL) via Mangum, handler `app.main.handler`. It holds every secret key; the mobile app never sees them.
 

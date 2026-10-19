@@ -14,7 +14,7 @@ from collections.abc import Callable
 
 import httpx
 
-logger = logging.getLogger("naviglot.http")
+logger = logging.getLogger("lingvoyage.http")
 
 RETRYABLE_ERRORS: tuple[type[httpx.HTTPError], ...] = (httpx.NetworkError, httpx.RemoteProtocolError)
 RETRYABLE_ERRORS_AND_TIMEOUTS = (*RETRYABLE_ERRORS, httpx.TimeoutException)

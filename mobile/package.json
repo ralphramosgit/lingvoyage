@@ -1,5 +1,5 @@
 {
-  "name": "naviglot-mobile",
+  "name": "lingvoyage-mobile",
   "main": "expo-router/entry",
   "version": "1.0.0",
   "dependencies": {

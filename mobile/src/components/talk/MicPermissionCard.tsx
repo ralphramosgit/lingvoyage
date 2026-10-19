@@ -33,7 +33,7 @@ export function MicPermissionCard({
         <View style={styles.flex}>
           <Text variant="subheading">Microphone is off</Text>
           <Text variant="caption" color={colors.inkMuted}>
-            Naviglot needs the microphone to hear you speak. In Expo Go, turn on Microphone under Settings, Expo Go.
+            Lingvoyage needs the microphone to hear you speak. In Expo Go, turn on Microphone under Settings, Expo Go.
           </Text>
         </View>
         <IconButton icon={X} accessibilityLabel="Dismiss" onPress={onDismiss} size={32} iconSize={16} />

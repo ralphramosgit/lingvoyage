@@ -1,4 +1,4 @@
-# Claude Code build prompt: Naviglot hackathon MVP
+# Claude Code build prompt: Lingvoyage hackathon MVP
 
 ## How to use this
 
@@ -7,7 +7,7 @@
 3. Send Claude Code this one line:
 
 ```
-Read docs/CLAUDE_CODE_PROMPT.md (everything under "The prompt") and docs/setup/*.md, then build Naviglot exactly as specified, phase by phase.
+Read docs/CLAUDE_CODE_PROMPT.md (everything under "The prompt") and docs/setup/*.md, then build Lingvoyage exactly as specified, phase by phase.
 ```
 
 (Or copy everything under "The prompt" below and paste it in directly.)
@@ -18,7 +18,7 @@ If your Expo Go needs a different SDK than 57 (guide 01, step 7), change the two
 
 # The prompt
 
-You are building the hackathon MVP of **Naviglot** (Navigate + glot), a mobile app that helps travelers learn the language of the country they're visiting. The first (and only, for now) target language is **Mandarin Chinese**, taught in **English**. The core feature is **Encounters**: the learner picks a travel scenario and has a spoken (or typed) conversation with an AI character who replies out loud in Mandarin, like the Speak app's "Free Talk".
+You are building the hackathon MVP of **Lingvoyage** (language + voyage), a mobile app that helps travelers learn the language of the country they're visiting. The first (and only, for now) target language is **Mandarin Chinese**, taught in **English**. The core feature is **Encounters**: the learner picks a travel scenario and has a spoken (or typed) conversation with an AI character who replies out loud in Mandarin, like the Speak app's "Free Talk".
 
 Read `docs/setup/*.md` before you start. They describe the accounts, environment variable names, scripts and commands that this spec relies on, and the user follows them, so your code must match them exactly.
 
@@ -42,7 +42,7 @@ Read `docs/setup/*.md` before you start. They describe the accounts, environment
 ├── backend/       FastAPI app (Python 3.13), runs locally with uvicorn and on AWS Lambda via Mangum
 ├── docs/          already exists (guides, architecture.png, this prompt) - don't modify
 ├── .gitignore     root-level: node_modules, .env, .env.*, !.env.example, .venv, __pycache__, build/, lambda.zip, dist/, .expo/, *.log
-└── README.md      what Naviglot is, quickstart pointing to docs/setup, team: Ralph, Lin, Ran
+└── README.md      what Lingvoyage is, quickstart pointing to docs/setup, team: Ralph, Lin, Ran
 ```
 
 ## 2. Tech stack (exact)
@@ -113,7 +113,7 @@ Use Expo Router **protected routes** (`Stack.Protected` with `guard`, per the SD
 Follow whatever folder convention the SDK 57 default template uses (`app/` or `src/app/`) and put shared code under `src/` (`src/components`, `src/lib`, `src/theme`, `src/hooks`, `src/types`). Delete the template's demo screens and assets you don't use.
 
 ### 5.1 Welcome
-Full-screen sky-blue gradient. Logo mark: lucide `Compass` in a white rounded square with a small yellow dot accent, wordmark **Naviglot** in Plus Jakarta Sans ExtraBold, tagline "Speak your way around the world." Short line under it: "Practice real travel conversations in Mandarin before you land." Primary button **Get started** (to sign-up), secondary text button **I already have an account** (to sign-in). Gentle entrance animation (logo fades and rises, buttons follow).
+Full-screen sky-blue gradient. Logo mark: the Lingvoyage logo image (`mobile/assets/images/lingvoyage-logo.png`: yellow "LV" sails and a speech bubble above a white boat and wave, on a sky-blue rounded tile), wordmark **Lingvoyage** in Plus Jakarta Sans ExtraBold, tagline "Speak your way around the world." Short line under it: "Practice real travel conversations in Mandarin before you land." Primary button **Get started** (to sign-up), secondary text button **I already have an account** (to sign-in). Gentle entrance animation (logo fades and rises, buttons follow).
 
 ### 5.2 Sign up / Sign in
 Clean form cards on the light background. Fields with leading icons (`User`, `Mail`, `Lock`), password show/hide toggle (`Eye`/`EyeOff`), inline validation (valid email, password at least 6 characters, name required on sign-up), loading state on the button, friendly error messages mapped from Supabase errors (already registered, invalid credentials, network). Keyboard-safe (`KeyboardAvoidingView`, tap outside to dismiss), `textContentType`/`autoComplete` set so iOS offers password autofill. Links to switch between the two screens. Back button to Welcome.
@@ -282,7 +282,7 @@ Base: FastAPI app in `backend/app/main.py`, ending with `handler = Mangum(app, l
   ```
 
 **Scripts and tests**
-- `backend/scripts/check_keys.py`: loads settings and checks, printing OK/FAIL with a hint per service: Supabase (`GET {SUPABASE_URL}/auth/v1/settings` with `apikey` header returns 200), ElevenLabs TTS (synthesize "Ni hao, welcome to Naviglot." with the default voice), ElevenLabs STT (send that same audio back and expect non-empty text), Claude (a one-line request to the configured model). Never print key values.
+- `backend/scripts/check_keys.py`: loads settings and checks, printing OK/FAIL with a hint per service: Supabase (`GET {SUPABASE_URL}/auth/v1/settings` with `apikey` header returns 200), ElevenLabs TTS (synthesize "Ni hao, welcome to Lingvoyage." with the default voice), ElevenLabs STT (send that same audio back and expect non-empty text), Claude (a one-line request to the configured model). Never print key values.
 - `backend/scripts/build_lambda.ps1`: exactly the script shown in docs/setup/07 (Linux wheels via `pip install --platform manylinux2014_x86_64 --implementation cp --python-version 3.13 --only-binary=:all: --target build`, copy `app/`, remove `__pycache__`, zip with Python's `shutil.make_archive`). Lambda handler path is `app.main.handler`.
 - `backend/tests/`: pytest with FastAPI `TestClient` and mocks (no real network): `/health`, `/scenarios` hides `scene_details`, private endpoints return 401 without a token, `/conversation/turn` 422 when both or neither of text/audio are sent, emoji stripping, history normalization (role mapping, merging, 30-line cap), goal-id filtering and union.
 - `backend/README.md`: run locally, run tests, check keys, deploy (link to docs/setup/07).
@@ -291,7 +291,7 @@ Base: FastAPI app in `backend/app/main.py`, ending with `handler = Mangum(app, l
 
 - `src/lib/api.ts`: typed client for the endpoints above. Adds `Authorization: Bearer <access_token>` from `supabase.auth.getSession()`, 30 s timeout with `AbortController`, parses the error shape into a typed `ApiError` (code, message, status). Mirror the backend types in `src/types/api.ts`.
 - **Recording** (`src/hooks/useVoiceRecorder.ts`): `expo-audio` `useAudioRecorder` with `{ ...RecordingPresets.HIGH_QUALITY, numberOfChannels: 1, bitRate: 64000 }` (m4a/AAC) and `useAudioRecorderState` (100 ms interval) for the timer. Request permission with `requestRecordingPermissionsAsync`. Before recording: `setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true })`. **After stopping, set `allowsRecording: false`** again, otherwise iOS plays the reply quietly through the earpiece. Stop any playing audio before recording. Read the file as base64 with the SDK 57 `expo-file-system` `File` API, send it, then delete the file.
-- **Playback** (`src/lib/audio.ts`): one shared player from `createAudioPlayer` (release it when the talk screen unmounts). To play a base64 MP3, write it to a file under `Paths.cache` (`naviglot-audio/` folder) using the SDK 57 `File` API, then `player.replace({ uri })` and `play()`. Slow replay: `setPlaybackRate(0.75, 'high')`; normal: `1.0`. Phrase cache: key = a simple hash of the text; if the file already exists, play it without calling the backend.
+- **Playback** (`src/lib/audio.ts`): one shared player from `createAudioPlayer` (release it when the talk screen unmounts). To play a base64 MP3, write it to a file under `Paths.cache` (`lingvoyage-audio/` folder) using the SDK 57 `File` API, then `player.replace({ uri })` and `play()`. Slow replay: `setPlaybackRate(0.75, 'high')`; normal: `1.0`. Phrase cache: key = a simple hash of the text; if the file already exists, play it without calling the backend.
 - Settings (pinyin, auto English, auto-play) in a small context backed by AsyncStorage.
 - Haptics: light impact on mic start/stop, success notification on goal completion.
 

@@ -1,6 +1,8 @@
-# Naviglot
+<img src="mobile/assets/images/lingvoyage-logo.png" alt="Lingvoyage logo" width="120">
 
-**Navigate + glot.** Naviglot helps travelers learn the language of the country they're visiting. The first target language is **Mandarin Chinese**, taught in English.
+# Lingvoyage
+
+**Language + voyage.** Lingvoyage helps travelers learn the language of the country they're visiting. The first target language is **Mandarin Chinese**, taught in English.
 
 The core feature is **Encounters**: pick a travel scene (ordering noodles in Beijing, asking for your train in Shanghai, checking in to a hotel in Chengdu) and hold a spoken or typed conversation with an AI character who answers out loud in Mandarin. Every reply comes with pinyin, an optional English translation, feedback on what you said, and suggestions for what to say next.
 
@@ -9,7 +11,7 @@ The core feature is **Encounters**: pick a travel scene (ordering noodles in Bei
 ```
 iPhone (Expo Go)
   ├── Supabase Auth ......... sign up / log in, profile, progress
-  └── Naviglot API (FastAPI) .. runs on your PC now, AWS Lambda later
+  └── Lingvoyage API (FastAPI) .. runs on your PC now, AWS Lambda later
          ├── ElevenLabs Speech-to-Text (Scribe v2)
          ├── Claude API (Haiku 5.5)
          └── ElevenLabs Text-to-Speech (Flash v2.5)

@@ -8,7 +8,7 @@ from app.config import get_settings
 from app.errors import ApiError, missing_setting
 from app.http_retry import send_with_retry
 
-logger = logging.getLogger("naviglot.speech")
+logger = logging.getLogger("lingvoyage.speech")
 
 ELEVENLABS_BASE_URL = "https://api.elevenlabs.io"
 TTS_OUTPUT_FORMAT = "mp3_44100_64"

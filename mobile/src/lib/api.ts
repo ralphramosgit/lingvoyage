@@ -65,7 +65,7 @@ async function request<T>(method: 'GET' | 'POST', path: string, options: Request
     }
     throw new ApiError(
       'network',
-      "Can't reach the Naviglot server. Check your connection and that the backend is running.",
+      "Can't reach the Lingvoyage server. Check your connection and that the backend is running.",
       0,
     );
   } finally {

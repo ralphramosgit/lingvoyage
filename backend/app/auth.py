@@ -19,7 +19,7 @@ from app.config import get_settings
 from app.errors import ApiError, missing_setting
 from app.http_retry import RETRYABLE_ERRORS_AND_TIMEOUTS, send_with_retry
 
-logger = logging.getLogger("naviglot.auth")
+logger = logging.getLogger("lingvoyage.auth")
 
 CACHE_TTL_SECONDS = 300
 CACHE_MAX_ENTRIES = 512

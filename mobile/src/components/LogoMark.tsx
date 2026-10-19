@@ -1,38 +1,29 @@
-import { Compass } from 'lucide-react-native';
-import { StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 
-import { colors, shadows } from '@/theme/theme';
+import { shadows } from '@/theme/theme';
 
-/** Naviglot logo: a compass in a white rounded square with a small yellow dot accent. */
+const LOGO = require('@/assets/images/lingvoyage-logo.png');
+
+// The logo PNG draws its own rounded sky-blue tile. The wrapper repeats that tile's color and corner
+// radius so the shadow follows the rounded corners.
+const TILE_COLOR = '#74BBF9';
+const TILE_RADIUS = 0.227;
+
+/** Lingvoyage logo: the sailboat with "LV" sails and a speech bubble, on its sky-blue rounded tile. */
 export function LogoMark({ size = 88 }: { size?: number }) {
-  const dot = Math.round(size * 0.18);
   return (
     <View
       accessibilityRole="image"
-      accessibilityLabel="Naviglot logo"
-      style={[styles.square, { width: size, height: size, borderRadius: size * 0.28 }]}>
-      <Compass size={size * 0.54} color={colors.sky600} strokeWidth={2} />
-      <View
-        style={[
-          styles.dot,
-          { width: dot, height: dot, borderRadius: dot / 2, top: size * 0.14, right: size * 0.14 },
-        ]}
-      />
+      accessibilityLabel="Lingvoyage logo"
+      style={[styles.tile, { width: size, height: size, borderRadius: size * TILE_RADIUS }]}>
+      <Image source={LOGO} style={{ width: size, height: size }} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  square: {
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
+  tile: {
+    backgroundColor: TILE_COLOR,
     ...shadows.raised,
-  },
-  dot: {
-    position: 'absolute',
-    backgroundColor: colors.sun400,
-    borderWidth: 2,
-    borderColor: colors.surface,
   },
 });
