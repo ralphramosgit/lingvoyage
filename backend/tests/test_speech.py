@@ -78,6 +78,55 @@ def test_wav_recordings_are_uploaded_as_wav(monkeypatch: pytest.MonkeyPatch) -> 
     assert b"Content-Type: audio/wav" in bodies[0]
 
 
+def test_stt_sends_the_language_and_keyterms(monkeypatch: pytest.MonkeyPatch) -> None:
+    bodies: list[bytes] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        bodies.append(request.read())
+        return httpx.Response(200, json={"text": "买单"})
+
+    _mock_elevenlabs(monkeypatch, handler)
+    assert speech.transcribe(b"RIFF-fake", "audio/wav", "zh", ["买单", "不要辣"]) == "买单"
+    body = bodies[0].decode("utf-8", errors="replace")
+    assert 'name="language_code"\r\n\r\nzh\r\n' in body
+    assert 'name="keyterms"\r\n\r\n买单\r\n' in body
+    assert 'name="keyterms"\r\n\r\n不要辣\r\n' in body
+
+
+def test_stt_without_a_language_lets_elevenlabs_detect_it(monkeypatch: pytest.MonkeyPatch) -> None:
+    bodies: list[bytes] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        bodies.append(request.read())
+        return httpx.Response(200, json={"text": "hi"})
+
+    _mock_elevenlabs(monkeypatch, handler)
+    speech.transcribe(b"RIFF-fake", "audio/wav")
+    assert b"language_code" not in bodies[0]
+    assert b"keyterms" not in bodies[0]
+
+
+def test_language_code_from_scenario_language() -> None:
+    assert speech.language_code("zh-CN") == "zh"
+    assert speech.language_code("ja") == "ja"
+
+
+def test_keyterms_drop_punctuation_repeats_and_long_phrases() -> None:
+    phrases = ["我要一碗牛肉面。", "谢谢，再见！", "我叫……", "WiFi 密码是多少？", "买单。", "买单", "长" * 21]
+    assert speech.keyterms(phrases) == ["我要一碗牛肉面", "谢谢再见", "我叫", "WiFi 密码是多少", "买单"]
+
+
+def test_keyterms_are_capped_for_realtime() -> None:
+    assert len(speech.keyterms([f"词{i}" for i in range(80)])) == speech.MAX_KEYTERMS
+
+
+def test_has_chinese() -> None:
+    assert speech.has_chinese("你好")
+    assert speech.has_chinese("WiFi 密码是多少？")
+    assert not speech.has_chinese("My dawn. She has a gen.")
+    assert not speech.has_chinese("ni hao")
+
+
 def test_live_token_comes_from_the_single_use_token_endpoint(monkeypatch: pytest.MonkeyPatch) -> None:
     requests: list[httpx.Request] = []
 

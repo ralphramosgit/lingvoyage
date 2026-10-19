@@ -94,6 +94,16 @@ class LiveTokenResponse(BaseModel):
     model_id: str
 
 
+class TranscribeRequest(BaseModel):
+    scenario_id: str
+    audio_base64: str = Field(min_length=1)
+    audio_mime: str | None = None
+
+
+class TranscribeResponse(BaseModel):
+    transcript: str
+
+
 class StartRequest(BaseModel):
     scenario_id: str
 
@@ -151,6 +161,21 @@ def _decode_audio(audio_base64: str) -> bytes:
     return audio
 
 
+def _transcribe(audio_base64: str, audio_mime: str | None, scenario: ScenarioDefinition) -> str:
+    """The learner's recording as text, heard as the scenario's language (never auto-detected) and
+    biased toward its key phrases."""
+    audio = _decode_audio(audio_base64)
+    language = speech.language_code(scenario.language)
+    terms = speech.keyterms([phrase.hanzi for phrase in scenario.key_phrases])
+    transcript = speech.transcribe(audio, audio_mime, language, terms)
+    if not transcript:
+        raise ApiError(422, "no_speech", "We didn't catch that. Try again or type it.")
+    # Even when told to expect Mandarin, ElevenLabs writes speech it can't match as English.
+    if language == "zh" and not speech.has_chinese(transcript):
+        raise ApiError(422, "not_mandarin", "That didn't sound like Mandarin. Try again in Mandarin, or type it.")
+    return transcript
+
+
 def _speak(text: str, scenario: ScenarioDefinition) -> str | None:
     """Character's line as base64 MP3, or None if TTS fails (the turn still succeeds)."""
     if not text:
@@ -192,9 +217,16 @@ def text_to_speech(body: TtsRequest, _user: AuthUser = Depends(require_user)) ->
 
 @app.post("/speech/live-token", response_model=LiveTokenResponse)
 def live_token(_user: AuthUser = Depends(require_user)) -> LiveTokenResponse:
-    """Token for live captions while the learner records. The recording itself still goes
-    through /conversation/turn, whose transcript is the one the character answers."""
+    """Token for live captions while the learner records. The recording itself then goes
+    through /speech/transcribe, whose transcript is the one the learner checks and sends."""
     return LiveTokenResponse(token=speech.create_live_token(), model_id=get_settings().elevenlabs_realtime_stt_model)
+
+
+@app.post("/speech/transcribe", response_model=TranscribeResponse)
+def speech_transcribe(body: TranscribeRequest, _user: AuthUser = Depends(require_user)) -> TranscribeResponse:
+    """What the learner said, for them to check before sending it to /conversation/turn as text."""
+    scenario = _scenario_or_404(body.scenario_id)
+    return TranscribeResponse(transcript=_transcribe(body.audio_base64, body.audio_mime, scenario))
 
 
 @app.post("/conversation/start", response_model=TurnResponse)
@@ -210,10 +242,8 @@ def conversation_turn(body: TurnRequest, _user: AuthUser = Depends(require_user)
 
     transcript: str | None = None
     if body.audio_base64:
-        audio = _decode_audio(body.audio_base64)
-        transcript = speech.transcribe(audio, body.audio_mime)
-        if not transcript:
-            raise ApiError(422, "no_speech", "We didn't catch that. Try again or type it.")
+        # Older app versions send the recording here directly instead of checking it first.
+        transcript = _transcribe(body.audio_base64, body.audio_mime, scenario)
         learner_text = transcript
     else:
         learner_text = (body.user_text or "").strip()

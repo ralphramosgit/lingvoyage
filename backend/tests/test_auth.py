@@ -9,6 +9,7 @@ PRIVATE_ENDPOINTS = [
     ("/conversation/start", {"scenario_id": "restaurant"}),
     ("/conversation/turn", {"scenario_id": "restaurant", "user_text": "ni hao"}),
     ("/speech/live-token", {}),
+    ("/speech/transcribe", {"scenario_id": "restaurant", "audio_base64": "AAAA"}),
 ]
 
 

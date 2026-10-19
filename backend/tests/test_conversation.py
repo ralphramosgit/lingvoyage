@@ -9,6 +9,7 @@ from app.scenarios import ScenarioDefinition
 from app.tutor import ChatLine, Phrase, TutorReply
 
 FAKE_MP3 = b"ID3fake-mp3-bytes"
+RESTAURANT_KEYTERMS = ["你好", "两位", "我要一碗牛肉面", "不要辣", "买单"]
 
 
 def _reply(**overrides: object) -> TutorReply:
@@ -38,9 +39,11 @@ def fake_services(monkeypatch: pytest.MonkeyPatch) -> dict[str, list[object]]:
         calls["tts"].append((text, voice_id))
         return FAKE_MP3
 
-    def fake_transcribe(audio: bytes, audio_mime: str | None = None) -> str:
-        calls["stt"].append((audio, audio_mime))
-        return "ni hao, liang wei"
+    def fake_transcribe(
+        audio: bytes, audio_mime: str | None = None, language: str | None = None, terms: list[str] | None = None
+    ) -> str:
+        calls["stt"].append((audio, audio_mime, language, terms))
+        return "你好，两位"
 
     def fake_generate_reply(
         scenario: ScenarioDefinition,
@@ -121,20 +124,62 @@ def test_voice_turn_transcribes_first(authed_client: TestClient, fake_services: 
         json={"scenario_id": "restaurant", "audio_base64": audio, "audio_mime": "audio/mp4"},
     )
     assert response.status_code == 200
-    assert response.json()["transcript"] == "ni hao, liang wei"
-    assert fake_services["stt"] == [(b"fake-m4a", "audio/mp4")]
-    assert fake_services["tutor"][0][3] == "ni hao, liang wei"
+    assert response.json()["transcript"] == "你好，两位"
+    assert fake_services["stt"] == [(b"fake-m4a", "audio/mp4", "zh", RESTAURANT_KEYTERMS)]
+    assert fake_services["tutor"][0][3] == "你好，两位"
 
 
 def test_empty_transcript_is_no_speech(
     authed_client: TestClient, fake_services: dict, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr(speech, "transcribe", lambda audio, mime=None: "")
+    monkeypatch.setattr(speech, "transcribe", lambda *args: "")
     audio = base64.b64encode(b"silence").decode()
     response = authed_client.post("/conversation/turn", json={"scenario_id": "restaurant", "audio_base64": audio})
     assert response.status_code == 422
     assert response.json()["error"]["code"] == "no_speech"
     assert fake_services["tutor"] == []
+
+
+def test_transcribe_returns_the_transcript_without_answering(authed_client: TestClient, fake_services: dict) -> None:
+    audio = base64.b64encode(b"fake-wav").decode()
+    response = authed_client.post(
+        "/speech/transcribe",
+        json={"scenario_id": "restaurant", "audio_base64": audio, "audio_mime": "audio/wav"},
+    )
+    assert response.status_code == 200
+    assert response.json() == {"transcript": "你好，两位"}
+    assert fake_services["stt"] == [(b"fake-wav", "audio/wav", "zh", RESTAURANT_KEYTERMS)]
+    assert fake_services["tutor"] == []
+    assert fake_services["tts"] == []
+
+
+@pytest.mark.parametrize("path", ["/speech/transcribe", "/conversation/turn"])
+def test_speech_without_chinese_is_not_mandarin(
+    authed_client: TestClient, fake_services: dict, monkeypatch: pytest.MonkeyPatch, path: str
+) -> None:
+    monkeypatch.setattr(speech, "transcribe", lambda *args: "My dawn. She has a gen.")
+    audio = base64.b64encode(b"fake-wav").decode()
+    response = authed_client.post(path, json={"scenario_id": "restaurant", "audio_base64": audio})
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "not_mandarin"
+    assert fake_services["tutor"] == []
+
+
+def test_mixed_chinese_and_english_speech_is_kept(
+    authed_client: TestClient, fake_services: dict, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(speech, "transcribe", lambda *args: "WiFi 密码是多少？")
+    audio = base64.b64encode(b"fake-wav").decode()
+    response = authed_client.post("/speech/transcribe", json={"scenario_id": "hotel", "audio_base64": audio})
+    assert response.status_code == 200
+    assert response.json()["transcript"] == "WiFi 密码是多少？"
+
+
+def test_transcribe_unknown_scenario_is_404(authed_client: TestClient, fake_services: dict) -> None:
+    audio = base64.b64encode(b"fake-wav").decode()
+    response = authed_client.post("/speech/transcribe", json={"scenario_id": "moon", "audio_base64": audio})
+    assert response.status_code == 404
+    assert fake_services["stt"] == []
 
 
 def test_audio_over_2mb_is_rejected(authed_client: TestClient, fake_services: dict) -> None:

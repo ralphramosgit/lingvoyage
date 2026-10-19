@@ -7,8 +7,10 @@ FastAPI app (Python 3.13). Runs locally with uvicorn and on AWS Lambda (Function
 | GET | `/health` | no | `{ "status": "ok" }` |
 | GET | `/scenarios` | no | Encounter list (public fields only) |
 | POST | `/tts` | yes | Text to MP3 (ElevenLabs), base64 |
+| POST | `/speech/live-token` | yes | Single-use token for live captions (ElevenLabs realtime STT) |
+| POST | `/speech/transcribe` | yes | Recording in, transcript out, for the learner to check before sending. Heard as the scenario's language (Mandarin), biased toward its key phrases; 422 `no_speech` or `not_mandarin` |
 | POST | `/conversation/start` | yes | The character's greeting (Claude + TTS) |
-| POST | `/conversation/turn` | yes | Learner text or audio in, character reply out (STT + Claude + TTS) |
+| POST | `/conversation/turn` | yes | Learner text in (the app sends checked voice transcripts as text), character reply out (Claude + TTS). Still accepts audio from older app versions |
 
 "Auth" means `Authorization: Bearer <Supabase access token>`. Errors are always `{ "error": { "code": "...", "message": "..." } }`. Interactive docs at `/docs`.
 
@@ -65,6 +67,8 @@ All external services are mocked; no keys or network needed.
 ## Deploy to AWS Lambda
 
 Full steps: [docs/setup/07-aws-deploy.md](../docs/setup/07-aws-deploy.md).
+
+Pushes to `main` that change `backend/` deploy automatically: `.github/workflows/deploy-backend.yml` runs the tests, builds `lambda.zip` and uploads it ([docs/setup/12-auto-deploy-backend.md](../docs/setup/12-auto-deploy-backend.md)). To deploy by hand:
 
 ```powershell
 .\scripts\build_lambda.ps1

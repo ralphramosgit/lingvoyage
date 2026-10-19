@@ -1,6 +1,7 @@
 """ElevenLabs Text to Speech and Speech to Text (sync httpx, called only from the backend)."""
 
 import logging
+import re
 
 import httpx
 
@@ -12,8 +13,42 @@ logger = logging.getLogger("lingvoyage.speech")
 
 ELEVENLABS_BASE_URL = "https://api.elevenlabs.io"
 TTS_OUTPUT_FORMAT = "mp3_44100_64"
+# Realtime Speech to Text allows at most 50 keyterms of 20 characters; batch allows more, but the
+# app's live captions use the same list.
+MAX_KEYTERMS = 50
+MAX_KEYTERM_LENGTH = 20
 
 _http = httpx.Client(timeout=20.0)
+
+_KEYTERM_PUNCTUATION_RE = re.compile(r"[。，！？、；：…?!.,;:]")
+_HAN_RE = re.compile(r"[㐀-䶿一-鿿]")
+
+
+# ---------------------------------------------------------------------------
+# Recognition hints. Without them, a beginner's accented Mandarin is often heard as English or
+# another language. The app's live captions (mobile/src/hooks/useLiveTranscript.ts) use the same
+# hints; keep the two in sync.
+# ---------------------------------------------------------------------------
+
+
+def language_code(scenario_language: str) -> str:
+    """ElevenLabs language code for a scenario's language tag: "zh-CN" -> "zh" (Mandarin)."""
+    return scenario_language.split("-", 1)[0].lower()
+
+
+def keyterms(phrases: list[str]) -> list[str]:
+    """Phrases to bias recognition toward, e.g. a scene's key phrases: no punctuation, no repeats."""
+    terms: list[str] = []
+    for phrase in phrases:
+        term = " ".join(_KEYTERM_PUNCTUATION_RE.sub("", phrase).split())
+        if term and len(term) <= MAX_KEYTERM_LENGTH and term not in terms:
+            terms.append(term)
+    return terms[:MAX_KEYTERMS]
+
+
+def has_chinese(text: str) -> bool:
+    """True if `text` has at least one Chinese character."""
+    return _HAN_RE.search(text) is not None
 
 
 def _error_detail(response: httpx.Response) -> tuple[str, str]:
@@ -107,18 +142,31 @@ def _filename_for(mime: str) -> str:
     return "speech.m4a"
 
 
-def transcribe(audio: bytes, audio_mime: str | None = None) -> str:
-    """Returns the transcript of `audio` (language auto-detected). May be an empty string."""
+def transcribe(
+    audio: bytes,
+    audio_mime: str | None = None,
+    language: str | None = None,
+    terms: list[str] | None = None,
+) -> str:
+    """Returns the transcript of `audio`. May be an empty string.
+
+    `language` (e.g. "zh") makes ElevenLabs hear the audio as that language instead of guessing;
+    `terms` biases it toward phrases the learner is likely to say."""
     settings = get_settings()
     api_key = _api_key()
     mime = audio_mime or "audio/mp4"
+    data: dict[str, str | list[str]] = {"model_id": settings.elevenlabs_stt_model, "tag_audio_events": "false"}
+    if language:
+        data["language_code"] = language
+    if terms:
+        data["keyterms"] = terms
 
     try:
         response = send_with_retry(
             lambda: _http.post(
                 f"{ELEVENLABS_BASE_URL}/v1/speech-to-text",
                 headers={"xi-api-key": api_key},
-                data={"model_id": settings.elevenlabs_stt_model, "tag_audio_events": "false"},
+                data=data,
                 files={"file": (_filename_for(mime), audio, mime)},
             ),
             "ElevenLabs Speech to Text",
