@@ -26,7 +26,7 @@ npx expo-doctor
 
 ## Layout
 
-- `src/app/` routes (Expo Router): `(auth)` welcome, sign up, sign in; `setup`; `(tabs)` Encounters and Profile; `encounter/[id]` prep and `encounter/[id]/talk` conversation.
+- `src/app/` routes (Expo Router): `(auth)` welcome, sign up, sign in; `setup`; `(tabs)` Encounters and Profile; `encounter/[id]` prep, `encounter/[id]/lesson/[lessonId]` practice lesson and `encounter/[id]/talk` conversation.
 - `src/components/` shared UI (Button, TextField, Card, Pill, IconButton, Screen, CharacterAvatar, SkeletonCard, ...).
 - `src/lib/` env, Supabase client, API client, audio helpers.
 - `src/hooks/`, `src/theme/`, `src/types/`.

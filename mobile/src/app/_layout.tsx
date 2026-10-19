@@ -69,6 +69,7 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
         <Stack.Protected guard={signedIn && onboarded}>
           <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
           <Stack.Screen name="encounter/[id]/index" />
+          <Stack.Screen name="encounter/[id]/lesson/[lessonId]" />
           <Stack.Screen name="encounter/[id]/talk" options={{ gestureEnabled: false }} />
         </Stack.Protected>
       </Stack>

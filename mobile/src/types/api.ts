@@ -32,6 +32,57 @@ export type Scenario = {
   character: Character;
   goals: Goal[];
   key_phrases: KeyPhrase[];
+  /** Practice before the encounter. Missing from servers older than the lessons feature. */
+  lessons?: Lesson[];
+};
+
+/** A multiple-choice answer: Chinese (hanzi and pinyin), or English for "what does it mean?" questions. */
+export type LessonOption = {
+  hanzi: string;
+  pinyin: string;
+  english: string;
+};
+
+export type Tile = {
+  hanzi: string;
+  pinyin: string;
+};
+
+export type ChoiceExercise = {
+  kind: 'choice';
+  prompt: string;
+  /** Chinese the question is about, "" if none. BLANK marks a gap. */
+  hanzi: string;
+  pinyin: string;
+  options: LessonOption[];
+  /** Index of the right option. */
+  answer: number;
+  hint: string;
+  solution: KeyPhrase;
+};
+
+export type BuildExercise = {
+  kind: 'build';
+  prompt: string;
+  /** The answer, in order. */
+  tiles: Tile[];
+  extra_tiles: Tile[];
+  hint: string;
+  solution: KeyPhrase;
+};
+
+export type Exercise = ChoiceExercise | BuildExercise;
+
+export type Lesson = {
+  id: string;
+  title: string;
+  summary: string;
+  /** The sentence pattern taught, with [slots]. */
+  pattern: KeyPhrase | null;
+  examples: KeyPhrase[];
+  words: KeyPhrase[];
+  tip: string;
+  exercises: Exercise[];
 };
 
 export type Phrase = {

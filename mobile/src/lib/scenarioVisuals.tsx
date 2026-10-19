@@ -1,8 +1,9 @@
-import { BedDouble, CarTaxiFront, Compass, ShoppingBag, TrainFront, UtensilsCrossed } from 'lucide-react-native';
+import { BedDouble, CarTaxiFront, Compass, PlaneLanding, ShoppingBag, TrainFront, UtensilsCrossed } from 'lucide-react-native';
 
 import type { TintName } from '@/theme/theme';
 
 const TINTS: Record<string, TintName> = {
+  airport: 'sky',
   restaurant: 'sun',
   train: 'sky',
   hotel: 'mint',
@@ -25,6 +26,8 @@ export function ScenarioIcon({ name, ...props }: IconProps & { name: string }) {
       return <TrainFront {...props} />;
     case 'BedDouble':
       return <BedDouble {...props} />;
+    case 'PlaneLanding':
+      return <PlaneLanding {...props} />;
     case 'ShoppingBag':
       return <ShoppingBag {...props} />;
     case 'CarTaxiFront':

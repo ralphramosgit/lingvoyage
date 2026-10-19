@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ChevronLeft, Circle, Clock, Gauge, MapPin, Mic } from 'lucide-react-native';
+import { BookOpen, ChevronLeft, Circle, Clock, Gauge, MapPin, Mic } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -12,12 +12,14 @@ import { CharacterAvatar } from '@/components/CharacterAvatar';
 import { ErrorState } from '@/components/ErrorState';
 import { FormMessage } from '@/components/FormMessage';
 import { IconButton } from '@/components/IconButton';
+import { LessonRow } from '@/components/lesson/LessonRow';
 import { Pill } from '@/components/Pill';
 import { Screen } from '@/components/Screen';
 import { SpeakerButton } from '@/components/SpeakerButton';
 import { Text } from '@/components/Text';
 import { useScenario } from '@/hooks/useScenarios';
 import { stopPlayback } from '@/lib/audio';
+import { useLessonFinished } from '@/lib/lessonProgress';
 import { ScenarioIcon, scenarioTint } from '@/lib/scenarioVisuals';
 import { colors, layout, motion, radii, shadows, spacing, tints } from '@/theme/theme';
 
@@ -31,6 +33,7 @@ export default function EncounterPrepScreen() {
   const { scenario, loading, error, reload, notFound } = useScenario(id);
   const insets = useSafeAreaInsets();
   const [phraseError, setPhraseError] = useState<string | null>(null);
+  const isFinished = useLessonFinished(scenario?.id);
 
   useEffect(() => () => stopPlayback(), []);
 
@@ -57,12 +60,24 @@ export default function EncounterPrepScreen() {
   const tint = scenarioTint(scenario.id);
   const palette = tints[tint];
   const { character } = scenario;
+  const lessons = scenario.lessons ?? [];
+  const finishedCount = lessons.filter((lesson) => isFinished(lesson.id)).length;
+  // The footer's practice button picks up where the learner left off.
+  const practiceTarget = lessons.find((lesson) => !isFinished(lesson.id)) ?? lessons[0];
+  let practiceLabel = 'Practice first';
+  if (finishedCount === lessons.length) practiceLabel = 'Practice again';
+  else if (finishedCount > 0) practiceLabel = 'Keep practicing';
+
+  const openLesson = (lessonId: string) => {
+    stopPlayback();
+    router.push({ pathname: '/encounter/[id]/lesson/[lessonId]', params: { id: scenario.id, lessonId } });
+  };
 
   return (
     <View style={styles.flex}>
       <ScrollView
         style={styles.flex}
-        contentContainerStyle={{ paddingBottom: 120 + insets.bottom }}
+        contentContainerStyle={{ paddingBottom: (lessons.length > 0 ? 180 : 120) + insets.bottom }}
         showsVerticalScrollIndicator={false}>
         <LinearGradient colors={palette.gradient} style={{ paddingTop: insets.top + spacing.sm }}>
           <View style={styles.column}>
@@ -126,7 +141,32 @@ export default function EncounterPrepScreen() {
             </Card>
           </Animated.View>
 
-          <Animated.View entering={FadeInDown.duration(motion.base).delay(180)} style={styles.section}>
+          {lessons.length > 0 ? (
+            <Animated.View entering={FadeInDown.duration(motion.base).delay(180)} style={styles.section}>
+              <View style={styles.sectionTitle}>
+                <Text variant="heading">Practice first</Text>
+                <Pill label="Optional" tone="neutral" />
+              </View>
+              <Text variant="caption" color={colors.inkMuted}>
+                Short quizzes on the words and sentences in this scene. Pick any lesson, do them all, or skip straight to
+                the encounter.
+              </Text>
+              <Card padded={false}>
+                {lessons.map((lesson, index) => (
+                  <LessonRow
+                    key={lesson.id}
+                    lesson={lesson}
+                    number={index + 1}
+                    finished={isFinished(lesson.id)}
+                    divider={index > 0}
+                    onPress={() => openLesson(lesson.id)}
+                  />
+                ))}
+              </Card>
+            </Animated.View>
+          ) : null}
+
+          <Animated.View entering={FadeInDown.duration(motion.base).delay(240)} style={styles.section}>
             <Text variant="heading">Key phrases</Text>
             <Text variant="caption" color={colors.inkMuted}>
               Tap the speaker to hear each one. Audio is saved on your phone, so replays are free.
@@ -156,7 +196,17 @@ export default function EncounterPrepScreen() {
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
-        <View style={styles.column}>
+        <View style={[styles.column, styles.footerButtons]}>
+          {practiceTarget ? (
+            <Button
+              label={practiceLabel}
+              icon={BookOpen}
+              variant="secondary"
+              size="md"
+              accessibilityHint={`Opens the lesson “${practiceTarget.title}”`}
+              onPress={() => openLesson(practiceTarget.id)}
+            />
+          ) : null}
           <Button
             label="Start encounter"
             icon={Mic}
@@ -197,9 +247,11 @@ const styles = StyleSheet.create({
   characterCard: { flexDirection: 'row', alignItems: 'center', gap: spacing.lg, marginBottom: spacing.xl },
   sections: { gap: spacing.xxl, paddingTop: spacing.xs },
   section: { gap: spacing.md },
+  sectionTitle: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   goalRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.lg, paddingVertical: spacing.md + 2 },
   phraseRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.lg, paddingVertical: spacing.md + 2 },
   rowDivider: { borderTopWidth: 1, borderTopColor: colors.line },
+  footerButtons: { gap: spacing.sm },
   footer: {
     position: 'absolute',
     left: 0,
