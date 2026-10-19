@@ -1,12 +1,21 @@
+from types import SimpleNamespace
+
+import anthropic
+import httpx
+import pytest
+
+from app import tutor
 from app.scenarios import get_scenario
 from app.tutor import (
     OPENING_MESSAGE,
     ChatLine,
     Phrase,
     TutorReply,
+    asks_travelers_question,
     build_messages,
     build_system_prompt,
     finalize_reply,
+    generate_reply,
     merge_goal_ids,
     strip_emojis,
 )
@@ -170,13 +179,94 @@ def test_system_prompt_includes_scene_goals_and_progress() -> None:
     assert '"learner_hanzi"' in prompt and '"learner_english"' in prompt
 
 
-def test_system_prompt_follows_the_outline_and_practiced_language() -> None:
+def test_system_prompt_follows_the_script_and_keeps_roles_apart() -> None:
     prompt = build_system_prompt(_scenario("airport"), [])
-    assert "1. Greet the learner: 你好！" in prompt
-    assert "我要去酒店。" in prompt
+    assert "1. You open: 你好！需要帮忙吗？" in prompt
+    assert "The traveler asks where the bus or the DiDi is. You: 巴士在那里。" in prompt
     assert "- [place] + 在哪里？ (Where is [place]?)" in prompt
+    assert "don't use them to ask the traveler anything" in prompt
+    assert "never ask the traveler the questions that are theirs to ask you" in prompt
     assert "行李 xíngli (luggage)" in prompt
     assert prompt.count("哪里 nǎlǐ (where)") == 1
+
+
+def test_script_never_gives_the_character_a_travelers_question() -> None:
+    for scenario_id in ("airport", "restaurant", "train", "hotel"):
+        scenario = _scenario(scenario_id)
+        for step in scenario.scene_outline:
+            # Only the part after "You" is the character's line.
+            yours = step.split("You:", 1)[-1] if "You:" in step else step.split("You open:", 1)[-1]
+            assert asks_travelers_question(scenario, yours) is None, (scenario_id, step)
+
+
+# --- role check -------------------------------------------------------------
+
+
+def test_asks_travelers_question_spots_the_learners_lines() -> None:
+    airport = _scenario("airport")
+    assert asks_travelers_question(airport, "好！你的行李在哪里？") == "行李在哪里？"
+    assert asks_travelers_question(airport, "好。巴士在哪里？") == "巴士在哪里？"
+    assert asks_travelers_question(airport, "巴士在那里。") is None
+    assert asks_travelers_question(airport, "你找行李吗？") is None
+    assert asks_travelers_question(airport, "不客气！你要去哪里？") is None
+
+    hotel = _scenario("hotel")
+    assert asks_travelers_question(hotel, "WiFi密码是多少？") == "WiFi 密码是多少？"
+    assert asks_travelers_question(hotel, "早餐七点到十点。") is None
+
+    train = _scenario("train")
+    assert asks_travelers_question(train, "去杭州的火车下午三点半出发。") is None
+
+
+class _FakeClient:
+    """Stands in for anthropic.Anthropic: hands out queued replies (or errors) and records the calls."""
+
+    def __init__(self, *results: TutorReply | Exception) -> None:
+        self.results = list(results)
+        self.systems: list[str] = []
+        self.messages = SimpleNamespace(parse=self._parse)
+
+    def _parse(self, **kwargs: object) -> SimpleNamespace:
+        self.systems.append(str(kwargs["system"]))
+        result = self.results.pop(0)
+        if isinstance(result, Exception):
+            raise result
+        return SimpleNamespace(parsed_output=result, stop_reason="end_turn")
+
+
+def _use_client(monkeypatch: pytest.MonkeyPatch, client: _FakeClient) -> None:
+    monkeypatch.setattr(tutor, "_get_client", lambda: client)
+
+
+def test_role_swap_is_asked_again(monkeypatch: pytest.MonkeyPatch) -> None:
+    client = _FakeClient(_reply(hanzi="好。巴士在哪里？"), _reply(hanzi="好。你坐巴士还是滴滴？"))
+    _use_client(monkeypatch, client)
+    reply = generate_reply(_scenario("airport"), [], [], "我要去酒店。")
+    assert reply.hanzi == "好。你坐巴士还是滴滴？"
+    assert len(client.systems) == 2
+    assert '"好。巴士在哪里？"' in client.systems[1]
+    assert '"好。巴士在哪里？"' not in client.systems[0]
+
+
+def test_normal_reply_is_not_asked_again(monkeypatch: pytest.MonkeyPatch) -> None:
+    client = _FakeClient(_reply(hanzi="在那里。"))
+    _use_client(monkeypatch, client)
+    assert generate_reply(_scenario("airport"), [], [], "行李在哪里？").hanzi == "在那里。"
+    assert len(client.systems) == 1
+
+
+def test_first_reply_is_kept_if_asking_again_fails(monkeypatch: pytest.MonkeyPatch) -> None:
+    request = httpx.Request("POST", "https://api.anthropic.com/v1/messages")
+    client = _FakeClient(_reply(hanzi="巴士在哪里？"), anthropic.APITimeoutError(request=request))
+    _use_client(monkeypatch, client)
+    assert generate_reply(_scenario("airport"), [], [], "我要去酒店。").hanzi == "巴士在哪里？"
+    assert len(client.systems) == 2
+
+
+def test_first_reply_is_kept_if_the_second_swaps_too(monkeypatch: pytest.MonkeyPatch) -> None:
+    client = _FakeClient(_reply(hanzi="巴士在哪里？"), _reply(hanzi="行李在哪里？"))
+    _use_client(monkeypatch, client)
+    assert generate_reply(_scenario("airport"), [], [], "你好").hanzi == "巴士在哪里？"
 
 
 def test_system_prompt_with_no_progress_says_none() -> None:

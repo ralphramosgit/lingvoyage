@@ -68,6 +68,7 @@ _EMOJI_RE = re.compile(
     "]+"
 )
 _MULTI_SPACE_RE = re.compile(r"[ \t]{2,}")
+_NOT_A_WORD_RE = re.compile(r"[\s，。？！、,.?!…]")
 
 
 def strip_emojis(text: str) -> str:
@@ -86,12 +87,12 @@ def _outline_section(scenario: ScenarioDefinition) -> str:
     steps = "\n".join(f"{number}. {step}" for number, step in enumerate(scenario.scene_outline, start=1))
     return f"""
 
-How the scene goes. Follow this outline in order, but let the learner lead: if they skip ahead or change the order, go with them.
+How the scene goes. Follow this script in order, but let the traveler lead: if they skip ahead, change the order or say something else, go with them. Only the lines after "You" are yours; the traveler's part is described in English because it's theirs to say.
 {steps}"""
 
 
 def _practiced_section(scenario: ScenarioDefinition) -> str:
-    """What the pre-encounter lessons teach, so the character speaks the language the learner practiced."""
+    """What the pre-encounter lessons teach: listed so the character recognizes it, not to say it."""
     patterns = [f"- {lesson.pattern.hanzi} ({lesson.pattern.english})" for lesson in scenario.lessons if lesson.pattern]
     words: dict[str, str] = {}
     for lesson in scenario.lessons:
@@ -101,10 +102,9 @@ def _practiced_section(scenario: ScenarioDefinition) -> str:
         return ""
     return f"""
 
-Before the scene, the learner may have practiced these sentence patterns:
+Before the scene, the learner may have practiced these sentence patterns. Listen for them in what the traveler says. They are for the traveler to say to you: don't use them to ask the traveler anything.
 {chr(10).join(patterns)}
-And these words: {", ".join(words.values())}.
-Build your lines from these patterns and words, so the learner hears what they practiced."""
+Words the learner practiced: {", ".join(words.values())}. Prefer these words in your own lines."""
 
 
 def build_system_prompt(scenario: ScenarioDefinition, completed_goal_ids: list[str]) -> str:
@@ -112,27 +112,28 @@ def build_system_prompt(scenario: ScenarioDefinition, completed_goal_ids: list[s
     role = character.role[0].lower() + character.role[1:]
     goals = "\n".join(f"- [{goal.id}] {goal.label}" for goal in scenario.goals)
     completed = ", ".join(completed_goal_ids) if completed_goal_ids else "none"
-    return f"""You are {character.name_hanzi} ({character.name_pinyin}), {role} at {scenario.setting} in {scenario.city}, China. You are role-playing a real travel situation with a beginner Mandarin learner, a traveler whose first language is English.
+    return f"""You are {character.name_hanzi} ({character.name_pinyin}), {role} at {scenario.setting} in {scenario.city}, China. You are role-playing a real travel situation with a beginner Mandarin learner, who plays the traveler. Their first language is English.
 
 Scene details: {scenario.scene_details}{_outline_section(scenario)}{_practiced_section(scenario)}
 
-The learner's goals for this scene (ids in brackets):
+The traveler's goals for this scene (ids in brackets). These are things THE TRAVELER says or asks, never you:
 {goals}
 Goals already completed: {completed}
 
 Rules for every reply:
-1. Stay in character as a friendly, patient local. Speak only Simplified Chinese in "hanzi": one or two short sentences, at most about 20 characters, using the practiced patterns and words where they fit and otherwise HSK 1-2 vocabulary.
-2. Move the scene forward. React naturally to what the learner said, then, if goals remain, ask one simple question or give one prompt that invites the learner toward the next unfinished goal. Never list or mention the goals. Once every goal is completed, wrap up the scene with a natural goodbye.
-3. The learner may write or speak Chinese, pinyin, English or a mix, and speech recognition may garble their words. Work out what they meant and respond to that.
-4. "pinyin": pinyin for "hanzi" with tone marks (nǐ hǎo), words separated by spaces, punctuation kept.
-5. "english": a natural English translation of "hanzi".
-6. "feedback": one short, warm sentence in English about the learner's last message. Praise what was right; if something was wrong, or they used English, say how to say it in Chinese. Use "" for the opening line.
-7. "corrected_hanzi" and "corrected_pinyin": the natural Chinese version of what the learner meant, when their message had mistakes or wasn't in Chinese; otherwise "". Use "" for the opening line.
-8. "suggestions": exactly 3 short things the learner could say next, easiest first, each with hanzi, pinyin and english. At least one should move toward the next unfinished goal, using a practiced pattern if one fits.
-9. "completed_goal_ids": every goal id completed so far, including earlier ones. A goal counts when the learner attempted it in Chinese or pinyin, even with mistakes. If they only used English, don't count it yet; teach the Chinese in "feedback" instead.
-10. "scenario_complete": true only when every goal is completed and your line in this reply is a natural goodbye.
-11. Never use emojis or emoticons. Don't mention being an AI or that this is a lesson unless the learner asks directly. If the learner goes off topic or says something inappropriate, politely steer back to the scene, in character.
-12. "learner_hanzi", "learner_pinyin" and "learner_english" show the learner what they just said, under their message. "learner_hanzi": their last message in Simplified Chinese exactly as they said it, keeping their words and mistakes (write pinyin as characters, leave any English words as they are); "" if it had no Chinese or pinyin. "learner_pinyin": pinyin for "learner_hanzi" with tone marks, words separated by spaces. "learner_english": a natural English translation of their whole last message; "" if it was entirely in English. Use "" for all three on the opening line."""
+1. Stay in character as a friendly, patient local. Speak only Simplified Chinese in "hanzi": one or two short sentences, at most about 20 characters, as simple as your lines in the script, using the practiced words where they fit and otherwise HSK 1-2 vocabulary.
+2. Keep to your own part. You are the local with the answers from the scene details, so never ask the traveler the questions that are theirs to ask you (where something is, what time something happens, how much something costs, a password), and never say the traveler's lines. Don't coach in "hanzi" either (no 你可以说… or 你可以问…): showing the learner what to say is the job of "feedback" and "suggestions".
+3. Move the scene forward. React naturally to what the traveler said, then, if goals remain, invite them toward the next unfinished goal the way your script lines do: offer help, or ask about their plans. When that goal is the traveler asking you something, leave the question to them, and don't give away the answer before they ask. If they seem stuck, offer help again or repeat your last question more simply. Never list or mention the goals. Once every goal is completed, wrap up the scene with a natural goodbye.
+4. The learner may write or speak Chinese, pinyin, English or a mix, and speech recognition may garble their words. Work out what they meant and respond to that.
+5. "pinyin": pinyin for "hanzi" with tone marks (nǐ hǎo), words separated by spaces, punctuation kept.
+6. "english": a natural English translation of "hanzi".
+7. "feedback": one short, warm sentence in English about the learner's last message. Praise what was right; if something was wrong, or they used English, say how to say it in Chinese. Use "" for the opening line.
+8. "corrected_hanzi" and "corrected_pinyin": the natural Chinese version of what the learner meant, when their message had mistakes or wasn't in Chinese; otherwise "". Use "" for the opening line.
+9. "suggestions": exactly 3 short things the traveler could say next, easiest first, each with hanzi, pinyin and english. At least one should move toward the next unfinished goal, using a practiced pattern if one fits.
+10. "completed_goal_ids": every goal id completed so far, including earlier ones. A goal counts when the learner attempted it in Chinese or pinyin, even with mistakes. If they only used English, don't count it yet; teach the Chinese in "feedback" instead.
+11. "scenario_complete": true only when every goal is completed and your line in this reply is a natural goodbye.
+12. Never use emojis or emoticons. Don't mention being an AI or that this is a lesson unless the learner asks directly. If the learner goes off topic or says something inappropriate, politely steer back to the scene, in character.
+13. "learner_hanzi", "learner_pinyin" and "learner_english" show the learner what they just said, under their message. "learner_hanzi": their last message in Simplified Chinese exactly as they said it, keeping their words and mistakes (write pinyin as characters, leave any English words as they are); "" if it had no Chinese or pinyin. "learner_pinyin": pinyin for "learner_hanzi" with tone marks, words separated by spaces. "learner_english": a natural English translation of their whole last message; "" if it was entirely in English. Use "" for all three on the opening line."""
 
 
 def build_messages(history: list[ChatLine], learner_text: str | None) -> list[MessageParam]:
@@ -191,6 +192,30 @@ def finalize_reply(reply: TutorReply, scenario: ScenarioDefinition, client_compl
 
 
 # ---------------------------------------------------------------------------
+# Role check: the character must not ask the traveler's questions
+# ---------------------------------------------------------------------------
+
+
+def asks_travelers_question(scenario: ScenarioDefinition, hanzi: str) -> str | None:
+    """The scene's key-phrase question that `hanzi` contains, if any. Key phrases are the learner's
+    lines, so the character saying one (e.g. 你的行李在哪里？ at the airport) has swapped roles."""
+    line = _NOT_A_WORD_RE.sub("", hanzi)
+    for phrase in scenario.key_phrases:
+        if phrase.hanzi.rstrip().endswith(("？", "?")):
+            question = _NOT_A_WORD_RE.sub("", phrase.hanzi)
+            if question and question in line:
+                return phrase.hanzi
+    return None
+
+
+def _role_swap_note(hanzi: str) -> str:
+    return (
+        f'\n\nYour last draft line was "{hanzi}". That is the traveler\'s question to ask you, not yours. '
+        "Write the reply again in your own part: answer them, offer help, or ask about their plans."
+    )
+
+
+# ---------------------------------------------------------------------------
 # Claude call
 # ---------------------------------------------------------------------------
 
@@ -232,23 +257,12 @@ def _map_error(error: Exception) -> ApiError:
     return ApiError(502, "tutor_failed", "The character couldn't answer. Try again.")
 
 
-def generate_reply(
-    scenario: ScenarioDefinition,
-    history: list[ChatLine],
-    client_completed_ids: list[str],
-    learner_text: str | None,
-) -> TutorReply:
-    client = _get_client()
-    settings = get_settings()
-    completed = merge_goal_ids(scenario, client_completed_ids)
-    system = build_system_prompt(scenario, completed)
-    messages = build_messages(history, learner_text)
-
+def _ask_claude(client: anthropic.Anthropic, system: str, messages: list[MessageParam], attempts: int) -> TutorReply:
     # No temperature / top_p / top_k: Claude Haiku 5.5 rejects sampling parameters.
-    for attempt in (1, 2):
+    for attempt in range(1, attempts + 1):
         try:
             response = client.messages.parse(
-                model=settings.anthropic_model,
+                model=get_settings().anthropic_model,
                 max_tokens=MAX_TOKENS,
                 system=system,
                 messages=messages,
@@ -256,7 +270,7 @@ def generate_reply(
                 output_format=TutorReply,
             )
         except anthropic.APIError as error:
-            if attempt == 1 and _is_retryable(error):
+            if attempt < attempts and _is_retryable(error):
                 logger.warning("Claude overloaded or timed out; retrying once")
                 continue
             logger.exception("Claude request failed")
@@ -269,6 +283,33 @@ def generate_reply(
         if reply is None:
             logger.error("Claude returned no parsed output (stop_reason=%s)", response.stop_reason)
             raise ApiError(502, "tutor_failed", "The character couldn't answer that. Try saying it another way.")
-        return finalize_reply(reply, scenario, client_completed_ids)
+        return reply
 
     raise ApiError(503, "tutor_busy", "The character is busy right now. Try again in a moment.")
+
+
+def generate_reply(
+    scenario: ScenarioDefinition,
+    history: list[ChatLine],
+    client_completed_ids: list[str],
+    learner_text: str | None,
+) -> TutorReply:
+    client = _get_client()
+    completed = merge_goal_ids(scenario, client_completed_ids)
+    system = build_system_prompt(scenario, completed)
+    messages = build_messages(history, learner_text)
+
+    reply = _ask_claude(client, system, messages, attempts=2)
+
+    # Now and then the character asks the traveler's question (e.g. 巴士在哪里？). Ask once more,
+    # without the overload retry to stay inside the Lambda timeout; if that fails, keep the first reply.
+    if asks_travelers_question(scenario, reply.hanzi):
+        logger.warning("Character said the traveler's line %r in scenario %s; asking again", reply.hanzi, scenario.id)
+        try:
+            second = _ask_claude(client, system + _role_swap_note(reply.hanzi), messages, attempts=1)
+        except ApiError:
+            second = None
+        if second is not None and not asks_travelers_question(scenario, second.hanzi):
+            reply = second
+
+    return finalize_reply(reply, scenario, client_completed_ids)
