@@ -4,7 +4,9 @@
 
 **Language + voyage.** Lingvoyage helps travelers learn the language of the country they're visiting. The first target language is **Mandarin Chinese**, taught in English.
 
-The core feature is **Encounters**: pick a travel scene (ordering noodles in Beijing, asking for your train in Shanghai, checking in to a hotel in Chengdu) and hold a spoken or typed conversation with an AI character who answers out loud in Mandarin. Every reply comes with pinyin, an optional English translation, feedback on what you said, and suggestions for what to say next.
+The core feature is **Encounters**: pick a travel scene (arriving at the airport in Chengdu, ordering noodles in Beijing, asking for your train in Shanghai, checking in to a hotel in Chengdu) and hold a spoken or typed conversation with an AI character who answers out loud in Mandarin. Every reply comes with pinyin, an optional English translation, feedback on what you said, and suggestions for what to say next.
+
+Before a scene, learners can take optional **practice lessons**: short quizzes (multiple choice and word tiles, with hints) on the sentence patterns and words the scene uses. The character then speaks with those same patterns, so the encounter matches what was practiced.
 
 ## How it fits together
 

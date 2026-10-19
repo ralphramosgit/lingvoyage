@@ -83,13 +83,37 @@ This policy can upload new code to `lingvoyage-api` and read its settings. It ca
 6. Role name: `lingvoyage-github-deploy` > **Create role**.
 7. Open the new role. Copy its **ARN** from the Summary box. It looks like `arn:aws:iam::123456789012:role/lingvoyage-github-deploy`.
 
-Check: the role's **Trust relationships** tab should contain this line:
+Check: the role's **Trust relationships** tab should contain these two lines, spelled exactly like this:
 
 ```
+"token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
 "token.actions.githubusercontent.com:sub": "repo:ralphramosgit/lingvoyage:ref:refs/heads/main"
 ```
 
-That line is what stops other repos, forks and other branches from using the role.
+The `sub` line is what stops other repos, forks and other branches from using the role. It has to match what GitHub sends **exactly**. For this repo, GitHub sends the version with the account and repo ID numbers, `repo:ralphramosgit@134979001/lingvoyage@1416221299:ref:refs/heads/main`, which the console's form doesn't produce. So **Edit trust policy**, replace everything with this and **Update policy**:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::ACCOUNT_ID:oidc-provider/token.actions.githubusercontent.com"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
+          "token.actions.githubusercontent.com:sub": "repo:ralphramosgit@134979001/lingvoyage@1416221299:ref:refs/heads/main"
+        }
+      }
+    }
+  ]
+}
+```
+
+(For another repo, the "Not authorized" row in the table at the end shows how to find the exact value GitHub sends.)
 
 ### 5. Give GitHub the role ARN
 
@@ -138,7 +162,8 @@ Open the red run in the **Actions** tab and look at which step failed.
 | `python -m pytest` | A test failed. Nothing was deployed | Run `python -m pytest` in `backend/` on your PC to see it, fix, push |
 | **Configure AWS credentials**: "Credentials could not be loaded" | The `AWS_DEPLOY_ROLE_ARN` secret is missing or misspelled | Redo step 5 |
 | **Configure AWS credentials**: "No OpenIDConnect provider found" | Step 2 wasn't done | Do step 2, then re-run |
-| **Configure AWS credentials**: "Not authorized to perform sts:AssumeRoleWithWebIdentity" | The role doesn't trust this repo or branch (a renamed repo, or a run started from another branch) | Check the trust relationship line in step 4. Run from `main` only |
+| **Configure AWS credentials**: "The web identity token provided could not be validated" | The audience isn't exactly `sts.amazonaws.com` (a typo like `sts.amazonsws.com` is easy to miss) | IAM > **Identity providers** > `token.actions.githubusercontent.com` > **Audiences**: add `sts.amazonaws.com`, remove the wrong one. Then fix the same value in the role's **Trust relationships** > **Edit trust policy**. Re-run |
+| **Configure AWS credentials**: "Not authorized to perform sts:AssumeRoleWithWebIdentity" | The role's `sub` line doesn't match what GitHub sent (the ID-number format, a renamed repo, or a run started from another branch) | See what GitHub sent: AWS Console, region **us-west-2** > **CloudTrail** > **Event history** > filter **Event name** = `AssumeRoleWithWebIdentity` > open the newest event. The text after `sts.amazonaws.com:` in `principalId` is the exact `sub`. Put it in the trust policy (step 4). Run from `main` only |
 | **Upload to Lambda**: "AccessDeniedException" | The policy isn't attached to the role, or has the wrong account ID | Role > **Permissions** tab should list `lingvoyage-deploy`. Check the account ID in its JSON |
 | **Upload to Lambda**: "ResourceConflictException ... update is in progress" | Someone deployed by hand at the same moment | Wait a minute, then **Re-run all jobs** |
 | **Check /health** fails | The new code is live but crashes on startup (an import error, or a new setting missing from the Lambda environment variables) | Lambda > `lingvoyage-api` > **Monitor** > **View CloudWatch logs**. Fix and push, or revert (above) |

@@ -110,7 +110,7 @@ create trigger on_auth_user_created
 create table if not exists public.encounter_progress (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null default auth.uid() references auth.users (id) on delete cascade,
-  scenario_id text not null,            -- 'restaurant' | 'train' | 'hotel'
+  scenario_id text not null,            -- 'airport' | 'restaurant' | 'train' | 'hotel'
   goals_completed int not null default 0,
   goals_total int not null default 0,
   completed boolean not null default false,

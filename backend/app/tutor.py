@@ -80,6 +80,33 @@ def strip_emojis(text: str) -> str:
 # ---------------------------------------------------------------------------
 
 
+def _outline_section(scenario: ScenarioDefinition) -> str:
+    if not scenario.scene_outline:
+        return ""
+    steps = "\n".join(f"{number}. {step}" for number, step in enumerate(scenario.scene_outline, start=1))
+    return f"""
+
+How the scene goes. Follow this outline in order, but let the learner lead: if they skip ahead or change the order, go with them.
+{steps}"""
+
+
+def _practiced_section(scenario: ScenarioDefinition) -> str:
+    """What the pre-encounter lessons teach, so the character speaks the language the learner practiced."""
+    patterns = [f"- {lesson.pattern.hanzi} ({lesson.pattern.english})" for lesson in scenario.lessons if lesson.pattern]
+    words: dict[str, str] = {}
+    for lesson in scenario.lessons:
+        for word in lesson.words:
+            words.setdefault(word.hanzi, f"{word.hanzi} {word.pinyin} ({word.english})")
+    if not patterns and not words:
+        return ""
+    return f"""
+
+Before the scene, the learner may have practiced these sentence patterns:
+{chr(10).join(patterns)}
+And these words: {", ".join(words.values())}.
+Build your lines from these patterns and words, so the learner hears what they practiced."""
+
+
 def build_system_prompt(scenario: ScenarioDefinition, completed_goal_ids: list[str]) -> str:
     character = scenario.character
     role = character.role[0].lower() + character.role[1:]
@@ -87,21 +114,21 @@ def build_system_prompt(scenario: ScenarioDefinition, completed_goal_ids: list[s
     completed = ", ".join(completed_goal_ids) if completed_goal_ids else "none"
     return f"""You are {character.name_hanzi} ({character.name_pinyin}), {role} at {scenario.setting} in {scenario.city}, China. You are role-playing a real travel situation with a beginner Mandarin learner, a traveler whose first language is English.
 
-Scene details: {scenario.scene_details}
+Scene details: {scenario.scene_details}{_outline_section(scenario)}{_practiced_section(scenario)}
 
 The learner's goals for this scene (ids in brackets):
 {goals}
 Goals already completed: {completed}
 
 Rules for every reply:
-1. Stay in character as a friendly, patient local. Speak only Simplified Chinese in "hanzi": one or two short sentences, at most about 20 characters, using HSK 1-2 vocabulary wherever possible.
+1. Stay in character as a friendly, patient local. Speak only Simplified Chinese in "hanzi": one or two short sentences, at most about 20 characters, using the practiced patterns and words where they fit and otherwise HSK 1-2 vocabulary.
 2. Move the scene forward. React naturally to what the learner said, then, if goals remain, ask one simple question or give one prompt that invites the learner toward the next unfinished goal. Never list or mention the goals. Once every goal is completed, wrap up the scene with a natural goodbye.
 3. The learner may write or speak Chinese, pinyin, English or a mix, and speech recognition may garble their words. Work out what they meant and respond to that.
 4. "pinyin": pinyin for "hanzi" with tone marks (nǐ hǎo), words separated by spaces, punctuation kept.
 5. "english": a natural English translation of "hanzi".
 6. "feedback": one short, warm sentence in English about the learner's last message. Praise what was right; if something was wrong, or they used English, say how to say it in Chinese. Use "" for the opening line.
 7. "corrected_hanzi" and "corrected_pinyin": the natural Chinese version of what the learner meant, when their message had mistakes or wasn't in Chinese; otherwise "". Use "" for the opening line.
-8. "suggestions": exactly 3 short things the learner could say next, easiest first, each with hanzi, pinyin and english. At least one should move toward the next unfinished goal.
+8. "suggestions": exactly 3 short things the learner could say next, easiest first, each with hanzi, pinyin and english. At least one should move toward the next unfinished goal, using a practiced pattern if one fits.
 9. "completed_goal_ids": every goal id completed so far, including earlier ones. A goal counts when the learner attempted it in Chinese or pinyin, even with mistakes. If they only used English, don't count it yet; teach the Chinese in "feedback" instead.
 10. "scenario_complete": true only when every goal is completed and your line in this reply is a natural goodbye.
 11. Never use emojis or emoticons. Don't mention being an AI or that this is a lesson unless the learner asks directly. If the learner goes off topic or says something inappropriate, politely steer back to the scene, in character.

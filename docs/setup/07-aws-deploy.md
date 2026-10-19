@@ -118,7 +118,7 @@ That's 12 variables: `APP_ENV`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `ELE
 
 1. **Configuration** > **Function URL**: copy the URL (like `https://abc123xyz.lambda-url.us-west-2.on.aws/`).
 2. In your browser, open that URL followed by `health`, e.g. `https://abc123xyz.lambda-url.us-west-2.on.aws/health`. You should see `{"status":"ok"}`.
-3. Open `.../scenarios`: you should see the three Encounters (restaurant, train, hotel) as JSON.
+3. Open `.../scenarios`: you should see the four Encounters (airport, restaurant, train, hotel) as JSON.
 4. Open `.../docs` to see the API page, now served from AWS. Trying `/tts` or `/conversation/...` from there returns **401**: that's correct, those need a logged-in user from the app.
 
 The very first request after a deploy (or after a quiet spell) takes a second or two longer while Lambda starts up. That's normal.

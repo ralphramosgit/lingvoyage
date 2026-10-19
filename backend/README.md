@@ -18,6 +18,7 @@ FastAPI app (Python 3.13). Runs locally with uvicorn and on AWS Lambda (Function
 
 - `app/config.py` settings (environment variables first, then `backend/.env`)
 - `app/scenarios.py` Encounter content, the single source of truth
+- `app/lessons.py` Practice lessons for each encounter (sentence patterns, words, quiz questions); checked when the module loads
 - `app/auth.py` Supabase token check (cached 5 minutes)
 - `app/speech.py` ElevenLabs Text to Speech and Speech to Text
 - `app/tutor.py` Claude prompt, structured output and clean-up

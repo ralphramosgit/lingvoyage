@@ -170,5 +170,14 @@ def test_system_prompt_includes_scene_goals_and_progress() -> None:
     assert '"learner_hanzi"' in prompt and '"learner_english"' in prompt
 
 
+def test_system_prompt_follows_the_outline_and_practiced_language() -> None:
+    prompt = build_system_prompt(_scenario("airport"), [])
+    assert "1. Greet the learner: 你好！" in prompt
+    assert "我要去酒店。" in prompt
+    assert "- [place] + 在哪里？ (Where is [place]?)" in prompt
+    assert "行李 xíngli (luggage)" in prompt
+    assert prompt.count("哪里 nǎlǐ (where)") == 1
+
+
 def test_system_prompt_with_no_progress_says_none() -> None:
     assert "Goals already completed: none" in build_system_prompt(_scenario("hotel"), [])
