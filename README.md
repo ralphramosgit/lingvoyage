@@ -38,3 +38,11 @@ Follow the guides in [`docs/setup/`](docs/setup/00-START-HERE.md) in order. In s
 5. Deploy the backend to AWS Lambda before the demo ([07](docs/setup/07-aws-deploy.md)).
 
 Something broken? See [08-troubleshooting](docs/setup/08-troubleshooting.md).
+
+## Team guides
+
+| Guide | For |
+|---|---|
+| [Test Lingvoyage on your phone](docs/team/03-test-on-your-phone.md) | Everyone: open the latest version in Expo Go |
+| [Dev environment guide](docs/team/02-dev-environment-guide.md) | Developers: set up, branch naming (`issue-<number>`) and pull requests |
+| [Lead developer guide](docs/team/01-lead-developer-guide.md) | The lead: who gets access to what, and how it's locked down |
