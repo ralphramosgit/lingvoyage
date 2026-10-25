@@ -1,6 +1,6 @@
 import { Keyboard, Lightbulb, type LucideIcon, Mic, RotateCcw, SendHorizontal, Square, X } from 'lucide-react-native';
 import { type ReactNode, type Ref, useEffect } from 'react';
-import { ActivityIndicator, Platform, StyleSheet, TextInput, View, type ViewStyle } from 'react-native';
+import { ActivityIndicator, Platform, StyleSheet, TextInput, type TextInputInstance, View, type ViewStyle } from 'react-native';
 import Animated, {
   cancelAnimation,
   FadeIn,
@@ -198,7 +198,7 @@ export function InputBar({
   onToggleSuggestions: () => void;
   hint: string | null;
   bottomInset: number;
-  inputRef: Ref<TextInput>;
+  inputRef: Ref<TextInputInstance>;
 }) {
   const disabled = busy || locked;
   const recording = micState === 'recording';

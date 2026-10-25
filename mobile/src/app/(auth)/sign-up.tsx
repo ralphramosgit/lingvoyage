@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { Eye, EyeOff, Lock, Mail, MailCheck, User } from 'lucide-react-native';
 import { useRef, useState } from 'react';
-import { StyleSheet, type TextInput, View } from 'react-native';
+import { StyleSheet, type TextInputInstance, View } from 'react-native';
 
 import { AuthScaffold } from '@/components/AuthScaffold';
 import { Button } from '@/components/Button';
@@ -25,8 +25,8 @@ export default function SignUpScreen() {
   const [formError, setFormError] = useState<string | null>(null);
   const [needsConfirmation, setNeedsConfirmation] = useState(false);
 
-  const emailRef = useRef<TextInput>(null);
-  const passwordRef = useRef<TextInput>(null);
+  const emailRef = useRef<TextInputInstance>(null);
+  const passwordRef = useRef<TextInputInstance>(null);
 
   // Inline validation shows after the first submit attempt, then updates as the user types.
   const errors = {

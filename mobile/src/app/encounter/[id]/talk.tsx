@@ -10,8 +10,9 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  type ScrollViewInstance,
   StyleSheet,
-  type TextInput,
+  type TextInputInstance,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -63,8 +64,8 @@ export default function TalkScreen() {
   const [sheetVisible, setSheetVisible] = useState(false);
   const [keyboardOpen, setKeyboardOpen] = useState(false);
 
-  const scrollRef = useRef<ScrollView>(null);
-  const inputRef = useRef<TextInput>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
+  const inputRef = useRef<TextInputInstance>(null);
   const started = useRef(false);
   const progressSaved = useRef(false);
   const stopping = useRef(false);

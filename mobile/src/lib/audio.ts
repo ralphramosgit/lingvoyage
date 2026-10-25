@@ -127,7 +127,7 @@ function audioDirectory(): Directory {
 export function saveBase64Audio(base64: string, fileName: string): string {
   const file = new File(audioDirectory(), fileName);
   file.create({ overwrite: true });
-  file.write(base64, { encoding: 'base64' });
+  file.writeSync(base64, { encoding: 'base64' });
   return file.uri;
 }
 
