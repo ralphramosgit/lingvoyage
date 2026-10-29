@@ -1,0 +1,163 @@
+import { build, gap, listen, match, meaning, p, quiz, reply, which } from './build';
+import type { Unit } from './types';
+
+export const LUCK: Unit = {
+  id: 'luck',
+  part: 'culture',
+  title: 'Luck, gifts and festivals',
+  summary: 'Lucky numbers and colors, gifts to avoid, and the big holidays.',
+  icon: 'Gift',
+  scene:
+    'Sounds matter in Chinese: words that sound like “rich” or “death” give numbers, colors and gifts their meaning. Knowing a few makes sense of a lot of what you see.',
+  canDo: ['Know which numbers and colors are lucky', 'Avoid gifts that send the wrong message', 'Wish people well at festivals'],
+  buildsOn: ['numbers', 'manners'],
+  lessons: [
+    {
+      id: 'lucky-numbers',
+      title: 'Lucky and unlucky numbers',
+      summary: 'Why 8 is great and 4 is not.',
+      pattern: null,
+      examples: [
+        p('八', 'bā', '8: sounds like 发 (fā), getting rich'),
+        p('四', 'sì', '4: sounds like 死 (sǐ), death'),
+        p('六六大顺', 'liùliù dà shùn', '66: everything goes smoothly'),
+        p('九', 'jiǔ', '9: sounds like 久 (jiǔ), long-lasting'),
+      ],
+      words: [
+        p('发', 'fā', 'get rich'),
+        p('死', 'sǐ', 'die, death'),
+        p('久', 'jiǔ', 'a long time'),
+        p('顺', 'shùn', 'smooth'),
+        p('吉利', 'jílì', 'lucky'),
+        p('不吉利', 'bù jílì', 'unlucky'),
+      ],
+      tip: '520 (wǔ èr líng) sounds a little like 我爱你 (wǒ ài nǐ, I love you), so May 20 has become a day for couples.',
+      culture: {
+        title: "Numbers you'll notice",
+        body: 'Phone numbers and license plates full of 8s sell for extra, and prices often end in 8. Some buildings skip the 4th, 14th and 24th floors. Money gifts often come in lucky amounts, like 88 or 666 yuan.',
+      },
+      exercises: [
+        quiz(
+          'Why is 8 (八 bā) a lucky number?',
+          ['It sounds like 发 (fā), getting rich', 'It looks like a dragon', "It's the emperor's number"],
+          'Listen to the sound: bā, fā.',
+          p('八', 'bā', 'eight'),
+        ),
+        quiz(
+          'Why do some buildings skip the 4th floor?',
+          ['四 (sì) sounds like 死 (sǐ), death', "4 is the emperor's number", "It's bad luck for elevators"],
+          'sì and sǐ sound alike.',
+          p('四', 'sì', 'four'),
+        ),
+        listen(p('八', 'bā', '8'), ['4', '6', '9'], 'bā: high and flat.', 'Which number did you hear?'),
+        meaning(p('六六大顺', 'liùliù dà shùn', 'Everything goes smoothly'), ['Six people', 'Happy birthday'], '顺 (shùn) means smooth.', 'People say this as a good wish. What does it mean?'),
+        which(p('吉利', 'jílì', 'lucky'), ['不吉利 bù jílì', '久 jiǔ'], '吉 (jí) is good fortune.', 'Which word means “lucky”?'),
+        match(
+          [p('八', 'bā', 'getting rich'), p('四', 'sì', 'bad luck'), p('六', 'liù', 'smooth'), p('九', 'jiǔ', 'long-lasting')],
+          'Think of the words they sound like: 发, 死, 顺, 久.',
+        ),
+        build('六六 liùliù|大顺 dà shùn', '四 sì', 'Six-six + big smooth.', p('六六大顺', 'liùliù dà shùn', 'Everything goes smoothly'), 'Build the good wish: “Everything goes smoothly”'),
+      ],
+    },
+    {
+      id: 'colors-gifts',
+      title: 'Colors and gifts',
+      summary: 'Red for luck, and gifts to avoid.',
+      pattern: p('送[gift]', 'sòng [gift]', 'give [gift] as a present'),
+      examples: [
+        p('红色', 'hóngsè', 'Red: luck and happiness'),
+        p('白色', 'báisè', 'White: traditionally for funerals'),
+        p('红包', 'hóngbāo', 'Red envelope (with money inside)'),
+        p('送钟', 'sòng zhōng', 'Give a clock (sounds like 送终, a funeral)'),
+      ],
+      words: [
+        p('送', 'sòng', 'give (as a gift)'),
+        p('红包', 'hóngbāo', 'red envelope'),
+        p('钟', 'zhōng', 'clock'),
+        p('伞', 'sǎn', 'umbrella'),
+        p('散', 'sàn', 'break up, scatter'),
+        p('绿帽子', 'lǜ màozi', 'green hat'),
+      ],
+      tip: 'Money is a normal gift in China, for weddings, birthdays and New Year, in a red envelope (红包). Avoid amounts with a 4 in them.',
+      culture: {
+        title: 'Gifts to skip',
+        body: "A clock (钟 zhōng) is the classic bad gift: 送钟 (give a clock) sounds like 送终, seeing someone to their death. An umbrella (伞 sǎn) sounds like 散 (sàn, break up), and a green hat means a man's partner is cheating on him. Wrap gifts in red or gold, not white or black.",
+      },
+      exercises: [
+        quiz('Which color means luck and happiness?', ['Red', 'White', 'Black'], "It's the color of New Year decorations and red envelopes.", p('红色', 'hóngsè', 'red')),
+        quiz(
+          'Why is a clock a bad gift?',
+          ['送钟 (give a clock) sounds like 送终 (a funeral)', 'Clocks are too expensive', 'Clocks mean you think someone is late'],
+          'Listen to the sounds: sòng zhōng.',
+          p('送钟', 'sòng zhōng', 'give a clock'),
+        ),
+        meaning(p('红包', 'hóngbāo', 'Red envelope (with money)'), ['Red bag', 'Birthday cake'], '红 (hóng) is red, and 包 (bāo) is a bag or packet.'),
+        quiz(
+          "What's a safe gift to bring a Chinese host?",
+          ['Something from your home country, or fruit or tea', 'A clock', 'A green hat'],
+          'Avoid gifts whose names sound unlucky.',
+          p('礼物', 'lǐwù', 'gift'),
+        ),
+        which(p('伞', 'sǎn', 'umbrella'), ['钟 zhōng', '红包 hóngbāo'], '伞 (sǎn) sounds like 散 (sàn), break up.', 'Which gift might suggest breaking up?'),
+        build('这 zhè|是 shì|一个 yí gè|红包 hóngbāo', '钟 zhōng', 'This + is + a + red envelope.', p('这是一个红包。', 'Zhè shì yí gè hóngbāo.', 'This is a red envelope.')),
+      ],
+    },
+    {
+      id: 'festivals',
+      title: 'Festivals',
+      summary: 'New Year wishes, and the holidays to know.',
+      pattern: p('[festival]快乐！', '[festival] kuàilè!', 'Happy [festival]!'),
+      examples: [
+        p('新年快乐！', 'Xīnnián kuàilè!', 'Happy New Year!'),
+        p('春节快乐！', 'Chūnjié kuàilè!', 'Happy Spring Festival!'),
+        p('恭喜发财！', 'Gōngxǐ fācái!', 'Wishing you wealth! (a New Year greeting)'),
+        p('中秋节快乐！', 'Zhōngqiū Jié kuàilè!', 'Happy Mid-Autumn Festival!'),
+        p('生日快乐！', 'Shēngrì kuàilè!', 'Happy birthday!'),
+      ],
+      words: [
+        p('快乐', 'kuàilè', 'happy'),
+        p('新年', 'xīnnián', 'new year'),
+        p('春节', 'Chūnjié', 'Spring Festival (Chinese New Year)'),
+        p('恭喜发财', 'gōngxǐ fācái', 'wishing you wealth'),
+        p('中秋节', 'Zhōngqiū Jié', 'Mid-Autumn Festival'),
+        p('月饼', 'yuèbing', 'mooncake'),
+        p('生日', 'shēngrì', 'birthday'),
+      ],
+      tip: "Anything + 快乐 is a wish: 新年快乐 (happy New Year), 生日快乐 (happy birthday). At Chinese New Year you'll also hear 恭喜发财, and people often say it right back.",
+      culture: {
+        title: 'The big holidays',
+        body: 'Spring Festival (春节, in January or February) is the biggest: families gather, red decorations go up, and many shops close for days. Mid-Autumn Festival (中秋节, September or October) is for mooncakes and the full moon. National Day (国庆节, October 1) starts a week-long holiday when the whole country travels.',
+      },
+      exercises: [
+        meaning(p('新年快乐！', 'Xīnnián kuàilè!', 'Happy New Year!'), ['Happy birthday!', 'Merry Christmas!'], '新年 (xīnnián) is the new year, and 快乐 is happy.'),
+        meaning(
+          p('恭喜发财！', 'Gōngxǐ fācái!', 'Wishing you wealth!'),
+          ['Happy birthday!', 'Thank you very much!'],
+          '发财 (fācái) is getting rich, like the lucky 8.',
+          'At Chinese New Year, a shop owner says this. What does it mean?',
+        ),
+        reply(
+          'A friend wishes you 新年快乐！ What do you say back?',
+          p('新年快乐！', 'Xīnnián kuàilè!', 'Happy New Year!'),
+          p('新年快乐！', 'Xīnnián kuàilè!', 'Happy New Year!'),
+          ['生日快乐！ Shēngrì kuàilè!', '不客气。 Bú kèqi.'],
+          'Wish them the same thing back.',
+        ),
+        quiz(
+          'Which festival is the time for mooncakes?',
+          ['Mid-Autumn Festival (中秋节)', 'Spring Festival (春节)', 'National Day (国庆节)'],
+          "It's when the moon is full and round, like the cakes.",
+          p('月饼', 'yuèbing', 'mooncake'),
+        ),
+        gap('Happy birthday!', '__快乐！', '__ kuàilè!', ['生日 Shēngrì', '新年 Xīnnián', '春节 Chūnjié'], '生日 (shēngrì) is a birthday.', p('生日快乐！', 'Shēngrì kuàilè!', 'Happy birthday!')),
+        quiz(
+          'Why is the first week of October a tricky time to travel in China?',
+          ['Everyone travels: trains sell out and sights are packed', 'Everything is closed', "Foreigners can't travel then"],
+          "It's a week-long holiday for the whole country.",
+          p('国庆节', 'Guóqìng Jié', 'National Day'),
+        ),
+        build('春节 Chūnjié|快乐 kuàilè', '生日 shēngrì', 'Spring Festival + happy.', p('春节快乐！', 'Chūnjié kuàilè!', 'Happy Spring Festival!')),
+      ],
+    },
+  ],
+};

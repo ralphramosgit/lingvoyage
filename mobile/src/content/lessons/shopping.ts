@@ -1,0 +1,158 @@
+import { build, gap, listen, match, meaning, p, quiz, reply, which } from './build';
+import type { Unit } from './types';
+
+export const SHOPPING: Unit = {
+  id: 'shopping',
+  part: 'trip',
+  title: 'Shopping',
+  summary: 'Ask for what you want, in the right size and color.',
+  icon: 'ShoppingBag',
+  scene:
+    "From night markets to giant malls, shopping in China is an event. Here's how to find what you want, in your size, and leave politely if you don't buy.",
+  canDo: ['Ask if they have something', 'Ask for another size or color', "Say you're just looking, or that you'll take it"],
+  buildsOn: ['first-sentences', 'money'],
+  lessons: [
+    {
+      id: 'have-it',
+      title: 'Do you have…?',
+      summary: "Ask for what you're looking for.",
+      pattern: p('有[thing]吗？', 'Yǒu [thing] ma?', 'Do you have [thing]?'),
+      examples: [
+        p('有雨伞吗？', 'Yǒu yǔsǎn ma?', 'Do you have umbrellas?'),
+        p('有大一点的吗？', 'Yǒu dà yìdiǎn de ma?', 'Do you have a bigger one?'),
+        p('有小一点的吗？', 'Yǒu xiǎo yìdiǎn de ma?', 'Do you have a smaller one?'),
+        p('卖完了。', 'Mài wán le.', "It's sold out."),
+      ],
+      words: [
+        p('大', 'dà', 'big'),
+        p('小', 'xiǎo', 'small'),
+        p('一点', 'yìdiǎn', 'a little (…er)'),
+        p('的', 'de', 'one (as in “a bigger one”)'),
+        p('雨伞', 'yǔsǎn', 'umbrella'),
+        p('卖完了', 'mài wán le', 'sold out'),
+      ],
+      tip: '大一点的 is “a little bigger one”. Swap in any adjective: 便宜一点的 (a cheaper one), 小一点的 (a smaller one).',
+      culture: {
+        title: 'Open late',
+        body: 'Big cities have huge malls with fixed prices and small markets where you can haggle. Many shops stay open until 10 pm, and convenience stores like FamilyMart and 7-Eleven are often open 24 hours.',
+      },
+      exercises: [
+        meaning(p('有大一点的吗？', 'Yǒu dà yìdiǎn de ma?', 'Do you have a bigger one?'), ['Is this one big?', 'Do you have a cheaper one?'], '大 (dà) is big, and 一点 is “a little more”.'),
+        which(
+          p('有小一点的吗？', 'Yǒu xiǎo yìdiǎn de ma?', 'Do you have a smaller one?'),
+          ['有大一点的吗？ Yǒu dà yìdiǎn de ma?', '有便宜一点的吗？ Yǒu piányi yìdiǎn de ma?'],
+          '小 (xiǎo) is small.',
+          'The shirt is too big. What do you ask?',
+        ),
+        listen(p('卖完了。', 'Mài wán le.', "It's sold out."), ["We don't sell that.", "It's over there.", 'Too expensive.'], '完 (wán) means finished.', 'You ask for an umbrella. What did the shop assistant say?'),
+        gap(
+          'Do you have a cheaper one?',
+          '有__一点的吗？',
+          'Yǒu __ yìdiǎn de ma?',
+          ['便宜 piányi', '贵 guì', '大 dà'],
+          '便宜 (piányi) is cheap.',
+          p('有便宜一点的吗？', 'Yǒu piányi yìdiǎn de ma?', 'Do you have a cheaper one?'),
+        ),
+        build('有 yǒu|雨伞 yǔsǎn|吗 ma', '大 dà', 'Have + umbrella + the question word.', p('有雨伞吗？', 'Yǒu yǔsǎn ma?', 'Do you have umbrellas?')),
+      ],
+    },
+    {
+      id: 'colors-sizes',
+      title: 'Colors and sizes',
+      summary: 'Ask for another color or size.',
+      pattern: p('有[color]的吗？', 'Yǒu [color] de ma?', 'Do you have a [color] one?'),
+      examples: [
+        p('有红色的吗？', 'Yǒu hóngsè de ma?', 'Do you have a red one?'),
+        p('我要黑色的。', 'Wǒ yào hēisè de.', "I'd like the black one."),
+        p('有大号吗？', 'Yǒu dà hào ma?', 'Do you have a large?'),
+        p('什么颜色？', 'Shénme yánsè?', 'What color?'),
+      ],
+      words: [
+        p('颜色', 'yánsè', 'color'),
+        p('红色', 'hóngsè', 'red'),
+        p('黑色', 'hēisè', 'black'),
+        p('白色', 'báisè', 'white'),
+        p('蓝色', 'lánsè', 'blue'),
+        p('大号', 'dà hào', 'large (size)'),
+        p('中号', 'zhōng hào', 'medium'),
+        p('小号', 'xiǎo hào', 'small (size)'),
+      ],
+      tip: 'Add 的 to a color to mean “a … one”: 红色的 is “a red one”. Sizes use 号: 大号 (L), 中号 (M), 小号 (S).',
+      culture: {
+        title: 'Sizes run small',
+        body: 'Clothes in China often run smaller than in Western countries, so you may need a size or two up. Shoe sizes use European numbers, like 42.',
+      },
+      exercises: [
+        meaning(p('有红色的吗？', 'Yǒu hóngsè de ma?', 'Do you have a red one?'), ['Is this red?', 'I want the black one.'], '红色 (hóngsè) is red, and 的 means “one”.'),
+        match(
+          [p('红色', 'hóngsè', 'red'), p('黑色', 'hēisè', 'black'), p('白色', 'báisè', 'white'), p('蓝色', 'lánsè', 'blue')],
+          '色 (sè) means color, so each one is “something-color”.',
+        ),
+        which(p('大号', 'dà hào', 'large'), ['小号 xiǎo hào', '中号 zhōng hào'], '大 (dà) is big.', 'Which one is size L?'),
+        listen(
+          p('我们只有黑色的。', 'Wǒmen zhǐ yǒu hēisè de.', 'We only have black.'),
+          ['We only have white.', 'We have every color.', 'Black is sold out.'],
+          '只有 (zhǐ yǒu) means “only have”.',
+          'You ask for a blue one. What did you hear?',
+        ),
+        gap("I'd like the white one.", '我要__的。', 'Wǒ yào __ de.', ['白色 báisè', '红色 hóngsè', '颜色 yánsè'], '白色 (báisè) is white.', p('我要白色的。', 'Wǒ yào báisè de.', "I'd like the white one.")),
+        build('有 yǒu|中号 zhōng hào|吗 ma', '大号 dà hào', 'Have + medium + the question word.', p('有中号吗？', 'Yǒu zhōng hào ma?', 'Do you have a medium?')),
+      ],
+    },
+    {
+      id: 'just-looking',
+      title: "Just looking, or I'll take it",
+      summary: 'Browse in peace, try things on, and decide.',
+      pattern: p('我看看。', 'Wǒ kànkan.', "I'm just looking."),
+      examples: [
+        p('我看看。', 'Wǒ kànkan.', "I'm just looking."),
+        p('可以试试吗？', 'Kěyǐ shìshi ma?', 'Can I try it on?'),
+        p('我要这个。', 'Wǒ yào zhège.', "I'll take this one."),
+        p('不要了，谢谢。', 'Bú yào le, xièxie.', "I'll leave it, thanks."),
+        p('试衣间在哪里？', 'Shìyījiān zài nǎlǐ?', "Where's the fitting room?"),
+      ],
+      words: [
+        p('看看', 'kànkan', 'have a look'),
+        p('试试', 'shìshi', 'try'),
+        p('试衣间', 'shìyījiān', 'fitting room'),
+        p('不要了', 'bú yào le', "I'll leave it"),
+        p('好看', 'hǎokàn', 'good-looking, nice'),
+      ],
+      tip: 'Saying a verb twice makes it light and casual: 看看 (have a little look), 试试 (give it a try).',
+      culture: {
+        title: 'Shop assistants stay close',
+        body: "In many shops an assistant will follow you around and suggest things. It's meant as good service. 我看看 (I'm just looking) is a friendly way to get some space.",
+      },
+      exercises: [
+        meaning(p('我看看。', 'Wǒ kànkan.', "I'm just looking."), ["I'll take it.", 'Can I try it on?'], '看 (kàn) is look: “I\'ll have a look”.'),
+        reply(
+          "A shop assistant asks what you're after. You're just browsing. What do you say?",
+          p('你要什么？', 'Nǐ yào shénme?', 'What are you looking for?'),
+          p('我看看。', 'Wǒ kànkan.', "I'm just looking."),
+          ['我要这个。 Wǒ yào zhège.', '太贵了。 Tài guì le.'],
+          '看看 means “have a look”.',
+        ),
+        which(
+          p('可以试试吗？', 'Kěyǐ shìshi ma?', 'Can I try it on?'),
+          ['可以打包吗？ Kěyǐ dǎbāo ma?', '可以刷卡吗？ Kěyǐ shuā kǎ ma?'],
+          '试 (shì) is try.',
+          'You want to try on a jacket. What do you ask?',
+        ),
+        gap("I'll leave it, thanks.", '不要__，谢谢。', 'Bú yào __, xièxie.', ['了 le', '吗 ma', '的 de'], '不要了 is a polite “not this time”.', p('不要了，谢谢。', 'Bú yào le, xièxie.', "I'll leave it, thanks.")),
+        meaning(
+          p('很好看！', 'Hěn hǎokàn!', 'It looks great!'),
+          ["It's delicious!", "It's too small!"],
+          '好看 is “good to look at”, like 好吃 is “good to eat”.',
+          'You try something on, and the assistant says this. What does it mean?',
+        ),
+        quiz(
+          'A shop assistant keeps following you around. What does it mean?',
+          ["They're trying to give good service", "They think you'll steal something", 'They want you to leave'],
+          'A friendly 我看看 gets you some space.',
+          p('我看看。', 'Wǒ kànkan.', "I'm just looking."),
+        ),
+        build('试衣间 shìyījiān|在 zài|哪里 nǎlǐ', '看看 kànkan', 'Fitting room + is at + where.', p('试衣间在哪里？', 'Shìyījiān zài nǎlǐ?', "Where's the fitting room?")),
+      ],
+    },
+  ],
+};

@@ -7,12 +7,14 @@ import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { Button } from '@/components/Button';
 import { SpeakerButton } from '@/components/SpeakerButton';
 import { Text } from '@/components/Text';
+import type { UnitExercise } from '@/content/lessons/types';
 import { hasBlank, isBuildRight, pickOne, RIGHT_MESSAGES, shuffled, WRONG_MESSAGES } from '@/lib/lessons';
 import { colors, layout, motion, radii, spacing } from '@/theme/theme';
-import type { Exercise, KeyPhrase } from '@/types/api';
+import type { KeyPhrase } from '@/types/api';
 
 import { BuildAnswer } from './BuildAnswer';
 import { ChoiceAnswer } from './ChoiceAnswer';
+import { MatchAnswer } from './MatchAnswer';
 
 /** After this many misses the answer is shown, so nobody gets stuck. */
 const MISSES_BEFORE_REVEAL = 2;
@@ -28,6 +30,8 @@ const PANELS = {
 /**
  * One question: the prompt, the answer area, and a bottom panel with Hint / Check, then
  * friendly feedback. Mount it with a `key` per question so its state starts fresh.
+ * Encounter practice lessons only send choice and build questions; listen and match
+ * come from the Lessons tab.
  */
 export function ExerciseStep({
   exercise,
@@ -37,7 +41,7 @@ export function ExerciseStep({
   onAudioError,
   onDone,
 }: {
-  exercise: Exercise;
+  exercise: UnitExercise;
   isLast: boolean;
   showPinyin: boolean;
   bottomInset: number;
@@ -50,9 +54,9 @@ export function ExerciseStep({
   const [hintShown, setHintShown] = useState(false);
   const [message, setMessage] = useState('');
 
-  // Choice: options in a shuffled order. Build: answer and extra tiles shuffled together.
+  // Choice and listen: options in a shuffled order. Build: answer and extra tiles shuffled together.
   const [order] = useState(() =>
-    exercise.kind === 'choice' ? shuffled(exercise.options.map((_, index) => index)) : [],
+    exercise.kind === 'choice' || exercise.kind === 'listen' ? shuffled(exercise.options.map((_, index) => index)) : [],
   );
   const [bank] = useState(() => (exercise.kind === 'build' ? shuffled([...exercise.tiles, ...exercise.extra_tiles]) : []));
   const [selected, setSelected] = useState<number | null>(null);
@@ -60,31 +64,37 @@ export function ExerciseStep({
   const [picked, setPicked] = useState<number[]>([]);
 
   const answering = status === 'answering';
-  const ready = exercise.kind === 'choice' ? selected !== null : picked.length > 0;
+  const answered = status === 'right' || status === 'revealed';
+  const ready = exercise.kind === 'build' ? picked.length > 0 : selected !== null;
+
+  const cheer = () => {
+    const message = pickOne(RIGHT_MESSAGES);
+    setMessage(message);
+    setStatus('right');
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    AccessibilityInfo.announceForAccessibility(message);
+  };
 
   const check = () => {
-    if (!ready || !answering) return;
+    // Match pairs checks itself as each pair is tapped.
+    if (exercise.kind === 'match' || !ready || !answering) return;
     const right =
-      exercise.kind === 'choice'
-        ? selected === exercise.answer
-        : isBuildRight(
+      exercise.kind === 'build'
+        ? isBuildRight(
             exercise,
             picked.map((index) => bank[index].hanzi),
-          );
+          )
+        : selected === exercise.answer;
 
     if (right) {
-      const cheer = pickOne(RIGHT_MESSAGES);
-      setMessage(cheer);
-      setStatus('right');
-      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      AccessibilityInfo.announceForAccessibility(cheer);
+      cheer();
       return;
     }
 
     const nextMisses = misses + 1;
     setMisses(nextMisses);
     setHintShown(true);
-    if (exercise.kind === 'choice' && selected !== null) setMissedOptions((current) => [...current, selected]);
+    if (exercise.kind !== 'build' && selected !== null) setMissedOptions((current) => [...current, selected]);
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (nextMisses >= MISSES_BEFORE_REVEAL) {
       setMessage("Here's the answer");
@@ -101,6 +111,11 @@ export function ExerciseStep({
   const tryAgain = () => {
     setSelected(null);
     setStatus('answering');
+  };
+
+  const missPair = () => {
+    setMisses((count) => count + 1);
+    setHintShown(true);
   };
 
   let lineState: 'building' | 'right' | 'missed' = 'building';
@@ -132,20 +147,47 @@ export function ExerciseStep({
               )}
             </View>
           ) : null}
+          {exercise.kind === 'listen' ? (
+            <View style={styles.questionCard}>
+              {/* The text stays hidden until it's answered: the point is to hear it. */}
+              <View style={styles.flex}>
+                {answered ? (
+                  <>
+                    <Text variant="hanziLarge">{exercise.solution.hanzi}</Text>
+                    {showPinyin ? (
+                      <Text variant="label" color={colors.inkMuted}>
+                        {exercise.solution.pinyin}
+                      </Text>
+                    ) : null}
+                  </>
+                ) : (
+                  <Text variant="bodyMedium" color={colors.inkMuted}>
+                    Tap to listen, as often as you like.
+                  </Text>
+                )}
+              </View>
+              <SpeakerButton text={exercise.audio} slow label="Play it slowly" size={44} onError={onAudioError} />
+              <SpeakerButton text={exercise.audio} label="Play it" size={56} onError={onAudioError} />
+            </View>
+          ) : null}
         </Animated.View>
 
-        {exercise.kind === 'choice' ? (
+        {exercise.kind === 'choice' || exercise.kind === 'listen' ? (
           <ChoiceAnswer
             exercise={exercise}
             order={order}
             selected={selected}
             missed={missedOptions}
             locked={!answering}
-            showRight={status === 'right' || status === 'revealed'}
+            showRight={answered}
             showPinyin={showPinyin}
             onSelect={setSelected}
           />
-        ) : (
+        ) : null}
+        {exercise.kind === 'match' ? (
+          <MatchAnswer pairs={exercise.pairs} showPinyin={showPinyin} onMiss={missPair} onComplete={cheer} />
+        ) : null}
+        {exercise.kind === 'build' ? (
           <BuildAnswer
             bank={bank}
             picked={picked}
@@ -155,7 +197,7 @@ export function ExerciseStep({
             onPick={(index) => setPicked((current) => [...current, index])}
             onUnpick={(index) => setPicked((current) => current.filter((item) => item !== index))}
           />
-        )}
+        ) : null}
 
         {hintShown && answering ? (
           <Animated.View entering={FadeIn.duration(motion.base)} style={styles.hint} accessibilityLiveRegion="polite">
@@ -169,7 +211,23 @@ export function ExerciseStep({
 
       <View style={[styles.dock, { paddingBottom: Math.max(bottomInset, spacing.md) + spacing.sm }]}>
         <View style={styles.column}>
-          {answering ? (
+          {answering && exercise.kind === 'match' ? (
+            hintShown ? (
+              <Text variant="caption" align="center" color={colors.inkMuted} style={styles.matchNote}>
+                Tap one on each side to make a pair.
+              </Text>
+            ) : (
+              <Button
+                label="Hint"
+                icon={Lightbulb}
+                variant="secondary"
+                size="md"
+                onPress={() => setHintShown(true)}
+                accessibilityHint="Shows a clue for this question"
+              />
+            )
+          ) : null}
+          {answering && exercise.kind !== 'match' ? (
             <View style={styles.actions}>
               {hintShown ? null : (
                 <Button
@@ -183,18 +241,19 @@ export function ExerciseStep({
               )}
               <Button label="Check" size="md" disabled={!ready} onPress={check} style={styles.flex} />
             </View>
-          ) : (
+          ) : null}
+          {status !== 'answering' ? (
             <FeedbackPanel
               status={status}
               message={message}
               hint={exercise.hint}
-              solution={exercise.solution}
+              solution={exercise.kind === 'match' ? undefined : exercise.solution}
               isLast={isLast}
               onAudioError={onAudioError}
               onTryAgain={tryAgain}
               onContinue={() => onDone(misses === 0)}
             />
-          )}
+          ) : null}
         </View>
       </View>
     </>
@@ -214,7 +273,8 @@ function FeedbackPanel({
   status: Exclude<Status, 'answering'>;
   message: string;
   hint: string;
-  solution: KeyPhrase;
+  /** Shown with a play button once it's answered. Match pairs has none. */
+  solution?: KeyPhrase;
   isLast: boolean;
   onAudioError: (message: string) => void;
   onTryAgain: () => void;
@@ -245,16 +305,18 @@ function FeedbackPanel({
               This one was tricky. Have a listen, and you&apos;ll have it next time.
             </Text>
           ) : null}
-          <View style={styles.solution}>
-            <View style={styles.flex}>
-              <Text variant="hanzi">{solution.hanzi}</Text>
-              <Text variant="label" color={colors.inkMuted}>
-                {solution.pinyin}
-              </Text>
-              <Text variant="caption">{solution.english}</Text>
+          {solution ? (
+            <View style={styles.solution}>
+              <View style={styles.flex}>
+                <Text variant="hanzi">{solution.hanzi}</Text>
+                <Text variant="label" color={colors.inkMuted}>
+                  {solution.pinyin}
+                </Text>
+                <Text variant="caption">{solution.english}</Text>
+              </View>
+              <SpeakerButton text={solution.hanzi} label={`Play ${solution.english}`} size={44} onError={onAudioError} />
             </View>
-            <SpeakerButton text={solution.hanzi} label={`Play ${solution.english}`} size={44} onError={onAudioError} />
-          </View>
+          ) : null}
         </>
       )}
 
@@ -308,6 +370,7 @@ const styles = StyleSheet.create({
     borderTopColor: colors.line,
   },
   actions: { flexDirection: 'row', gap: spacing.sm },
+  matchNote: { paddingVertical: spacing.md },
   panel: { gap: spacing.md, padding: spacing.lg, borderRadius: radii.card, borderWidth: 1.5 },
   panelTitle: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   solution: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },

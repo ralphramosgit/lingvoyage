@@ -1,0 +1,191 @@
+import { build, gap, match, meaning, p, quiz, reply, which } from './build';
+import type { Unit } from './types';
+
+export const ABOUT_YOU: Unit = {
+  id: 'about-you',
+  part: 'basics',
+  title: 'About you',
+  summary: "Your name, where you're from and why you're here.",
+  icon: 'UserRound',
+  scene:
+    "People in China are curious about visitors. Expect to be asked your name and where you're from, often within a minute of saying 你好.",
+  canDo: ["Say your name and ask someone else's", "Say where you're from", "Say why you're in China"],
+  lessons: [
+    {
+      id: 'your-name',
+      title: 'Your name',
+      summary: "Introduce yourself and ask someone's name.",
+      pattern: p('我叫[name]。', 'Wǒ jiào [name].', 'My name is [name].'),
+      examples: [
+        p('我叫Alex。', 'Wǒ jiào Alex.', 'My name is Alex.'),
+        p('你叫什么名字？', 'Nǐ jiào shénme míngzi?', "What's your name?"),
+        p('我姓王。', 'Wǒ xìng Wáng.', 'My family name is Wang.'),
+        p('很高兴认识你。', 'Hěn gāoxìng rènshi nǐ.', 'Nice to meet you.'),
+      ],
+      words: [
+        p('叫', 'jiào', 'to be called'),
+        p('名字', 'míngzi', 'name'),
+        p('姓', 'xìng', 'family name, to be surnamed'),
+        p('很', 'hěn', 'very'),
+        p('高兴', 'gāoxìng', 'happy, glad'),
+        p('认识', 'rènshi', 'to meet, to know (a person)'),
+      ],
+      tip: 'Say your own name just as you would at home. Some people will give you a Chinese nickname, which is a friendly gesture.',
+      culture: {
+        title: 'Family name first',
+        body: 'Chinese names put the family name first: in 王明 (Wáng Míng), Wang is the family name. People are often called by family name plus a title, like 王先生 (Wáng xiānsheng, Mr. Wang) or 李老师 (Lǐ lǎoshī, Teacher Li).',
+      },
+      exercises: [
+        meaning(
+          p('你叫什么名字？', 'Nǐ jiào shénme míngzi?', "What's your name?"),
+          ['Where are you from?', 'Are you a tourist?'],
+          '名字 (míngzi) means “name”.',
+        ),
+        reply(
+          'Someone asks your name. Your name is Sam. What do you say?',
+          p('你叫什么名字？', 'Nǐ jiào shénme míngzi?', "What's your name?"),
+          p('我叫Sam。', 'Wǒ jiào Sam.', 'My name is Sam.'),
+          ['你叫Sam。 Nǐ jiào Sam.', 'Sam是什么？ Sam shì shénme?'],
+          "You're talking about yourself: start with 我.",
+        ),
+        quiz(
+          'Your guide is called 李明 (Lǐ Míng). What is their family name?',
+          ['Li (李)', 'Ming (明)', 'Neither, both are first names'],
+          'Chinese names start with the family name.',
+          p('李明', 'Lǐ Míng', 'Li Ming (family name Li)'),
+        ),
+        gap('My family name is Wang.', '我__王。', 'Wǒ __ Wáng.', ['姓 xìng', '叫 jiào', '是 shì'], '姓 (xìng) is for family names.', p('我姓王。', 'Wǒ xìng Wáng.', 'My family name is Wang.')),
+        which(
+          p('王先生', 'Wáng xiānsheng', 'Mr. Wang'),
+          ['先生王 xiānsheng Wáng', '王 Wáng'],
+          'The family name comes first, then the title.',
+          'How do you politely address Mr. Wang?',
+        ),
+        build(
+          '很 hěn|高兴 gāoxìng|认识 rènshi|你 nǐ',
+          '名字 míngzi',
+          'Very + glad + to meet + you.',
+          p('很高兴认识你。', 'Hěn gāoxìng rènshi nǐ.', 'Nice to meet you.'),
+        ),
+      ],
+    },
+    {
+      id: 'where-from',
+      title: "Where you're from",
+      summary: 'Say your country and ask theirs.',
+      pattern: p('我是[country]人。', 'Wǒ shì [country] rén.', "I'm [nationality]."),
+      examples: [
+        p('你是哪国人？', 'Nǐ shì nǎ guó rén?', 'Where are you from?'),
+        p('我是美国人。', 'Wǒ shì Měiguó rén.', "I'm American."),
+        p('我是英国人。', 'Wǒ shì Yīngguó rén.', "I'm British."),
+        p('他是中国人。', 'Tā shì Zhōngguó rén.', "He's Chinese."),
+      ],
+      words: [
+        p('国', 'guó', 'country'),
+        p('人', 'rén', 'person'),
+        p('哪', 'nǎ', 'which'),
+        p('中国', 'Zhōngguó', 'China'),
+        p('美国', 'Měiguó', 'the US'),
+        p('英国', 'Yīngguó', 'the UK'),
+        p('加拿大', 'Jiānádà', 'Canada'),
+        p('澳大利亚', 'Àodàlìyà', 'Australia'),
+      ],
+      tip: "Country + 人 (person) is the nationality: 中国人 is a Chinese person. If your country isn't here, say its name in English: people will often know it, or look it up.",
+      culture: {
+        title: 'Friendly questions',
+        body: "Soon after meeting you, people may ask where you're from, whether you're married or what you do for work. It's friendly curiosity, not prying. Answer what you're comfortable with, and ask back.",
+      },
+      exercises: [
+        meaning(
+          p('你是哪国人？', 'Nǐ shì nǎ guó rén?', 'Where are you from?'),
+          ["What's your name?", 'Are you Chinese?'],
+          '哪 (nǎ) is “which” and 国 (guó) is “country”: which-country person?',
+        ),
+        which(
+          p('我是加拿大人。', 'Wǒ shì Jiānádà rén.', "I'm Canadian."),
+          ['我是美国人。 Wǒ shì Měiguó rén.', '我是英国人。 Wǒ shì Yīngguó rén.'],
+          '加拿大 (Jiānádà) sounds a bit like “Canada”.',
+        ),
+        meaning(p('中国人', 'Zhōngguó rén', 'A Chinese person'), ['China', 'Chinese food'], '国 + 人: country + person.'),
+        gap(
+          "I'm Australian.",
+          '我是__人。',
+          'Wǒ shì __ rén.',
+          ['澳大利亚 Àodàlìyà', '中国 Zhōngguó', '英国 Yīngguó'],
+          '澳大利亚 (Àodàlìyà) is Australia.',
+          p('我是澳大利亚人。', 'Wǒ shì Àodàlìyà rén.', "I'm Australian."),
+        ),
+        match(
+          [p('中国', 'Zhōngguó', 'China'), p('美国', 'Měiguó', 'the US'), p('英国', 'Yīngguó', 'the UK'), p('加拿大', 'Jiānádà', 'Canada')],
+          'Three of them end in 国 (guó), “country”.',
+        ),
+        build('我 wǒ|是 shì|美国 Měiguó|人 rén', '哪 nǎ', 'I + am + America + person.', p('我是美国人。', 'Wǒ shì Měiguó rén.', "I'm American.")),
+      ],
+    },
+    {
+      id: 'why-here',
+      title: "Why you're here",
+      summary: "Say you're traveling, and how much Chinese you speak.",
+      pattern: p('我来中国[do something]。', 'Wǒ lái Zhōngguó [do something].', "I've come to China to [do something]."),
+      examples: [
+        p('我来中国旅游。', 'Wǒ lái Zhōngguó lǚyóu.', "I'm in China on vacation."),
+        p('我来中国工作。', 'Wǒ lái Zhōngguó gōngzuò.', "I'm in China for work."),
+        p('我第一次来中国。', 'Wǒ dì yī cì lái Zhōngguó.', "It's my first time in China."),
+        p('我会说一点中文。', 'Wǒ huì shuō yìdiǎn Zhōngwén.', 'I speak a little Chinese.'),
+      ],
+      words: [
+        p('来', 'lái', 'come'),
+        p('旅游', 'lǚyóu', 'travel, sightseeing'),
+        p('工作', 'gōngzuò', 'work'),
+        p('第一次', 'dì yī cì', 'the first time'),
+        p('会', 'huì', 'can, know how to'),
+        p('一点', 'yìdiǎn', 'a little'),
+        p('中文', 'Zhōngwén', 'Chinese (the language)'),
+      ],
+      tip: '第一次 (dì yī cì) keeps 一 as yī, because here it means “first”, not “one of something”. Numbers in a sequence don\'t change tone.',
+      culture: {
+        title: 'Expect a big welcome',
+        body: 'Even a few words of Chinese usually get a warm reaction, and you\'ll probably hear 你的中文很好！(Your Chinese is very good!) after just 你好. Enjoy it, and keep going.',
+      },
+      exercises: [
+        meaning(
+          p('我来中国旅游。', 'Wǒ lái Zhōngguó lǚyóu.', "I'm in China on vacation."),
+          ["I'm in China for work.", "It's my first time in China."],
+          '旅游 (lǚyóu) means traveling for fun.',
+        ),
+        which(
+          p('我会说一点中文。', 'Wǒ huì shuō yìdiǎn Zhōngwén.', 'I speak a little Chinese.'),
+          ['我听不懂中文。 Wǒ tīng bu dǒng Zhōngwén.', '我是中国人。 Wǒ shì Zhōngguó rén.'],
+          '一点 (yìdiǎn) means “a little”.',
+        ),
+        gap(
+          "It's my first time in China.",
+          '我__来中国。',
+          'Wǒ __ lái Zhōngguó.',
+          ['第一次 dì yī cì', '一点 yìdiǎn', '旅游 lǚyóu'],
+          '第一次 means “the first time”.',
+          p('我第一次来中国。', 'Wǒ dì yī cì lái Zhōngguó.', "It's my first time in China."),
+        ),
+        reply(
+          "Someone asks why you're in China. You're on vacation. What do you say?",
+          p('你来中国做什么？', 'Nǐ lái Zhōngguó zuò shénme?', 'What brings you to China?'),
+          p('我来旅游。', 'Wǒ lái lǚyóu.', "I'm here on vacation."),
+          ['我来工作。 Wǒ lái gōngzuò.', '我是中国人。 Wǒ shì Zhōngguó rén.'],
+          '旅游 is traveling for fun.',
+        ),
+        quiz(
+          'Why does 一 stay yī in 第一次 (the first time)?',
+          ['It means “first”, and numbers in order keep their tone', 'Because 次 is a 1st tone', "It's a typo"],
+          '一 only changes tone when it means “one of something”.',
+          p('第一次', 'dì yī cì', 'the first time'),
+        ),
+        build(
+          '我 wǒ|来 lái|中国 Zhōngguó|工作 gōngzuò',
+          '旅游 lǚyóu',
+          'I + come + China + work.',
+          p('我来中国工作。', 'Wǒ lái Zhōngguó gōngzuò.', "I'm in China for work."),
+        ),
+      ],
+    },
+  ],
+};

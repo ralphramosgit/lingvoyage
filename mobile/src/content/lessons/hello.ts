@@ -1,0 +1,176 @@
+import { build, gap, match, meaning, p, quiz, reply, which } from './build';
+import type { Unit } from './types';
+
+export const HELLO: Unit = {
+  id: 'hello',
+  part: 'basics',
+  title: 'Hello and thank you',
+  summary: "Greetings, thank you and sorry, and what to say when you're stuck.",
+  icon: 'Hand',
+  scene:
+    "You'll use these words a hundred times a day: with hotel staff, the noodle seller, and the stranger who points you the right way.",
+  canDo: ['Greet people politely', 'Say thank you and sorry', 'Ask someone to slow down or say it again'],
+  lessons: [
+    {
+      id: 'hello-goodbye',
+      title: 'Hello and goodbye',
+      summary: 'Greet people the polite way.',
+      pattern: null,
+      examples: [
+        p('你好！', 'Nǐ hǎo!', 'Hello!'),
+        p('您好！', 'Nín hǎo!', 'Hello! (polite)'),
+        p('早上好！', 'Zǎoshang hǎo!', 'Good morning!'),
+        p('再见！', 'Zàijiàn!', 'Goodbye!'),
+        p('明天见！', 'Míngtiān jiàn!', 'See you tomorrow!'),
+      ],
+      words: [
+        p('你', 'nǐ', 'you'),
+        p('您', 'nín', 'you (polite)'),
+        p('好', 'hǎo', 'good'),
+        p('早上', 'zǎoshang', 'morning'),
+        p('再见', 'zàijiàn', 'goodbye'),
+        p('明天', 'míngtiān', 'tomorrow'),
+      ],
+      tip: 'Use 您 (nín) with older people, hotel staff and anyone you want to be extra polite to. With people your own age, 你 is fine.',
+      culture: {
+        title: 'A nod and a smile',
+        body: 'Greetings in China are low-key: a nod, a smile, or a light handshake when you\'re introduced. Hugs and kisses on the cheek are unusual, even between friends. Older people may greet you with 你吃了吗？(Have you eaten?), which simply means “How are you?”',
+      },
+      exercises: [
+        meaning(p('你好', 'nǐ hǎo', 'Hello'), ['Goodbye', 'Thank you'], "It's the first thing you say to someone: “you” + “good”."),
+        which(
+          p('您好', 'nín hǎo', 'Hello (polite)'),
+          ['再见 zàijiàn', '谢谢 xièxie'],
+          '您 is the polite “you”.',
+          'You meet the hotel manager. What\'s the polite way to say hello?',
+        ),
+        reply(
+          'Your guesthouse host says this as you head out in the morning. What do you say back?',
+          p('早上好！', 'Zǎoshang hǎo!', 'Good morning!'),
+          p('早上好！', 'Zǎoshang hǎo!', 'Good morning!'),
+          ['再见！ Zàijiàn!', '明天见！ Míngtiān jiàn!'],
+          'Say the same thing back.',
+        ),
+        gap('Goodbye!', '再__！', 'Zài__!', ['见 jiàn', '好 hǎo', '您 nín'], '再见 is “again” + “see”: see you again.', p('再见！', 'Zàijiàn!', 'Goodbye!')),
+        quiz(
+          "You're introduced to a friend's parents. What's the most natural greeting?",
+          ['A nod or a light handshake, and 您好', 'A big hug', 'A kiss on the cheek'],
+          'Greetings are low-key, and 您 shows respect.',
+          p('您好', 'nín hǎo', 'Hello (polite)'),
+        ),
+        build('明天 míngtiān|见 jiàn', '你 nǐ', 'Tomorrow + see.', p('明天见！', 'Míngtiān jiàn!', 'See you tomorrow!')),
+      ],
+    },
+    {
+      id: 'thanks-sorry',
+      title: 'Thank you and sorry',
+      summary: "The words you'll use every day.",
+      pattern: null,
+      examples: [
+        p('谢谢！', 'Xièxie!', 'Thank you!'),
+        p('不客气。', 'Bú kèqi.', "You're welcome."),
+        p('对不起！', 'Duìbuqǐ!', 'Sorry!'),
+        p('没关系。', 'Méi guānxi.', "That's OK."),
+        p('不好意思。', 'Bù hǎoyìsi.', 'Excuse me. / Sorry to bother you.'),
+      ],
+      words: [
+        p('谢谢', 'xièxie', 'thank you'),
+        p('不客气', 'bú kèqi', "you're welcome"),
+        p('对不起', 'duìbuqǐ', 'sorry'),
+        p('没关系', 'méi guānxi', "that's OK, no problem"),
+        p('不好意思', 'bù hǎoyìsi', 'excuse me, sorry to bother you'),
+      ],
+      tip: '不好意思 is the everyday “excuse me”: to get past someone, to get a waiter\'s attention, or for a small slip. Save 对不起 for when you\'re really sorry.',
+      culture: {
+        title: 'Thank you, less often',
+        body: 'Between close friends and family, saying 谢谢 for every little thing can sound formal, almost distant. With shop staff, waiters and drivers, a 谢谢 is always welcome.',
+      },
+      exercises: [
+        meaning(p('谢谢', 'xièxie', 'Thank you'), ['Sorry', 'Hello'], 'x sounds like “sh”: shyeh-shyeh.'),
+        meaning(
+          p('不客气', 'bú kèqi', "You're welcome"),
+          ['No, thank you', 'Not good'],
+          "It's what people say back when you say 谢谢.",
+          'You say 谢谢, and they answer this. What does it mean?',
+        ),
+        meaning(
+          p('没关系', 'méi guānxi', "That's OK"),
+          ["You're welcome", 'Goodbye'],
+          '没 means “not”: “it doesn\'t matter”.',
+          'You say 对不起, and they answer this. What does it mean?',
+        ),
+        which(
+          p('不好意思', 'bù hǎoyìsi', 'Excuse me'),
+          ['对不起 duìbuqǐ', '不客气 bú kèqi'],
+          "It's the light, everyday “excuse me”.",
+          'You need to squeeze past someone on the metro. What do you say?',
+        ),
+        match(
+          [p('谢谢', 'xièxie', 'thank you'), p('不客气', 'bú kèqi', "you're welcome"), p('对不起', 'duìbuqǐ', 'sorry'), p('没关系', 'méi guānxi', "that's OK")],
+          'Two of these are the answers to the other two.',
+        ),
+        build('谢谢 xièxie|您 nín', '你好 nǐ hǎo', 'Thank you + the polite “you”.', p('谢谢您！', 'Xièxie nín!', 'Thank you! (polite)')),
+      ],
+    },
+    {
+      id: 'dont-understand',
+      title: "When you don't understand",
+      summary: 'Ask people to slow down or say it again.',
+      pattern: p('请[do something]。', 'Qǐng [do something].', 'Please [do something].'),
+      examples: [
+        p('我听不懂。', 'Wǒ tīng bu dǒng.', "I don't understand."),
+        p('请再说一遍。', 'Qǐng zài shuō yí biàn.', 'Please say that again.'),
+        p('请说慢一点。', 'Qǐng shuō màn yìdiǎn.', 'Please speak a little slower.'),
+        p('你会说英语吗？', 'Nǐ huì shuō Yīngyǔ ma?', 'Do you speak English?'),
+      ],
+      words: [
+        p('请', 'qǐng', 'please'),
+        p('听不懂', 'tīng bu dǒng', "don't understand (what I hear)"),
+        p('说', 'shuō', 'say, speak'),
+        p('再', 'zài', 'again'),
+        p('慢', 'màn', 'slow'),
+        p('会', 'huì', 'can, know how to'),
+        p('英语', 'Yīngyǔ', 'English'),
+      ],
+      tip: "These four sentences rescue almost any conversation. People are usually happy to slow down for a visitor who's trying.",
+      culture: {
+        title: "Show it, don't just say it",
+        body: "When talking gets stuck, people often switch to their phone: they'll type the characters or open a translation app. It's normal and nobody minds. Keep your hotel's address in Chinese on your phone too.",
+      },
+      exercises: [
+        meaning(
+          p('我听不懂。', 'Wǒ tīng bu dǒng.', "I don't understand."),
+          ["I don't speak English.", 'Please say that again.'],
+          '听 is “listen”, and 不懂 is “don\'t understand”.',
+        ),
+        which(
+          p('请再说一遍。', 'Qǐng zài shuō yí biàn.', 'Please say that again.'),
+          ['请说慢一点。 Qǐng shuō màn yìdiǎn.', '我听不懂。 Wǒ tīng bu dǒng.'],
+          '再 (zài) means “again”.',
+          "You didn't catch that. How do you ask them to say it again?",
+        ),
+        gap(
+          'Please speak a little slower.',
+          '请说__一点。',
+          'Qǐng shuō __ yìdiǎn.',
+          ['慢 màn', '再 zài', '好 hǎo'],
+          '慢 (màn) means “slow”.',
+          p('请说慢一点。', 'Qǐng shuō màn yìdiǎn.', 'Please speak a little slower.'),
+        ),
+        quiz(
+          "A shop owner is talking fast and you're lost. What's the best thing to do?",
+          ['Smile and say 请说慢一点', 'Nod as if you understood', 'Walk away without a word'],
+          "People are happy to slow down for someone who's trying.",
+          p('请说慢一点。', 'Qǐng shuō màn yìdiǎn.', 'Please speak a little slower.'),
+        ),
+        meaning(p('请', 'qǐng', 'Please'), ['Again', 'Slow'], 'It goes at the start of a polite request.', 'What does this word mean?'),
+        build(
+          '你 nǐ|会 huì|说 shuō|英语 Yīngyǔ|吗 ma',
+          '中文 Zhōngwén',
+          'You + can + speak + English + the question word.',
+          p('你会说英语吗？', 'Nǐ huì shuō Yīngyǔ ma?', 'Do you speak English?'),
+        ),
+      ],
+    },
+  ],
+};

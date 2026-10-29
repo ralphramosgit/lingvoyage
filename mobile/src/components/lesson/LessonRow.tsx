@@ -6,18 +6,20 @@ import { Text } from '@/components/Text';
 import { colors, fonts, spacing } from '@/theme/theme';
 import type { Lesson } from '@/types/api';
 
-/** One lesson in the encounter screen's "Practice first" list. */
+/** One lesson in a list: the encounter screen's "Practice first", or a unit on the Lessons tab. */
 export function LessonRow({
   lesson,
   number,
   finished,
   divider,
+  hint = 'Opens the practice lesson',
   onPress,
 }: {
-  lesson: Lesson;
+  lesson: Pick<Lesson, 'title' | 'summary'> & { exercises: readonly unknown[] };
   number: number;
   finished: boolean;
   divider: boolean;
+  hint?: string;
   onPress: () => void;
 }) {
   const count = lesson.exercises.length;
@@ -26,7 +28,7 @@ export function LessonRow({
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`Lesson ${number}: ${lesson.title}. ${count} questions.${finished ? ' Done.' : ''}`}
-      accessibilityHint="Opens the practice lesson"
+      accessibilityHint={hint}
       style={[styles.row, divider ? styles.divider : null]}>
       <View style={[styles.badge, finished ? styles.badgeDone : null]}>
         {finished ? (

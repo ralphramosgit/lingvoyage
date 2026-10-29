@@ -71,6 +71,9 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
           <Stack.Screen name="encounter/[id]/index" />
           <Stack.Screen name="encounter/[id]/lesson/[lessonId]" />
           <Stack.Screen name="encounter/[id]/talk" options={{ gestureEnabled: false }} />
+          <Stack.Screen name="unit/[unitId]/index" />
+          <Stack.Screen name="unit/[unitId]/lesson/[lessonId]" />
+          <Stack.Screen name="unit/[unitId]/checkpoint" />
         </Stack.Protected>
       </Stack>
 
