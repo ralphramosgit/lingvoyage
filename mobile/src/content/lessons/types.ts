@@ -43,6 +43,8 @@ export type PartId = 'basics' | 'trip' | 'culture';
 export type Part = {
   id: PartId;
   title: string;
+  /** The short name on the Lessons tab's part tabs. */
+  tab: string;
   summary: string;
 };
 
