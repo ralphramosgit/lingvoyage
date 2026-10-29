@@ -27,7 +27,8 @@ export function ChoiceAnswer({
   showPinyin,
   onSelect,
 }: {
-  exercise: ChoiceExercise;
+  /** A multiple-choice or listening question. */
+  exercise: Pick<ChoiceExercise, 'options' | 'answer'>;
   order: number[];
   selected: number | null;
   /** Options already tried that weren't right. */

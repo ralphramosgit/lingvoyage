@@ -34,7 +34,7 @@ export function isBuildRight(exercise: BuildExercise, built: readonly string[]) 
 }
 
 /** The lesson to suggest next: the first unfinished one after `currentId`, then any unfinished one. */
-export function nextLesson(lessons: Lesson[], currentId: string, isFinished: (id: string) => boolean): Lesson | null {
+export function nextLesson<T extends Pick<Lesson, 'id'>>(lessons: T[], currentId: string, isFinished: (id: string) => boolean): T | null {
   const start = lessons.findIndex((lesson) => lesson.id === currentId);
   const ordered = [...lessons.slice(start + 1), ...lessons.slice(0, Math.max(start, 0))];
   return ordered.find((lesson) => !isFinished(lesson.id)) ?? null;

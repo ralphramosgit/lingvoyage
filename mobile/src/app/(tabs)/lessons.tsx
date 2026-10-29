@@ -1,14 +1,37 @@
-import { BookOpen } from 'lucide-react-native';
+import { router } from 'expo-router';
+import { Languages } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
-import { Card } from '@/components/Card';
+import { Pill } from '@/components/Pill';
+import { LockedScenarioCard } from '@/components/ScenarioCard';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
-import { colors, motion, radii, spacing } from '@/theme/theme';
+import { ContinueCard } from '@/components/units/ContinueCard';
+import { UnitCard } from '@/components/units/UnitCard';
+import { PARTS, UNITS } from '@/content/lessons/units';
+import { continueTarget, lessonsDone } from '@/lib/course';
+import { useUnitProgress } from '@/lib/unitProgress';
+import { unitIcon } from '@/lib/unitVisuals';
+import { colors, motion, spacing } from '@/theme/theme';
 
-// Placeholder until the Lessons tab is built (issue #12).
 export default function LessonsScreen() {
+  const progress = useUnitProgress();
+  const target = continueTarget(UNITS, progress);
+  const totalLessons = UNITS.reduce((sum, unit) => sum + unit.lessons.length, 0);
+  // Counted from the content, so progress saved for a lesson that's since been removed doesn't count.
+  const doneLessons = UNITS.reduce((sum, unit) => sum + lessonsDone(unit, progress), 0);
+
+  const openTarget = () => {
+    if (target.kind === 'lesson') {
+      router.push({ pathname: '/unit/[unitId]/lesson/[lessonId]', params: { unitId: target.unit.id, lessonId: target.lesson.id } });
+    } else if (target.kind === 'checkpoint') {
+      router.push({ pathname: '/unit/[unitId]/checkpoint', params: { unitId: target.unit.id } });
+    } else {
+      router.navigate('/');
+    }
+  };
+
   return (
     <Screen scroll edges={['top']}>
       <Animated.View entering={FadeInDown.duration(motion.base)} style={styles.header}>
@@ -16,37 +39,54 @@ export default function LessonsScreen() {
           Lessons
         </Text>
         <Text variant="body" color={colors.inkMuted}>
-          Step-by-step lessons for your trip.
+          A beginner course for your trip, one short lesson at a time.
         </Text>
+        <View style={styles.pills}>
+          <Pill label="Mandarin Chinese" icon={Languages} tone="sky" />
+          <Pill label={`${doneLessons} of ${totalLessons} lessons done`} tone="neutral" />
+        </View>
       </Animated.View>
 
       <Animated.View entering={FadeInDown.duration(motion.base).delay(motion.stagger)}>
-        <Card style={styles.card}>
-          <View style={styles.icon}>
-            <BookOpen size={26} color={colors.sky700} />
-          </View>
-          <Text variant="subheading" align="center">
-            Coming soon
-          </Text>
-          <Text variant="caption" color={colors.inkMuted} align="center">
-            Numbers, money, ordering food, asking directions and more.
-          </Text>
-        </Card>
+        <ContinueCard target={target} onOpen={openTarget} />
       </Animated.View>
+
+      {PARTS.map((part, partIndex) => (
+        <Animated.View
+          key={part.id}
+          entering={FadeInDown.duration(motion.base).delay(motion.stagger * (partIndex + 2))}
+          style={styles.part}>
+          <View style={styles.partTitle}>
+            <Text variant="heading">{part.title}</Text>
+            <Text variant="caption" color={colors.inkMuted}>
+              {part.summary}
+            </Text>
+          </View>
+          <View style={styles.list}>
+            {UNITS.filter((unit) => unit.part === part.id).map((unit) =>
+              unit.lessons.length > 0 ? (
+                <UnitCard
+                  key={unit.id}
+                  unit={unit}
+                  number={UNITS.indexOf(unit) + 1}
+                  progress={progress}
+                  onPress={() => router.push({ pathname: '/unit/[unitId]', params: { unitId: unit.id } })}
+                />
+              ) : (
+                <LockedScenarioCard key={unit.id} title={unit.title} icon={unitIcon(unit.icon)} />
+              ),
+            )}
+          </View>
+        </Animated.View>
+      ))}
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   header: { gap: spacing.sm, paddingTop: spacing.lg, marginBottom: spacing.xl },
-  card: { alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.xxl },
-  icon: {
-    width: 56,
-    height: 56,
-    borderRadius: radii.full,
-    backgroundColor: colors.sky100,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.xs,
-  },
+  pills: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.xs },
+  part: { marginTop: spacing.xxl, gap: spacing.md },
+  partTitle: { gap: 2 },
+  list: { gap: spacing.md },
 });
