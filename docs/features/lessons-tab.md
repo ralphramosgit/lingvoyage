@@ -8,7 +8,7 @@ The full plan for the Lessons tab: what it teaches, how its screens work, how pr
 
 ## 1. What the Lessons tab is
 
-**A short course in beginner Mandarin for travelers.** It starts with the basics of the language (tones, greetings, first sentences, numbers, money, time), then works through a trip in order: the airport, the hotel, food, directions, getting around, shopping and emergencies.
+**A short course in beginner Mandarin for travelers.** It starts with the basics of the language (tones, greetings, first sentences, numbers, money, time), then works through a trip in order: the airport, the hotel, food, directions, getting around, shopping and emergencies. It ends with culture and etiquette: manners, table manners, luck and festivals.
 
 | Tab | What it's for |
 |---|---|
@@ -21,7 +21,7 @@ The full plan for the Lessons tab: what it teaches, how its screens work, how pr
 
 **What they can do by the end:** get through the common moments of a trip in simple Mandarin, and handle the moments they can't (by asking someone to slow down, or saying they don't understand).
 
-**Size:** 14 units, about 50 lessons of 3 to 5 minutes each. That's about 4 to 5 hours in total, which someone can realistically finish in the few weeks before a trip.
+**Size:** 17 units and 63 lessons of 3 to 5 minutes each (390 questions). That's about 4 to 5 hours in total, which someone can realistically finish in the few weeks before a trip.
 
 ### What learners should be able to do
 
@@ -38,8 +38,10 @@ The full plan for the Lessons tab: what it teaches, how its screens work, how pr
 Course
 ├── Part 1: Start here: the basics     (units 1–7)
 │     └── Unit ── Lesson, Lesson, Lesson ... ── Checkpoint
-└── Part 2: On your trip               (units 8–14)
-      └── Unit ── Lesson, Lesson, Lesson ... ── Checkpoint ── Encounter
+├── Part 2: On your trip               (units 8–14)
+│     └── Unit ── Lesson, Lesson, Lesson ... ── Checkpoint ── Encounter
+└── Part 3: Culture and etiquette      (units 15–17)
+      └── Unit ── Lesson, Lesson, Lesson ... ── Checkpoint
 ```
 
 - **Unit:** one topic (Numbers, Ordering food). 3 to 5 lessons, then a checkpoint.
@@ -53,6 +55,7 @@ Course
 3. **Things come back.** Trip units reuse the basics on purpose: `在哪里？` is taught in Your first sentences, then shows up again at the airport, the hotel and the metro. Each trip unit lists which basics it builds on.
 4. **Every trip unit ends at an encounter**, where one exists. The lesson is practice; the encounter is the real thing.
 5. **Encouraging, never punishing.** No lives, no failing a lesson. A wrong answer gets a hint and another try, like the current practice lessons.
+6. **A little immersive.** Each unit opens with a short scene (“You've just landed in Chengdu…”), and nearly every lesson has a culture note on how things are done in China: paying by QR code, two hands for a passport, never standing chopsticks up in rice. Part 3 goes deeper on manners, meals and festivals.
 
 ---
 
@@ -232,6 +235,42 @@ Encounter: none · Builds on: Your first sentences, Numbers
 
 Tip for lesson 3: in mainland China, 110 is the police and 120 is an ambulance.
 
+### Part 3: Culture and etiquette
+
+The unwritten rules. Every question still ends on a Chinese phrase with audio, so these units teach language too.
+
+#### Unit 15. Manners and etiquette
+
+Builds on: Hello and thank you, About you
+
+| # | Lesson | What it teaches | Key words and phrases |
+|---|---|---|---|
+| 1 | Showing respect | Titles after the family name, elders first, the polite 您 | 先生 xiānsheng, 女士 nǚshì, 老师 lǎoshī, 阿姨 āyí, 叔叔 shūshu |
+| 2 | Taking a compliment | Modesty: brushing praise aside | 哪里哪里 nǎlǐ nǎlǐ, 还可以 hái kěyǐ, 你太客气了 nǐ tài kèqi le |
+| 3 | Giving and receiving | Two hands, refusing once or twice, not opening gifts in front of the giver | 一点小意思 yìdiǎn xiǎo yìsi, 不用了 bú yòng le, 礼物 lǐwù |
+| 4 | Out and about | Signs, lining up, asking before a photo | 可以拍照吗？kěyǐ pāizhào ma?, 禁止吸烟 jìnzhǐ xīyān, 请勿 qǐng wù, 排队 páiduì |
+
+#### Unit 16. At the table
+
+Builds on: Ordering food
+
+| # | Lesson | What it teaches | Key words and phrases |
+|---|---|---|---|
+| 1 | Chopsticks | What never to do with them; asking for a fork is fine | 筷子 kuàizi, 叉子 chāzi, 勺子 sháozi, 会一点 huì yìdiǎn |
+| 2 | Toasts | 干杯, glass lower for elders, saying no to alcohol | 干杯 gānbēi, 随意 suíyì, 我不喝酒 wǒ bù hē jiǔ |
+| 3 | Who pays? | The friendly fight over the bill | 我请客 wǒ qǐngkè, 我来 wǒ lái, 下次我请 xià cì wǒ qǐng, AA |
+| 4 | Sharing dishes | The host serves you, serving chopsticks, leaving a little on the plate | 尝尝 chángchang, 吃饱了 chī bǎo le, 公筷 gōngkuài, 慢慢吃 mànmàn chī |
+
+#### Unit 17. Luck, gifts and festivals
+
+Builds on: Numbers, Manners and etiquette
+
+| # | Lesson | What it teaches | Key words and phrases |
+|---|---|---|---|
+| 1 | Lucky and unlucky numbers | 8, 4, 6 and 9, and the words they sound like | 发 fā, 死 sǐ, 六六大顺 liùliù dà shùn, 吉利 jílì |
+| 2 | Colors and gifts | Red for luck, red envelopes, gifts to avoid (clocks, umbrellas, green hats) | 红包 hóngbāo, 送钟 sòng zhōng, 伞 sǎn |
+| 3 | Festivals | Spring Festival, Mid-Autumn, National Day week | 新年快乐 xīnnián kuàilè, 恭喜发财 gōngxǐ fācái, 月饼 yuèbing |
+
 ---
 
 ## 4. Screens
@@ -306,7 +345,7 @@ Reuse the player from the encounter practice lessons, as #12 describes: **Learn 
 
 ### 4.4 The checkpoint
 
-- 8 to 10 questions drawn from the unit's lessons, mixed in order. Picked at random each time so a second go isn't identical, with at least one question from each lesson.
+- 9 questions: a match-the-pairs warm-up built from the unit's words, then 8 drawn from its lessons, at least one from each lesson and the rest at random, in a mixed order. Picked again each time, so a second go isn't identical.
 - Same player and same rules as a lesson: hints, retries, no failing. It skips the Learn step.
 - The Done screen shows the first-try score. When the checkpoint and all lessons are done, the unit counts as done and the Done screen says so ("Unit complete!").
 
@@ -330,7 +369,8 @@ Reuse the player from the encounter practice lessons, as #12 describes: **Learn 
 | Pattern | One, with slots in `[brackets]`, or none for word-only lessons like Hello and goodbye |
 | Words | Up to 8 new ones |
 | Examples | 2 to 4 full sentences using the pattern |
-| Tip | One short tip, for a culture note or a "watch out" |
+| Tip | One short tip, for a "watch out" |
+| Culture note | Optional: a title and a few sentences on how things are done in China, shown after the tip |
 | Questions | 5 to 8. At least 2 multiple choice and at least 1 word-tile build. At least 1 reuses a word from an earlier unit |
 
 ### Question types
@@ -383,7 +423,7 @@ Follow the pattern in `src/lib/lessonProgress.ts`: an in-memory copy, `useSyncEx
 
 ### The Continue card
 
-1. The first unfinished lesson in `lastUnitId`, if there is one.
+1. The first unfinished lesson in `lastUnitId`, if there is one, or else that unit's checkpoint if it isn't done.
 2. Otherwise, the first unfinished lesson in course order (Unit 1 onward).
 3. Otherwise, the first unfinished checkpoint.
 4. Otherwise, everything is done: show "Course complete".
@@ -436,33 +476,32 @@ From #12, plus a few additions:
 Content lives in `mobile/src/content/lessons/`, one file per unit, as #12 suggests. The `Lesson` and `Exercise` types come from `src/types/api.ts` unchanged. Anything new is added in the content folder's own `types.ts`, not in `api.ts`.
 
 ```ts
-// src/content/lessons/types.ts
-import type { Lesson } from '@/types/api';
+// src/content/lessons/types.ts (shortened)
+export type UnitExercise = Exercise | ListenExercise | MatchExercise;
+export type UnitLesson = Omit<Lesson, 'exercises'> & { exercises: UnitExercise[]; culture?: CultureNote };
 
-export type PartId = 'basics' | 'trip';
+export type PartId = 'basics' | 'trip' | 'culture';
 
 export type Unit = {
   id: string;                // 'numbers', 'money', 'airport', ... Permanent once shipped
   part: PartId;
   title: string;
   summary: string;
-  icon: string;              // a lucide icon name, like the scenario icons
+  icon: string;              // a lucide icon name, see UnitIcon in src/lib/unitVisuals.tsx
+  scene?: string;            // sets the scene on the unit screen
   canDo: string[];           // "You'll be able to" lines, 2 to 4
-  buildsOn?: string[];       // unit ids, shown as links on trip units
+  buildsOn?: string[];       // unit ids, shown as links
   encounterId?: string;      // the matching encounter, e.g. 'airport'
-  essentials?: string;       // an Essentials route, e.g. '/essentials/tables/numbers'
-  lessons: Lesson[];         // [] = coming soon
+  essentials?: { label: string; href: Href }; // an Essentials page, once #11 has them
+  lessons: UnitLesson[];     // [] = coming soon
 };
-
-export const PARTS: { id: PartId; title: string; summary: string }[] = [
-  { id: 'basics', title: 'Start here: the basics', summary: 'How Chinese works, and the words you need everywhere.' },
-  { id: 'trip', title: 'On your trip', summary: 'From the airport to the dinner table.' },
-];
 ```
 
-- **Order** is the order of `units.ts`. Lessons are in the order of each unit's `lessons` array.
-- **The checkpoint** is built from the unit's lessons when it opens, so it needs no content of its own. A unit can add hand-written checkpoint questions later if the random mix isn't good enough.
-- **New question types** (Listen, Match pairs) are a change to the `Exercise` type and `ExerciseStep`, made in their own ticket ([section 11](#11-build-order)).
+- **Writing content:** the helpers in `src/content/lessons/build.ts` (`meaning`, `which`, `reply`, `gap`, `quiz`, `build`, `listen`, `listenFor`, `match`) keep each question to a few lines. In every helper the right answer is listed first; the app shuffles the options.
+- **Checking content:** `validateUnits` (`src/content/lessons/validate.ts`) runs in `__DEV__` when `units.ts` loads and throws on the first bad question, naming the unit, lesson and question.
+- **Order** is the order of `UNITS` in `units.ts`. Lessons are in the order of each unit's `lessons` array.
+- **The checkpoint** is built from the unit's lessons when it opens (`checkpointExercises` in `src/lib/course.ts`), so it needs no content of its own.
+- **New question types** are Lessons-tab-only types in `content/lessons/types.ts`. `src/types/api.ts` is unchanged, and the encounter practice lessons still only send choice and build questions.
 
 ---
 
@@ -478,6 +517,8 @@ export const PARTS: { id: PartId; title: string; summary: string }[] = [
 ---
 
 ## 11. Build order
+
+**Status:** phases 1 to 5 are built: the Lessons tab, all 17 units' content (Part 3 included), checkpoints, and the Listen and Match pairs question types. Phase 6 is still to do.
 
 Feature tickets and content tickets can run at the same time, since content is just data files.
 
