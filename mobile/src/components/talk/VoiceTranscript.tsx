@@ -1,6 +1,6 @@
 import { CircleAlert, CircleCheck, RotateCcw } from 'lucide-react-native';
 import { type ReactNode, useEffect, useRef } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, ScrollView, type ScrollViewInstance, StyleSheet, View } from 'react-native';
 import Animated, {
   FadeIn,
   useAnimatedStyle,
@@ -46,7 +46,7 @@ function listeningPlaceholder(live: LiveStatus): string {
 }
 
 export function VoiceTranscript({ state }: { state: VoiceTranscriptState }) {
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
 
   let header: ReactNode;
   let body: ReactNode;

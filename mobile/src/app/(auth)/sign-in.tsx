@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { Eye, EyeOff, Lock, Mail } from 'lucide-react-native';
 import { useRef, useState } from 'react';
-import { StyleSheet, type TextInput } from 'react-native';
+import { StyleSheet, type TextInputInstance } from 'react-native';
 
 import { AuthScaffold } from '@/components/AuthScaffold';
 import { Button } from '@/components/Button';
@@ -23,7 +23,7 @@ export default function SignInScreen() {
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const passwordRef = useRef<TextInput>(null);
+  const passwordRef = useRef<TextInputInstance>(null);
 
   const errors = {
     email: submitted ? validateEmail(email) : null,

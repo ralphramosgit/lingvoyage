@@ -1,6 +1,6 @@
 import type { LucideIcon } from 'lucide-react-native';
 import { type ReactNode, type Ref, useState } from 'react';
-import { StyleSheet, TextInput, type TextInputProps, View } from 'react-native';
+import { StyleSheet, TextInput, type TextInputInstance, type TextInputProps, View } from 'react-native';
 
 import { colors, fonts, radii, spacing } from '@/theme/theme';
 
@@ -11,7 +11,7 @@ export type TextFieldProps = Omit<TextInputProps, 'style'> & {
   icon?: LucideIcon;
   error?: string | null;
   right?: ReactNode;
-  ref?: Ref<TextInput>;
+  ref?: Ref<TextInputInstance>;
 };
 
 export function TextField({ label, icon: Icon, error, right, ref, onFocus, onBlur, ...inputProps }: TextFieldProps) {

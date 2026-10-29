@@ -35,7 +35,7 @@ A developer could reach those secrets in only two ways:
 1. **Through the AWS console.** They never get an AWS login.
 2. **By getting code deployed.** Backend code that runs on Lambda can read Lambda's environment variables. Code only deploys from `main`, so the job is to make sure nothing lands on `main` without review, and nothing in `backend/` or `.github/` lands without **your** review. That's Part 1.
 
-There's one more thing to close: GitHub hands repository secrets to any workflow run in the repo, including one a collaborator writes on their own branch. Part 1.2 fixes that for `EXPO_TOKEN`.
+One small gap is left open on purpose. A collaborator could write a workflow on their own branch that reads the `EXPO_TOKEN` repository secret. The worst they could do with it is publish to testers' Expo Go or change the three public settings on Expo, and both are easy to undo. For a team you know, that isn't worth extra setup. If it ever is, see [Optional: lock `EXPO_TOKEN` to `main`](#optional-lock-expo_token-to-main) at the end.
 
 ### Your repo is public, and what that means
 
@@ -43,13 +43,11 @@ There's one more thing to close: GitHub hands repository secrets to any workflow
 
 - **Anyone can read the backend code**, developers included. That's fine: no key has ever been committed (only the two `.env.example` files, checked in the git history). GitHub can't hide one folder from collaborators anyway. If you ever need the backend code hidden, it has to move to a separate private repo.
 - **The protection features you need are free on public repos**: rulesets, required code-owner review and environments. If you make the repo private, all three need a paid GitHub plan (Pro). Without them, any collaborator could push straight to `main`.
-- **On a personal-account repo, every collaborator has the same write access.** There's no read-only role. The ruleset in Part 1.4 is what stops write access from meaning "can change `main`".
+- **On a personal-account repo, every collaborator has the same write access.** There's no read-only role. The ruleset in Part 1.3 is what stops write access from meaning "can change `main`".
 
 ---
 
 ## Part 1: GitHub
-
-Do these in order. 1.2 has to happen before 1.3, because 1.3 points a workflow at the environment that 1.2 creates.
 
 ### 1.1 Decide who stays a collaborator
 
@@ -58,24 +56,9 @@ Settings > **Collaborators**.
 - **Developers**: keep them.
 - **Non-devs**: remove them. They don't need write access to test the app, and on a public repo they can still open issues to report bugs with any GitHub account. Fewer people with write access means less to go wrong.
 
-### 1.2 Lock `EXPO_TOKEN` to `main`
+### 1.2 Add code owners and a PR check
 
-**Why:** any collaborator can push a branch containing their own workflow file. That workflow runs in your repo and receives every **repository** secret. GitHub hides secrets in logs, but it can't stop a workflow from sending one somewhere else. `EXPO_TOKEN` can publish straight to every tester's Expo Go. An **environment** secret is only handed to jobs that run from `main`.
-
-1. **Make a fresh token.** The current one has sat in repository secrets while collaborators had access. There's no sign it was misused, but replacing it is cheap. expo.dev > **lingvoyage-team** > **Settings** > **Access tokens** > robot `github-actions` > **Create token**. Copy it.
-2. GitHub > **Settings** > **Environments** > **New environment**. Name: `expo-preview` > **Configure environment**.
-3. **Deployment branches and tags**: change **No restriction** to **Selected branches and tags** > **Add deployment branch or tag rule** > `main` > **Add rule**.
-4. **Environment secrets** > **Add environment secret**. Name `EXPO_TOKEN`, value: the new token.
-5. **Settings** > **Secrets and variables** > **Actions** > **Repository secrets**: delete the old `EXPO_TOKEN`.
-6. Back on expo.dev, delete the old token.
-
-The workflow change that uses this environment is in 1.3.
-
-**Leave `AWS_DEPLOY_ROLE_ARN` as a repository secret.** It isn't a password, and the AWS role's trust policy already accepts only runs from `main` (guide 12, step 4). **Don't** put the backend deploy job in an environment. That changes what GitHub tells AWS from `...:ref:refs/heads/main` to `...:environment:<name>`, and the deploy fails with "Not authorized to perform sts:AssumeRoleWithWebIdentity".
-
-### 1.3 Add code owners, a PR check, and the environment line
-
-Three file changes, pushed to `main` in one commit.
+Two new files, pushed to `main` in one commit.
 
 **a) `.github/CODEOWNERS`** (new file). PRs that touch these paths can't merge until you approve. Everything else in `mobile/` can be approved by any developer.
 
@@ -147,27 +130,17 @@ jobs:
 
 There's no `paths:` filter on purpose. A required check that gets skipped stays "waiting" forever and blocks the merge.
 
-**c) `.github/workflows/eas-update.yml`**: add one line so the job uses the environment from 1.2:
-
-```yaml
-jobs:
-  publish:
-    runs-on: ubuntu-latest
-    environment: expo-preview   # EXPO_TOKEN lives here, and only main can use it (team guide 01, 1.2)
-    timeout-minutes: 20
-```
-
 Commit and push:
 
 ```bash
-git add .github/CODEOWNERS .github/workflows/pr-checks.yml .github/workflows/eas-update.yml
-git commit -m "add code owners, PR checks, main-only Expo token"
+git add .github/CODEOWNERS .github/workflows/pr-checks.yml
+git commit -m "add code owners and PR checks"
 git push
 ```
 
-Because `eas-update.yml` changed, this push runs **Publish app update** once. Check the **Actions** tab: it should go green, which proves the new token works from the environment. Red at the publish step with an authentication error means the environment secret is missing or misspelled.
+This push doesn't publish or deploy anything. The new check first runs on the next PR.
 
-### 1.4 Protect `main` with a ruleset
+### 1.3 Protect `main` with a ruleset
 
 GitHub > **Settings** > **Rules** > **Rulesets** > **New ruleset** > **New branch ruleset**.
 
@@ -204,14 +177,14 @@ What this does:
 
 **Test it:** ask a developer to try `git push origin main` with any small change. It should be refused with "push declined due to repository rule violations".
 
-### 1.5 Check two Actions settings
+### 1.4 Check two Actions settings
 
 Settings > **Actions** > **General**:
 
 - **Fork pull request workflows**: choose the strictest approval option (approval required for all outside contributors). The repo is public, so strangers can open PRs.
 - **Workflow permissions**: **Read repository contents and packages permissions**. Leave **Allow GitHub Actions to create and approve pull requests** unticked.
 
-### 1.6 Use issues for all work
+### 1.5 Use issues for all work
 
 Developers name branches after issues (`issue-12`, see team guide 02), so every task needs a GitHub issue. Write the issue, assign it to someone, and they take it from there. A `backend` label helps separate the requests that come to you.
 
@@ -350,19 +323,44 @@ That's all. No `.env`, no GitHub, no installs beyond Expo Go.
 - **Merging is publishing.** Every merge to `main` that touches `mobile/` reaches testers' Expo Go about 3 to 5 minutes later (guide 10). Don't merge half-finished screens.
 - **An app change that needs a new backend route:** ship the backend first (merge or push to `main`, wait for **Deploy backend** to go green), **then** merge the app PR. Otherwise testers get a screen that calls a route Lambda doesn't have yet.
 - **Undo a bad publish:** `eas update:republish` (guide 10, "Undoing a bad version"), or revert the PR on GitHub (**Revert** button on the merged PR) and merge the revert.
-- **Someone leaves:** remove them from GitHub **Collaborators** and Expo **Members**. Nothing to rotate: they never had a secret. (If you skipped 1.2, rotate `EXPO_TOKEN`.)
+- **Someone leaves:** remove them from GitHub **Collaborators** and Expo **Members**. Nothing to rotate: they never had a secret. (If you think someone copied `EXPO_TOKEN`, make a new token on expo.dev and replace the GitHub secret.)
 
 ---
 
 ## Checklist
 
 - [ ] 1.1 Non-devs removed from GitHub collaborators
-- [ ] 1.2 `EXPO_TOKEN` is an `expo-preview` environment secret (deployment branch `main`), the repo-level one is deleted, and the old Expo token is revoked
-- [ ] 1.3 `CODEOWNERS`, `pr-checks.yml` and the `eas-update.yml` change are on `main`, and **Publish app update** went green
-- [ ] 1.4 Ruleset `main` is active, with `mobile typecheck and lint` required, and a developer's direct push to `main` is refused
-- [ ] 1.5 Fork PR approval and read-only workflow permissions set
+- [ ] 1.2 `CODEOWNERS` and `pr-checks.yml` are on `main`
+- [ ] 1.3 Ruleset `main` is active, with `mobile typecheck and lint` required, and a developer's direct push to `main` is refused
+- [ ] 1.4 Fork PR approval and read-only workflow permissions set
 - [ ] 2.1 to 2.2 Developers and non-devs are **Viewer** in Expo
 - [ ] 2.3 Robot is **Release Manager** and `preview` is protected
 - [ ] 3 Supabase **Team** lists only you
 - [ ] 4 No other AWS users, a budget alert, and Claude and ElevenLabs spend limits
 - [ ] 5 Developers got `.env` and guide 02; non-devs got guide 03
+
+---
+
+## Optional: lock `EXPO_TOKEN` to `main`
+
+Skip this for a small team you know. It's worth doing if the team grows, includes people you don't know well, or someone leaves on bad terms.
+
+**What it closes:** a collaborator can push a branch with their own workflow file, and that workflow receives every repository secret. With `EXPO_TOKEN` they could publish to testers' Expo Go or change the settings on Expo. They couldn't reach the Claude or ElevenLabs keys, AWS or Supabase. An **environment** secret is only handed to jobs that run from `main`.
+
+1. expo.dev > **lingvoyage-team** > **Settings** > **Access tokens** > robot `github-actions` > **Create token**. Copy it.
+2. GitHub > **Settings** > **Environments** > **New environment** > `expo-preview` > **Configure environment**.
+3. **Deployment branches and tags** > **Selected branches and tags** > **Add deployment branch or tag rule** > `main`.
+4. **Environment secrets** > **Add environment secret**: `EXPO_TOKEN` = the new token.
+5. In `.github/workflows/eas-update.yml`, add `environment: expo-preview` to the job and push:
+
+    ```yaml
+    jobs:
+      publish:
+        runs-on: ubuntu-latest
+        environment: expo-preview   # EXPO_TOKEN lives here, and only main can use it
+        timeout-minutes: 20
+    ```
+
+6. Check that **Publish app update** goes green in the **Actions** tab. Then delete the repository-level `EXPO_TOKEN` (**Settings** > **Secrets and variables** > **Actions**) and the old token on expo.dev.
+
+**Don't do the same for `AWS_DEPLOY_ROLE_ARN`.** It isn't a password, and the AWS role already accepts only runs from `main` (guide 12, step 4). Putting the backend deploy job in an environment changes what GitHub tells AWS (`...:environment:<name>` instead of `...:ref:refs/heads/main`), and the deploy fails with "Not authorized to perform sts:AssumeRoleWithWebIdentity".
