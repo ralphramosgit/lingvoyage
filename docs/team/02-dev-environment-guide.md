@@ -230,7 +230,7 @@ Open the PR: GitHub shows a **Compare & pull request** banner on the repo page, 
 
 ### 7.6 Checks and review
 
-- **`mobile typecheck and lint`** must be green. If it's red, click **Details** to see the error, fix it on your computer, and push again.
+- **`mobile typecheck and lint`** and **`backend tests`** must be green. If one is red, click **Details** to see the error, fix it on your computer, and push again.
 - **Feedback:** fix it on the same branch and `git push`. The PR updates by itself. Reply to each comment or click **Resolve conversation**. All conversations must be resolved before merging.
 - **A new push clears earlier approvals.** Re-request review (the 🔄 icon next to the reviewer's name).
 

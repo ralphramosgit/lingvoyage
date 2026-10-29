@@ -92,11 +92,11 @@ Two new files, pushed to `main` in one commit.
 
 Want to approve every PR yourself? Put `*  @ralphramosgit` as the first rule.
 
-**b) `.github/workflows/pr-checks.yml`** (new file). Runs typecheck and lint on every PR, so problems show up before merging, not after. It uses no secrets.
+**b) `.github/workflows/pr-checks.yml`** (new file). Runs the mobile typecheck and lint, and the backend tests, on every PR, so problems show up before merging, not after. It uses no secrets.
 
 ```yaml
-# Runs the same checks as the publish workflow on every pull request into main, so errors show up
-# before merging instead of after. Uses no secrets. Required to pass by the main ruleset (team guide 01).
+# Runs the same checks as the publish and deploy workflows on every pull request into main, so errors
+# show up before merging instead of after. Uses no secrets. Required to pass by the main ruleset (team guide 01).
 name: PR checks
 
 on:
@@ -126,6 +126,25 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run lint
+
+  backend:
+    name: backend tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
+
+      - run: pip install -r requirements-dev.txt
+      - run: python -m pytest
 ```
 
 There's no `paths:` filter on purpose. A required check that gets skipped stays "waiting" forever and blocks the merge.
@@ -159,12 +178,12 @@ GitHub > **Settings** > **Rules** > **Rulesets** > **New ruleset** > **New branc
 | ↳ Require approval of the most recent reviewable push | On |
 | ↳ Require conversation resolution before merging | On |
 | ↳ Allowed merge methods | **Squash** only |
-| Require status checks to pass | On. **Add checks** > `mobile typecheck and lint` |
+| Require status checks to pass | On. **Add checks** > `mobile typecheck and lint` and `backend tests` |
 | ↳ Require branches to be up to date before merging | Off (otherwise every open PR needs updating after each merge) |
 
 **Create**.
 
-If `mobile typecheck and lint` isn't offered in the search, the check hasn't run yet. Save the ruleset without it, have a developer open any PR, then come back and add it.
+If `mobile typecheck and lint` or `backend tests` isn't offered in the search, the check hasn't run yet. Save the ruleset without it, have a developer open any PR, then come back and add it.
 
 What this does:
 
@@ -331,7 +350,7 @@ That's all. No `.env`, no GitHub, no installs beyond Expo Go.
 
 - [ ] 1.1 Non-devs removed from GitHub collaborators
 - [ ] 1.2 `CODEOWNERS` and `pr-checks.yml` are on `main`
-- [ ] 1.3 Ruleset `main` is active, with `mobile typecheck and lint` required, and a developer's direct push to `main` is refused
+- [ ] 1.3 Ruleset `main` is active, with `mobile typecheck and lint` and `backend tests` required, and a developer's direct push to `main` is refused
 - [ ] 1.4 Fork PR approval and read-only workflow permissions set
 - [ ] 2.1 to 2.2 Developers and non-devs are **Viewer** in Expo
 - [ ] 2.3 Robot is **Release Manager** and `preview` is protected
