@@ -278,28 +278,31 @@ Builds on: Numbers, Manners and etiquette
 ### 4.1 The Lessons tab (course home)
 
 ```
-Lessons
-Step-by-step lessons for your trip.
-
+Lessons                        12 of 63 done
+┌──────────────────────────┐ ┌─────────┐
+│ 🔍 Search lessons        │ │ Units ▾ │
+└──────────────────────────┘ └─────────┘
+(   Basics   |    Trip    |   Culture   )
+──────────────────────────────────────────  ← stays put; everything below scrolls
 ┌─ CONTINUE ───────────────────────────┐
 │ Numbers · Lesson 2 of 4              │
 │ Numbers 11–99              [Start →] │
 └──────────────────────────────────────┘
 
-START HERE: THE BASICS
-[icon] How Chinese works          4 of 4 ✓
-[icon] Hello and thank you        1 of 3   ›
-[icon] Your first sentences       Not started ›
-...
-ON YOUR TRIP
-[icon] Arriving at the airport    🎙 Encounter  ›
-[icon] Checking in at the hotel   🎙 Encounter  ›
+PART 1 · 2 OF 7 UNITS DONE
+Start here: the basics
+[icon] How Chinese works          ✓ Done
+[icon] Hello and thank you        1 of 3 done ›
+[icon] Your first sentences       4 lessons   ›
 ...
 [lock] Coming soon: <unit without lessons>
 ```
 
-- **Continue card** at the top: the next lesson to do (rules in [section 6](#6-progress)). Tapping it opens that lesson's player directly. On first open it says "Start here" and points at Unit 1, lesson 1. Hidden once everything is done, replaced by a "Course complete" card that links to Encounters.
-- **Two sections**, Part 1 and Part 2, each with a short heading.
+- **Navigation bar** at the top, which stays put while the rest scrolls: the title and overall progress, a search field, a **Units** dropdown, and the part tabs.
+- **Part tabs:** Basics, Trip and Culture. Each tab shows only that part's units, with the part's title, summary and how many of its units are done, rather than every unit in one long column. The tab opens on the part the Continue card points at (Part 1 on a first open), until the learner picks one.
+- **Search** finds units (title, summary, can-do lines) and lessons (title, summary, and every word, pattern and example). It takes English (`taxi`), pinyin with or without tone marks (`duoshao` finds `duōshao`) and characters (`多少`). While there's a query, the results replace the tabs: a unit opens its unit screen, and a lesson opens straight into the lesson player, showing the word that matched.
+- **Units dropdown:** every unit grouped by part, with its progress and an "Up next" marker on the Continue card's unit. Tapping one opens it. A tap outside, the button again or Android's back button closes it.
+- **Continue card** at the top of every tab: the next lesson to do (rules in [section 6](#6-progress)). Tapping it opens that lesson's player directly. On first open it says "Start here" and points at Unit 1, lesson 1. Hidden once everything is done, replaced by a "Course complete" card that links to Encounters.
 - **One card per unit:** icon, title, one-line summary, progress ("1 of 3", or a tick when done), and an "Encounter" pill when the unit has an encounter.
 - **Units with no lessons yet** show as locked "Coming soon" cards, like `LockedScenarioCard` on Encounters. They can't be opened.
 - Opens instantly: the content is in the app, so there's no loading spinner and no network call.

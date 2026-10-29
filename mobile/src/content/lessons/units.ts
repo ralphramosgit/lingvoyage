@@ -19,9 +19,9 @@ import type { Part, Unit } from './types';
 import { validateUnits } from './validate';
 
 export const PARTS: Part[] = [
-  { id: 'basics', title: 'Start here: the basics', summary: 'How Chinese works, and the words you need everywhere.' },
-  { id: 'trip', title: 'On your trip', summary: "From the airport to the dinner table, in the order you'll need it." },
-  { id: 'culture', title: 'Culture and etiquette', summary: 'The unwritten rules: manners, meals, luck and festivals.' },
+  { id: 'basics', title: 'Start here: the basics', tab: 'Basics', summary: 'How Chinese works, and the words you need everywhere.' },
+  { id: 'trip', title: 'On your trip', tab: 'Trip', summary: "From the airport to the dinner table, in the order you'll need it." },
+  { id: 'culture', title: 'Culture and etiquette', tab: 'Culture', summary: 'The unwritten rules: manners, meals, luck and festivals.' },
 ];
 
 /** The course, in its suggested order. A unit with no lessons shows as "coming soon". */
