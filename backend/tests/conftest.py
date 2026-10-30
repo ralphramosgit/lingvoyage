@@ -6,6 +6,7 @@ TEST_ENV = {
     "APP_ENV": "test",
     "SUPABASE_URL": "https://test-project.supabase.co",
     "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_test",
+    "SUPABASE_SECRET_KEY": "sb_secret_test",
     "ELEVENLABS_API_KEY": "sk_test",
     "ELEVENLABS_VOICE_ID": "default-voice",
     "ELEVENLABS_VOICE_ID_RESTAURANT": "",
