@@ -1,13 +1,53 @@
-import { NotebookText } from 'lucide-react-native';
+import { type Href, router } from 'expo-router';
+import { AudioLines, BookA, type LucideIcon, Puzzle, ScrollText, Table2 } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
-import { Card } from '@/components/Card';
+import { SectionCard } from '@/components/essentials/SectionCard';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
-import { colors, motion, radii, spacing } from '@/theme/theme';
+import { colors, motion, spacing, type TintName } from '@/theme/theme';
 
-// Placeholder until the Essentials tab is built (issue #11).
+type Section = { title: string; description: string; icon: LucideIcon; tint: TintName; href: Href };
+
+const SECTIONS: Section[] = [
+  {
+    title: 'Pinyin & pronunciation',
+    description: 'The four tones and the sounds that differ from English.',
+    icon: AudioLines,
+    tint: 'sky',
+    href: '/essentials/pinyin',
+  },
+  {
+    title: 'Vocabulary',
+    description: 'Beginner words grouped by type.',
+    icon: BookA,
+    tint: 'mint',
+    href: '/essentials/vocabulary',
+  },
+  {
+    title: 'Grammar',
+    description: 'The most common sentence patterns, one at a time.',
+    icon: Puzzle,
+    tint: 'sun',
+    href: '/essentials/grammar',
+  },
+  {
+    title: 'Tables',
+    description: 'Numbers, pronouns and more, to scan at a glance.',
+    icon: Table2,
+    tint: 'sky',
+    href: '/essentials/tables',
+  },
+  {
+    title: 'Cheat sheets',
+    description: 'One-screen summaries to review right before a trip.',
+    icon: ScrollText,
+    tint: 'mint',
+    href: '/essentials/cheatsheets',
+  },
+];
+
 export default function EssentialsScreen() {
   return (
     <Screen scroll edges={['top']}>
@@ -16,37 +56,28 @@ export default function EssentialsScreen() {
           Essentials
         </Text>
         <Text variant="body" color={colors.inkMuted}>
-          The basics to study anytime.
+          The basics to study anytime. Tap a speaker to hear any word.
         </Text>
       </Animated.View>
 
-      <Animated.View entering={FadeInDown.duration(motion.base).delay(motion.stagger)}>
-        <Card style={styles.card}>
-          <View style={styles.icon}>
-            <NotebookText size={26} color={colors.sky700} />
-          </View>
-          <Text variant="subheading" align="center">
-            Coming soon
-          </Text>
-          <Text variant="caption" color={colors.inkMuted} align="center">
-            Cheat sheets, tables, pronunciation, vocabulary and basic grammar.
-          </Text>
-        </Card>
-      </Animated.View>
+      <View style={styles.list}>
+        {SECTIONS.map((section, index) => (
+          <Animated.View key={section.title} entering={FadeInDown.duration(motion.base).delay(motion.stagger * (index + 1))}>
+            <SectionCard
+              title={section.title}
+              description={section.description}
+              icon={section.icon}
+              tint={section.tint}
+              onPress={() => router.push(section.href)}
+            />
+          </Animated.View>
+        ))}
+      </View>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   header: { gap: spacing.sm, paddingTop: spacing.lg, marginBottom: spacing.xl },
-  card: { alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.xxl },
-  icon: {
-    width: 56,
-    height: 56,
-    borderRadius: radii.full,
-    backgroundColor: colors.sky100,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.xs,
-  },
+  list: { gap: spacing.md },
 });
