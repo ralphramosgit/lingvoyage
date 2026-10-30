@@ -4,7 +4,7 @@ Run from backend/ with the virtual environment active:
 
     python scripts/check_keys.py
 
-Prints OK or FAIL (with a hint) for Supabase, ElevenLabs TTS, ElevenLabs STT and Claude.
+Prints OK or FAIL (with a hint) for Supabase (login and the local packs tables), ElevenLabs TTS, ElevenLabs STT and Claude.
 Never prints key values.
 """
 
@@ -19,8 +19,10 @@ import httpx  # noqa: E402
 from app import speech  # noqa: E402
 from app.config import ENV_FILE, get_settings  # noqa: E402
 from app.errors import ApiError  # noqa: E402
+from app.locations.store import supabase_headers  # noqa: E402
 
 TEST_SENTENCE = "Ni hao, welcome to Lingvoyage."
+LOCATION_TABLES = ("location_packs", "location_facts", "location_content")
 
 results: list[bool] = []
 
@@ -59,6 +61,45 @@ def check_supabase() -> None:
             f"HTTP {response.status_code}",
             "Check SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY come from the same project (guide 02, step 2).",
         )
+
+
+def check_location_tables() -> None:
+    """The local packs tables exist and the secret key can use them (issue #32)."""
+    settings = get_settings()
+    if not settings.supabase_url or not settings.supabase_secret_key:
+        report("Supabase tables", False, "SUPABASE_URL or SUPABASE_SECRET_KEY is empty", "Fill them in (guide 02 and 05).")
+        return
+    failed: list[str] = []
+    for table in LOCATION_TABLES:
+        try:
+            response = httpx.get(
+                f"{settings.supabase_url}/rest/v1/{table}",
+                params={"select": "id", "limit": "1"},
+                headers=supabase_headers(settings.supabase_secret_key),
+                timeout=10.0,
+            )
+        except httpx.HTTPError as error:
+            report("Supabase tables", False, f"couldn't connect ({type(error).__name__})", "Check SUPABASE_URL.")
+            return
+        if response.status_code == 401:
+            report(
+                "Supabase tables",
+                False,
+                "secret key rejected (HTTP 401)",
+                "Re-copy SUPABASE_SECRET_KEY from the same project as SUPABASE_URL.",
+            )
+            return
+        if response.status_code != 200:
+            failed.append(f"{table} (HTTP {response.status_code})")
+    if failed:
+        report(
+            "Supabase tables",
+            False,
+            "can't read " + ", ".join(failed),
+            "Run the local packs SQL from issue #32. 404: a table is missing. 403: a grant line didn't run.",
+        )
+    else:
+        report("Supabase tables", True, ", ".join(LOCATION_TABLES))
 
 
 def check_elevenlabs() -> None:
@@ -139,6 +180,7 @@ def main() -> int:
     env_note = "found" if ENV_FILE.exists() else "not found, using environment variables only"
     print(f"Lingvoyage key check (backend/.env {env_note})\n")
     check_supabase()
+    check_location_tables()
     check_elevenlabs()
     check_claude()
 

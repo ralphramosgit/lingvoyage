@@ -22,6 +22,7 @@ class Settings(BaseSettings):
 
     supabase_url: str = ""
     supabase_publishable_key: str = ""
+    supabase_secret_key: str = ""  # backend only: the local packs tables (app/locations/store.py)
 
     elevenlabs_api_key: str = ""
     elevenlabs_voice_id: str = ""
