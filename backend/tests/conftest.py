@@ -16,6 +16,9 @@ TEST_ENV = {
     "ELEVENLABS_STT_MODEL": "scribe_v2",
     "ANTHROPIC_API_KEY": "sk-ant-test",
     "ANTHROPIC_MODEL": "claude-haiku-5-5",
+    "ANTHROPIC_RESEARCH_MODEL": "claude-opus-5-5",
+    "ANTHROPIC_RESEARCH_EFFORT": "medium",
+    "ANTHROPIC_VERIFIER_MODEL": "claude-haiku-5-5",
 }
 os.environ.update(TEST_ENV)
 
