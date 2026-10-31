@@ -35,6 +35,10 @@ class Settings(BaseSettings):
 
     anthropic_api_key: str = ""
     anthropic_model: str = "claude-haiku-5-5"
+    # Local packs (app/research): the research workers, and the cheap model that checks their facts.
+    anthropic_research_model: str = "claude-opus-5-5"
+    anthropic_research_effort: str = "medium"
+    anthropic_verifier_model: str = "claude-haiku-5-5"
 
     @field_validator("*", mode="before")
     @classmethod
