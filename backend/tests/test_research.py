@@ -443,7 +443,8 @@ def test_pipeline_builds_a_pack(monkeypatch: pytest.MonkeyPatch) -> None:
     report = pipeline.run_pack("chengdu", store, client=FakeClient())  # type: ignore[arg-type]
 
     assert report.status == "ready" and report.error is None
-    assert seen == ["culture", "transport", "hot_spots", "food", "menu:chen-mapo-tofu"]
+    assert sorted(seen[:4]) == ["culture", "food", "hot_spots", "transport"]  # in parallel, so in any order
+    assert seen[4:] == ["menu:chen-mapo-tofu"]  # the deep dive starts once they've all finished
     pack = store.get_live_pack("chengdu")
     assert pack is not None and pack.id == report.pack_id
     assert sorted(item.category for item in store.get_facts(pack.id)) == ["menu_item", "restaurant", "transport"]
