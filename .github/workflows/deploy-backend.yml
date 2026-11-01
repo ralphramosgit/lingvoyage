@@ -1,6 +1,7 @@
-# Deploys the backend to the lingvoyage-api Lambda function on every push to main that changes
-# backend/. Same as building lambda.zip and running `aws lambda update-function-code` by hand
-# (guide 07, section 12). Needs the AWS_DEPLOY_ROLE_ARN repository secret (guide 12).
+# Deploys the backend on every push to main that changes backend/: the same lambda.zip goes to the
+# API function (lingvoyage-api) and the research worker (lingvoyage-research, issue #34). Same as
+# building lambda.zip and running `aws lambda update-function-code` by hand (guide 07, section 12).
+# Needs the AWS_DEPLOY_ROLE_ARN repository secret (guide 12), with both functions in its policy.
 name: Deploy backend
 
 on:
@@ -58,9 +59,13 @@ jobs:
 
       - name: Upload to Lambda
         run: |
-          aws lambda update-function-code --function-name lingvoyage-api --zip-file fileb://lambda.zip \
-            --query LastUpdateStatus --output text
-          aws lambda wait function-updated --function-name lingvoyage-api
+          for function in lingvoyage-api lingvoyage-research; do
+            aws lambda update-function-code --function-name "$function" --zip-file fileb://lambda.zip \
+              --query LastUpdateStatus --output text
+          done
+          for function in lingvoyage-api lingvoyage-research; do
+            aws lambda wait function-updated --function-name "$function"
+          done
 
       # A red run here means the new code is live but broken: check CloudWatch logs (guide 07, section 11).
       - name: Check /health

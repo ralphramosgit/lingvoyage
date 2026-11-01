@@ -1,3 +1,6 @@
 -r requirements.txt
 uvicorn[standard]==0.54.0
 pytest==9.1.1
+# Starts the research worker Lambda (app/research/jobs.py). On Lambda the runtime's own boto3 is used, so it
+# stays out of requirements.txt and lambda.zip.
+boto3==1.43.123

@@ -309,3 +309,59 @@ def test_store_needs_the_secret_key(monkeypatch: pytest.MonkeyPatch, fresh_setti
 
 def test_store_from_settings(fresh_settings: None) -> None:
     assert isinstance(get_store(), SupabasePackStore)
+
+
+# ---------------------------------------------------------------------------
+# Runs: latest pack, claiming a queued pack, counting runs (issue #34)
+# ---------------------------------------------------------------------------
+
+
+def test_claim_pack_once() -> None:
+    store = InMemoryPackStore()
+    pack = store.create_pack("chengdu")
+    assert store.claim_pack(pack.id) is True
+    claimed = store.get_pack(pack.id)
+    assert claimed is not None and claimed.status == "running"
+    assert store.claim_pack(pack.id) is False  # a second delivery of the same run
+    assert store.claim_pack("missing") is False
+
+
+def test_latest_pack_and_run_counts() -> None:
+    now = [datetime(2026, 10, 31, 12, tzinfo=UTC)]
+    store = InMemoryPackStore(clock=lambda: now[0])
+    old = store.create_pack("chengdu", requested_by="user-1")
+    store.fail_pack(old.id, "research_failed")
+    now[0] += timedelta(hours=2)
+    new = store.create_pack("chengdu", requested_by="user-2")
+    store.create_pack("beijing", requested_by="user-1")
+
+    latest = store.get_latest_pack("chengdu")
+    assert latest is not None and latest.id == new.id
+    assert store.get_latest_pack("xian") is None
+    assert store.count_runs_since(now[0] - timedelta(hours=1)) == 2
+    assert store.count_runs_since(now[0] - timedelta(hours=3), requested_by="user-1") == 2
+    assert store.count_runs_since(now[0] - timedelta(hours=1), requested_by="user-1") == 1
+
+
+def test_supabase_claim_pack() -> None:
+    store, seen = supabase(lambda _: httpx.Response(200, json=[PACK_ROW]))
+    assert store.claim_pack(PACK_ROW["id"]) is True
+    request = seen[0]
+    assert request.method == "PATCH"
+    assert dict(request.url.params) == {"id": f"eq.{PACK_ROW['id']}", "status": "eq.queued"}
+    assert json.loads(request.content) == {"status": "running"}
+
+    store, _ = supabase(lambda _: httpx.Response(200, json=[]))
+    assert store.claim_pack(PACK_ROW["id"]) is False
+
+
+def test_supabase_count_runs_since() -> None:
+    store, seen = supabase(lambda _: httpx.Response(200, json=[{"id": "a"}, {"id": "b"}]))
+    since = datetime(2026, 10, 30, 12, tzinfo=UTC)
+    assert store.count_runs_since(since, requested_by="user-1") == 2
+    assert dict(seen[0].url.params) == {
+        "select": "id",
+        "created_at": "gte.2026-10-30T12:00:00+00:00",
+        "limit": "1000",
+        "requested_by": "eq.user-1",
+    }
