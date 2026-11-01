@@ -12,7 +12,7 @@ from contextlib import contextmanager
 from datetime import UTC, datetime
 from typing import Any
 
-from app.locations.models import PackStage
+from app.locations.models import FactDraft, PackStage
 from app.locations.store import PackStore, StoreError
 
 logger = logging.getLogger("lingvoyage.research")
@@ -30,6 +30,7 @@ PRICES: dict[str, dict[str, float]] = {
     "claude-haiku-5-5": {"input": 0.10, "output": 0.50, "cache_read": 0.01, "cache_write": 0.125},
 }
 _TOKEN_FIELDS = ("input_tokens", "output_tokens", "cache_read_input_tokens", "cache_creation_input_tokens")
+_PLACES = {"hot_spot", "restaurant"}
 
 
 class Trace:
@@ -51,6 +52,10 @@ class Trace:
         self._searches = 0
         self._fetches = 0
         self._seconds: dict[str, float] = {}
+        # Facts are only saved at the end, so the app's live counts come from here.
+        self._facts = 0
+        self._places = 0
+        self._sources: set[str] = set()
         self._last_flush = clock()
         self._dirty = False
 
@@ -108,6 +113,21 @@ class Trace:
             self._dirty = True
         return searches
 
+    def count_fact(self, fact: FactDraft) -> None:
+        with self._lock:
+            self._facts += 1
+            self._places += fact.category in _PLACES
+            self._sources.add(fact.source_url)
+            self._dirty = True
+
+    def set_counts(self, facts: list[FactDraft]) -> None:
+        """Replaces the running counts with what's actually being published, after the fact check."""
+        with self._lock:
+            self._facts = len(facts)
+            self._places = sum(fact.category in _PLACES for fact in facts)
+            self._sources = {fact.source_url for fact in facts}
+            self._dirty = True
+
     def usage(self) -> dict[str, Any]:
         with self._lock:
             return self._usage_locked()
@@ -128,6 +148,7 @@ class Trace:
             "web_fetch_requests": self._fetches,
             "seconds": dict(self._seconds),
             "cost_usd_estimate": round(cost, 2),
+            "counts": {"facts": self._facts, "places": self._places, "sources": len(self._sources)},
         }
 
     def flush(self, force: bool = False) -> None:

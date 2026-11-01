@@ -348,6 +348,7 @@ class ToolBox:
             return f"Already saved: {fact.title}. Move on to something new.", False
         self._saved.add(key)
         self.facts.append(fact)
+        self._trace.count_fact(fact)
         self._trace.step(self._stage, "found", found_text(fact), worker=self.brief.worker)
         return f"Saved ({len(self.facts)} so far): {fact.title}", False
 

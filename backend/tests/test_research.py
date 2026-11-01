@@ -186,6 +186,7 @@ def test_record_saves_a_fact_from_a_page_it_saw(trace: Trace) -> None:
     assert [fact.title for fact in box.facts] == ["Metro Line 18 to the airport"]
     assert box.facts[0].data["fare_cny_max"] == 10
     assert trace.steps[-1]["kind"] == "found" and "¥2–¥10" in trace.steps[-1]["text"]
+    assert trace.usage()["counts"] == {"facts": 1, "places": 0, "sources": 1}  # live counts for the app
 
 
 def test_record_accepts_another_page_on_a_site_it_saw(trace: Trace) -> None:
@@ -451,6 +452,7 @@ def test_pipeline_builds_a_pack(monkeypatch: pytest.MonkeyPatch) -> None:
     stages = [step["stage"] for step in pack.trace if step["kind"] == "stage"]
     assert stages == ["plan", "research", "deep_dive", "verify", "publish"]
     assert set(pack.usage["seconds"]) == set(stages) and "cost_usd_estimate" in pack.usage
+    assert pack.usage["counts"] == {"facts": 3, "places": 1, "sources": 3}  # what was published
 
 
 def test_pipeline_fails_when_nothing_is_found(monkeypatch: pytest.MonkeyPatch) -> None:

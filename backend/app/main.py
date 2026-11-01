@@ -21,6 +21,7 @@ from app import speech, tutor
 from app.auth import AuthUser, require_user
 from app.config import get_settings
 from app.errors import ApiError, error_body
+from app.locations.routes import router as locations_router
 from app.scenarios import SCENARIOS, Scenario, ScenarioDefinition, get_scenario
 from app.tutor import ChatLine, TutorReply
 
@@ -256,5 +257,8 @@ def conversation_turn(body: TurnRequest, _user: AuthUser = Depends(require_user)
     )
     return TurnResponse(transcript=transcript, reply=reply, audio_base64=_speak(reply.hanzi, scenario))
 
+
+# Local packs (issue #34): GET /cities, POST /packs/{city}, GET /packs/{city}/status, GET /packs/{city}
+app.include_router(locations_router)
 
 handler = Mangum(app, lifespan="off")

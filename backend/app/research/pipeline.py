@@ -108,6 +108,7 @@ def run_pack(
         with trace.stage("verify", f"Checking {len(found)} facts"):
             report.facts = verify(client, settings.anthropic_verifier_model, city, found, trace)
 
+        trace.set_counts(report.facts)
         with trace.stage("publish", f"Saving {len(report.facts)} facts"):
             store.insert_facts(pack.id, report.facts)
             store.finish_pack(pack.id)

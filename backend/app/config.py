@@ -39,6 +39,12 @@ class Settings(BaseSettings):
     anthropic_research_model: str = "claude-opus-5-5"
     anthropic_research_effort: str = "medium"
     anthropic_verifier_model: str = "claude-haiku-5-5"
+    # The worker Lambda that builds packs (lingvoyage-research). Empty: build in a thread, for local runs.
+    research_function_name: str = ""
+    # New pack runs a day (about $4 of Claude credits each): for all accounts together, and per account.
+    # 0 pauses new runs; cities that are already built keep working. See app/locations/packs.py.
+    research_runs_per_day: int = 2
+    research_runs_per_account_per_day: int = 1
 
     @field_validator("*", mode="before")
     @classmethod

@@ -7,6 +7,7 @@ That key must never reach the app.
 import logging
 import threading
 import uuid
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from functools import lru_cache
 from typing import Any, Protocol
@@ -22,6 +23,7 @@ logger = logging.getLogger("lingvoyage.locations")
 
 PACK_TTL = timedelta(days=30)
 ACTIVE_STATUSES = ("queued", "running")
+MAX_COUNTED_RUNS = 1000  # count_runs_since only needs to know whether a small limit is reached
 _UNIQUE_VIOLATION = "23505"  # Postgres error code, here from the location_packs_one_active index
 
 
@@ -38,6 +40,9 @@ class PackStore(Protocol):
     def get_pack(self, pack_id: str) -> Pack | None: ...
     def get_live_pack(self, city: str) -> Pack | None: ...
     def get_active_run(self, city: str) -> Pack | None: ...
+    def get_latest_pack(self, city: str) -> Pack | None: ...
+    def claim_pack(self, pack_id: str) -> bool: ...
+    def count_runs_since(self, since: datetime, requested_by: str | None = None) -> int: ...
     def set_stage(self, pack_id: str, stage: PackStage) -> None: ...
     def save_trace(self, pack_id: str, steps: list[dict[str, Any]], usage: dict[str, Any]) -> None: ...
     def finish_pack(self, pack_id: str, ttl: timedelta = PACK_TTL) -> None: ...
@@ -138,6 +143,27 @@ class SupabasePackStore:
         )
         return Pack.model_validate(rows[0]) if rows else None
 
+    def get_latest_pack(self, city: str) -> Pack | None:
+        rows = self._select("location_packs", {"city": f"eq.{city}", "order": "created_at.desc", "limit": "1"})
+        return Pack.model_validate(rows[0]) if rows else None
+
+    def claim_pack(self, pack_id: str) -> bool:
+        # Only a queued pack matches, so if the same run is delivered twice, only one worker gets it.
+        rows = self._request(
+            "PATCH",
+            "location_packs",
+            params={"id": f"eq.{pack_id}", "status": "eq.queued"},
+            json={"status": "running"},
+            prefer="return=representation",
+        )
+        return bool(rows)
+
+    def count_runs_since(self, since: datetime, requested_by: str | None = None) -> int:
+        params = {"select": "id", "created_at": f"gte.{since.isoformat()}", "limit": str(MAX_COUNTED_RUNS)}
+        if requested_by:
+            params["requested_by"] = f"eq.{requested_by}"
+        return len(self._request("GET", "location_packs", params=params) or [])
+
     def set_stage(self, pack_id: str, stage: PackStage) -> None:
         self._update_pack(pack_id, {"stage": stage, "status": "running"})
 
@@ -207,7 +233,8 @@ def _postgrest_error(response: httpx.Response) -> tuple[str, str]:
 class InMemoryPackStore:
     """Behaves like the Supabase store, including the one-run-per-city rule. Nothing is saved."""
 
-    def __init__(self) -> None:
+    def __init__(self, clock: Callable[[], datetime] = _now) -> None:
+        self._clock = clock  # tests move time forward to expire packs and runs
         self._lock = threading.Lock()  # research workers run in parallel threads
         self._packs: dict[str, Pack] = {}
         self._facts: dict[str, list[Fact]] = {}
@@ -227,7 +254,9 @@ class InMemoryPackStore:
         with self._lock:
             if any(pack.city == city and pack.status in ACTIVE_STATUSES for pack in self._packs.values()):
                 raise RunAlreadyActive("This city already has a pack in progress.")
-            pack = Pack(id=str(uuid.uuid4()), city=city, status="queued", requested_by=requested_by, created_at=_now())
+            pack = Pack(
+                id=str(uuid.uuid4()), city=city, status="queued", requested_by=requested_by, created_at=self._clock()
+            )
             self._packs[pack.id] = pack
             return pack.model_copy(deep=True)
 
@@ -250,6 +279,27 @@ class InMemoryPackStore:
                     return pack.model_copy(deep=True)
             return None
 
+    def get_latest_pack(self, city: str) -> Pack | None:
+        with self._lock:
+            packs = [pack for pack in self._packs.values() if pack.city == city]
+            return max(packs, key=lambda pack: pack.created_at).model_copy(deep=True) if packs else None
+
+    def claim_pack(self, pack_id: str) -> bool:
+        with self._lock:
+            pack = self._packs.get(pack_id)
+            if pack is None or pack.status != "queued":
+                return False
+            self._packs[pack_id] = pack.model_copy(update={"status": "running"})
+            return True
+
+    def count_runs_since(self, since: datetime, requested_by: str | None = None) -> int:
+        with self._lock:
+            return sum(
+                1
+                for pack in self._packs.values()
+                if pack.created_at >= since and (requested_by is None or pack.requested_by == requested_by)
+            )
+
     def set_stage(self, pack_id: str, stage: PackStage) -> None:
         self._update_pack(pack_id, {"stage": stage, "status": "running"})
 
@@ -257,17 +307,18 @@ class InMemoryPackStore:
         self._update_pack(pack_id, {"trace": list(steps), "usage": dict(usage)})
 
     def finish_pack(self, pack_id: str, ttl: timedelta = PACK_TTL) -> None:
-        now = _now()
+        now = self._clock()
         self._update_pack(pack_id, {"status": "ready", "finished_at": now, "expires_at": now + ttl})
 
     def fail_pack(self, pack_id: str, error: str) -> None:
-        self._update_pack(pack_id, {"status": "failed", "error": error, "finished_at": _now()})
+        self._update_pack(pack_id, {"status": "failed", "error": error, "finished_at": self._clock()})
 
     def insert_facts(self, pack_id: str, facts: list[FactDraft]) -> list[Fact]:
         with self._lock:
             self._require_pack(pack_id)
             saved = [
-                Fact(id=str(uuid.uuid4()), pack_id=pack_id, retrieved_at=_now(), **fact.model_dump()) for fact in facts
+                Fact(id=str(uuid.uuid4()), pack_id=pack_id, retrieved_at=self._clock(), **fact.model_dump())
+                for fact in facts
             ]
             self._facts.setdefault(pack_id, []).extend(saved)
             return [fact.model_copy(deep=True) for fact in saved]
