@@ -20,8 +20,10 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from app import speech, tutor
 from app.auth import AuthUser, require_user
 from app.config import get_settings
+from app.content import lookup
 from app.errors import ApiError, error_body
 from app.locations.routes import router as locations_router
+from app.locations.store import StoreError
 from app.scenarios import SCENARIOS, Scenario, ScenarioDefinition, get_scenario
 from app.tutor import ChatLine, TutorReply
 
@@ -139,7 +141,13 @@ class TurnResponse(BaseModel):
 
 
 def _scenario_or_404(scenario_id: str) -> ScenarioDefinition:
+    """A built-in scene, or a local one (local-<city>-...) from the city's pack."""
     scenario = get_scenario(scenario_id)
+    if scenario is None and scenario_id.startswith("local-"):
+        try:
+            scenario = lookup.find_local_scenario(scenario_id)
+        except StoreError as error:
+            raise ApiError(503, "scenario_unavailable", "Couldn't load that scene right now. Try again.") from error
     if scenario is None:
         raise ApiError(404, "scenario_not_found", f"Unknown scenario '{scenario_id}'.")
     return scenario

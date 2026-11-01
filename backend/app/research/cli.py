@@ -60,6 +60,9 @@ def print_report(report: PackReport) -> None:
         if result.gaps:
             print(f"      couldn't find: {'; '.join(result.gaps)}")
 
+    print(f"Scenes: {len(report.encounters)}")
+    for scenario in report.encounters:
+        print(f"  {scenario.id}: {scenario.title}")
     print(f"Web: {usage.get('web_search_requests', 0)} searches, {usage.get('web_fetch_requests', 0)} page reads")
     for model, totals in usage.get("models", {}).items():
         print(
@@ -89,6 +92,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--topics", help=f"comma-separated, from: {', '.join(TOPICS)} (default: all)")
     parser.add_argument("--dry-run", action="store_true", help="don't save anything; print the facts as JSON")
     parser.add_argument("--no-deep-dive", action="store_true", help="skip reading restaurant menus")
+    parser.add_argument("--no-content", action="store_true", help="skip writing scenes (python -m app.content.cli later)")
     parser.add_argument(
         "--quick", action="store_true", help="one small worker (transport unless --topics), no menus: a cheap check"
     )
@@ -113,7 +117,13 @@ def main(argv: list[str] | None = None) -> int:
     print(f"Building the {args.city} pack{' (dry run, nothing saved)' if args.dry_run else ''}. This takes a few minutes.\n")
     try:
         report = run_pack(
-            args.city, store, topics=topics, deep_dive=not args.no_deep_dive, quick=args.quick, on_step=print_step
+            args.city,
+            store,
+            topics=topics,
+            deep_dive=not args.no_deep_dive,
+            quick=args.quick,
+            content=not args.no_content,
+            on_step=print_step,
         )
     except RunAlreadyActive:
         print(
