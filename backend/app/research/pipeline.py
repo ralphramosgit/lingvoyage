@@ -1,7 +1,8 @@
-"""A city's local pack, stage by stage: plan, research, menu deep dive, verify, publish.
+"""A city's local pack, stage by stage: plan, research, menu deep dive, verify, generate, publish.
 
-The content stage (issues #35 and #36) goes between verify and publish. Until then a ready pack
-holds the checked facts only.
+The checked facts are saved at the end of verify, then the content agents write from them (the
+encounters, #35; lessons and quizzes come in #36). A scene that can't be written is skipped: the
+pack is still published with its facts.
 """
 
 import logging
@@ -12,6 +13,7 @@ from typing import Any
 import anthropic
 
 from app.config import get_settings
+from app.content import encounters
 from app.errors import ApiError
 from app.locations.cities import City, find_city
 from app.locations.models import FactDraft
@@ -22,6 +24,7 @@ from app.research.claude import get_client
 from app.research.trace import Trace
 from app.research.verify import verify
 from app.research.workers import WorkerResult
+from app.scenarios import ScenarioDefinition
 
 logger = logging.getLogger("lingvoyage.research")
 
@@ -38,6 +41,7 @@ class PackReport:
     status: str  # "ready" or "failed"
     error: str | None = None
     facts: list[FactDraft] = field(default_factory=list)
+    encounters: list[ScenarioDefinition] = field(default_factory=list)
     workers: list[WorkerResult] = field(default_factory=list)
     usage: dict[str, Any] = field(default_factory=dict)
 
@@ -68,6 +72,7 @@ def run_pack(
     topics: Iterable[str] | None = None,
     deep_dive: bool = True,
     quick: bool = False,
+    content: bool = True,
     on_step: Callable[[dict[str, Any]], None] | None = None,
 ) -> PackReport:
     """Builds the pack. Pass `pack_id` to fill a pack that's already queued (the worker Lambda, #34);
@@ -89,7 +94,7 @@ def run_pack(
         with trace.stage("plan", f"Planning the research for {city.name}"):
             briefs = plan_briefs(city, topics or (["transport"] if quick else None))
             if quick:
-                briefs, deep_dive = [replace(brief, **QUICK_LIMITS) for brief in briefs], False
+                briefs, deep_dive, content = [replace(brief, **QUICK_LIMITS) for brief in briefs], False, False
 
         with trace.stage("research", f"Researching {city.name} with {len(briefs)} agents at once"):
             report.workers = workers.run_workers(client, briefs, city, trace, "research", model=model, effort=effort)
@@ -107,10 +112,28 @@ def run_pack(
 
         with trace.stage("verify", f"Checking {len(found)} facts"):
             report.facts = verify(client, settings.anthropic_verifier_model, city, found, trace)
-
+            # Saved now: each scene keeps the ids of the facts it was written from.
+            saved = store.insert_facts(pack.id, report.facts)
         trace.set_counts(report.facts)
-        with trace.stage("publish", f"Saving {len(report.facts)} facts"):
-            store.insert_facts(pack.id, report.facts)
+
+        if content:
+            with trace.stage("generate", f"Writing scenes for {city.name}"):
+                try:
+                    report.encounters = encounters.generate_encounters(
+                        client,
+                        store,
+                        pack.id,
+                        city,
+                        saved,
+                        trace,
+                        model=settings.anthropic_generator_model,
+                        effort=settings.anthropic_generator_effort,
+                    )
+                except Exception:  # a bug in writing scenes shouldn't lose the research
+                    logger.exception("Writing scenes for pack %s failed", pack.id)
+                    trace.step("generate", "error", "Couldn't write the scenes; the facts are still published")
+
+        with trace.stage("publish", f"Publishing {len(report.facts)} facts"):
             store.finish_pack(pack.id)
         sources = len({fact.source_url for fact in report.facts})
         trace.step("publish", "done", f"Your {city.name} pack is ready: {len(report.facts)} facts from {sources} sources")

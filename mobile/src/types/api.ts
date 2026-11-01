@@ -34,6 +34,10 @@ export type Scenario = {
   key_phrases: KeyPhrase[];
   /** Practice before the encounter. Missing from servers older than the lessons feature. */
   lessons?: Lesson[];
+  /** Local encounters (a city's pack): the pages their real details came from. Empty for built-in scenes. */
+  sources?: { url: string; title: string }[];
+  /** Local encounters: the day those details were checked (YYYY-MM-DD). */
+  checked_at?: string | null;
 };
 
 /** A multiple-choice answer: Chinese (hanzi and pinyin), or English for "what does it mean?" questions. */

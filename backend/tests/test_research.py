@@ -10,6 +10,7 @@ from anthropic.types.beta import BetaMessage
 from app.locations.cities import find_city
 from app.locations.models import FactDraft
 from app.locations.store import InMemoryPackStore
+from app.content import encounters
 from app.research import cli, pipeline, prompts, tools, workers
 from app.research.briefs import Brief, menu_brief, plan_briefs
 from app.research.trace import Trace
@@ -434,7 +435,13 @@ def fake_workers(monkeypatch: pytest.MonkeyPatch, facts_by_topic: dict[str, list
         found = [FactDraft.model_validate(item) for item in facts_by_topic.get(worker_brief.topic, [])]
         return workers.WorkerResult(worker_brief, found, summary="done", stopped="finished")
 
+    def fake_generate(client: Any, store: Any, pack_id: str, city: Any, facts: list[Any], trace: Trace, **_: Any) -> list[Any]:
+        seen.append(f"generate:{len(facts)} facts")
+        assert all(fact.id for fact in facts)  # saved before the scenes are written from them
+        return []
+
     monkeypatch.setattr(workers, "run_worker", fake_run_worker)
+    monkeypatch.setattr(encounters, "generate_encounters", fake_generate)
     return seen
 
 
@@ -445,12 +452,12 @@ def test_pipeline_builds_a_pack(monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert report.status == "ready" and report.error is None
     assert sorted(seen[:4]) == ["culture", "food", "hot_spots", "transport"]  # in parallel, so in any order
-    assert seen[4:] == ["menu:chen-mapo-tofu"]  # the deep dive starts once they've all finished
+    assert seen[4:] == ["menu:chen-mapo-tofu", "generate:3 facts"]  # the deep dive, then the scenes
     pack = store.get_live_pack("chengdu")
     assert pack is not None and pack.id == report.pack_id
     assert sorted(item.category for item in store.get_facts(pack.id)) == ["menu_item", "restaurant", "transport"]
     stages = [step["stage"] for step in pack.trace if step["kind"] == "stage"]
-    assert stages == ["plan", "research", "deep_dive", "verify", "publish"]
+    assert stages == ["plan", "research", "deep_dive", "verify", "generate", "publish"]
     assert set(pack.usage["seconds"]) == set(stages) and "cost_usd_estimate" in pack.usage
     assert pack.usage["counts"] == {"facts": 3, "places": 1, "sources": 3}  # what was published
 

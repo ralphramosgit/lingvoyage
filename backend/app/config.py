@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     anthropic_research_model: str = "claude-opus-5-5"
     anthropic_research_effort: str = "medium"
     anthropic_verifier_model: str = "claude-haiku-5-5"
+    # The content agent that writes local encounters from the facts (app/content).
+    anthropic_generator_model: str = "claude-sonnet-5-5"
+    anthropic_generator_effort: str = "medium"
     # The worker Lambda that builds packs (lingvoyage-research). Empty: build in a thread, for local runs.
     research_function_name: str = ""
     # New pack runs a day (about $4 of Claude credits each): for all accounts together, and per account.

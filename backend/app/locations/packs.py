@@ -13,6 +13,7 @@ The rules (issue #34):
 
 import logging
 import threading
+import time
 from collections import OrderedDict
 from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
@@ -25,7 +26,7 @@ from app.locations.cities import City
 from app.locations.models import Pack, PackStage
 from app.locations.store import PackStore, RunAlreadyActive
 from app.research import jobs
-from app.scenarios import Scenario, ScenarioDefinition
+from app.scenarios import Scenario, ScenarioDefinition, Source
 
 logger = logging.getLogger("lingvoyage.locations")
 
@@ -34,6 +35,7 @@ RETRY_FAILED_REFRESH_AFTER = timedelta(days=1)
 DAY = timedelta(days=1)
 STATUS_STEPS = 50
 CACHED_PACKS = 32
+CACHE_SECONDS = 600  # content can be added to a published pack (python -m app.content.cli)
 
 
 class PackStep(BaseModel):
@@ -65,11 +67,6 @@ class PackStatus(BaseModel):
     ready_pack_id: str | None = None  # set whenever a ready pack exists, even an expired one being refreshed
     refreshing: bool = False
     error: PackError | None = None
-
-
-class Source(BaseModel):
-    url: str
-    title: str
 
 
 class LocalPack(BaseModel):
@@ -220,8 +217,8 @@ def ensure_pack(store: PackStore, city: City, user_id: str) -> PackStatus:
 # The pack itself
 # ---------------------------------------------------------------------------
 
-# A ready pack never changes, so each warm Lambda keeps the last few it served.
-_pack_cache: "OrderedDict[str, LocalPack]" = OrderedDict()
+# Each warm Lambda keeps the last few packs it served, for 10 minutes.
+_pack_cache: "OrderedDict[str, tuple[float, LocalPack]]" = OrderedDict()
 _cache_lock = threading.Lock()
 
 
@@ -236,9 +233,9 @@ def local_pack(store: PackStore, city: City) -> LocalPack:
         raise ApiError(404, "pack_not_ready", f"Your {city.name} pack isn't ready yet.")
     with _cache_lock:
         cached = _pack_cache.get(live.id)
-        if cached is not None:
+        if cached is not None and time.monotonic() - cached[0] < CACHE_SECONDS:
             _pack_cache.move_to_end(live.id)
-            return cached
+            return cached[1]
 
     encounters, unit_notes, quizzes = [], [], []
     for item in store.get_content(live.id):
@@ -271,7 +268,8 @@ def local_pack(store: PackStore, city: City) -> LocalPack:
         sources=sources,
     )
     with _cache_lock:
-        _pack_cache[live.id] = pack
+        _pack_cache[live.id] = (time.monotonic(), pack)
+        _pack_cache.move_to_end(live.id)
         while len(_pack_cache) > CACHED_PACKS:
             _pack_cache.popitem(last=False)
     return pack

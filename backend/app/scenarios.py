@@ -1,6 +1,6 @@
 """Encounter content. The single source of truth for scenarios, goals, key phrases and lessons."""
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.lessons import AIRPORT_LESSONS, HOTEL_LESSONS, RESTAURANT_LESSONS, TRAIN_LESSONS, Lesson
 
@@ -24,6 +24,19 @@ class KeyPhrase(BaseModel):
     english: str
 
 
+class Source(BaseModel):
+    url: str
+    title: str
+
+
+class LocalRef(BaseModel):
+    """Where a local encounter came from: its city pack, place and facts (app/content/encounters.py)."""
+
+    pack_id: str
+    place_key: str
+    fact_ids: list[str]
+
+
 class Scenario(BaseModel):
     """Public fields, as sent to the app."""
 
@@ -40,6 +53,9 @@ class Scenario(BaseModel):
     goals: list[Goal]
     key_phrases: list[KeyPhrase]
     lessons: list[Lesson]  # optional practice before the encounter
+    # Local encounters only: the pages their real details came from, and the day they were checked.
+    sources: list[Source] = Field(default_factory=list)
+    checked_at: str | None = None
 
 
 class ScenarioDefinition(Scenario):
@@ -49,9 +65,12 @@ class ScenarioDefinition(Scenario):
     # How the scene should go, beat by beat, using the language the lessons teach.
     scene_outline: list[str]
     voice_env: str | None = None  # None: the default voice
+    local: LocalRef | None = None  # local encounters only
 
     def public(self) -> Scenario:
-        return Scenario.model_validate(self.model_dump(exclude={"scene_details", "scene_outline", "voice_env"}))
+        return Scenario.model_validate(
+            self.model_dump(exclude={"scene_details", "scene_outline", "voice_env", "local"})
+        )
 
     @property
     def goal_ids(self) -> list[str]:
