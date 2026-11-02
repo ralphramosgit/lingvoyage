@@ -1,6 +1,9 @@
 import type {
   ApiErrorBody,
+  City,
   LiveTokenResponse,
+  LocalPack,
+  PackStatus,
   Scenario,
   TranscribeRequest,
   TranscribeResponse,
@@ -108,6 +111,13 @@ export const api = {
     request<TurnResponse>('POST', '/conversation/start', { body: { scenario_id: scenarioId }, auth: true, signal }),
   sendTurn: (body: TurnRequest, signal?: AbortSignal) =>
     request<TurnResponse>('POST', '/conversation/turn', { body, auth: true, signal }),
+  getCities: () => request<City[]>('GET', '/cities'),
+  /** The city's pack status. Starts building it if there's no pack yet (or it has expired). */
+  ensurePack: (city: string) => request<PackStatus>('POST', `/packs/${encodeURIComponent(city)}`, { auth: true }),
+  /** For polling while a pack builds: never starts anything. */
+  getPackStatus: (city: string) =>
+    request<PackStatus>('GET', `/packs/${encodeURIComponent(city)}/status`, { auth: true }),
+  getPack: (city: string) => request<LocalPack>('GET', `/packs/${encodeURIComponent(city)}`, { auth: true }),
 };
 
 export function errorMessage(error: unknown, fallback = 'Something went wrong. Try again.'): string {

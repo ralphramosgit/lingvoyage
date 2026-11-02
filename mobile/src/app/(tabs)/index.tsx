@@ -6,6 +6,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { ErrorState } from '@/components/ErrorState';
 import { FormMessage } from '@/components/FormMessage';
 import { Pill } from '@/components/Pill';
+import { PackStatusCard } from '@/components/pack/PackStatusCard';
 import { LockedScenarioCard, ScenarioCard } from '@/components/ScenarioCard';
 import { Screen } from '@/components/Screen';
 import { SkeletonCard } from '@/components/SkeletonCard';
@@ -43,6 +44,10 @@ export default function EncountersScreen() {
           Pick a scene and start talking.
         </Text>
         <Pill label="Mandarin Chinese" icon={Languages} tone="sky" style={styles.languagePill} />
+      </Animated.View>
+
+      <Animated.View entering={FadeInDown.duration(motion.base).delay(motion.stagger)} style={styles.pack}>
+        <PackStatusCard />
       </Animated.View>
 
       <Text variant="heading" style={styles.sectionTitle}>
@@ -95,6 +100,7 @@ const styles = StyleSheet.create({
   },
   nihaoText: { fontWeight: '600' },
   languagePill: { marginTop: spacing.xs },
+  pack: { marginTop: spacing.lg },
   sectionTitle: { marginTop: spacing.xxl, marginBottom: spacing.md },
   list: { gap: spacing.md },
 });

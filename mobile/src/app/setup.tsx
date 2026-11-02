@@ -1,10 +1,12 @@
-import { Check, Lock, LogOut } from 'lucide-react-native';
+import { Check, ChevronLeft, Lock, LogOut } from 'lucide-react-native';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, LinearTransition, ZoomIn } from 'react-native-reanimated';
 
 import { Button } from '@/components/Button';
+import { CityPicker } from '@/components/destination/CityPicker';
 import { FormMessage } from '@/components/FormMessage';
+import { IconButton } from '@/components/IconButton';
 import { Pill } from '@/components/Pill';
 import { PressableScale } from '@/components/PressableScale';
 import { Screen } from '@/components/Screen';
@@ -29,28 +31,30 @@ const LANGUAGES: LanguageOption[] = [
   { code: 'fr', name: 'French', native: 'Français', available: false },
 ];
 
-type StepKey = 'language';
-// One step today; more (e.g. travel goals: food, sights, culture) slot in here later.
-const STEPS: StepKey[] = ['language'];
+type StepKey = 'language' | 'destination';
+// More (e.g. travel goals: food, sights, culture) slot in here later.
+const STEPS: StepKey[] = ['language', 'destination'];
 
 export default function SetupScreen() {
   const { session, refreshProfile, signOut } = useAuth();
-  const [stepIndex] = useState(0);
+  const [stepIndex, setStepIndex] = useState(0);
   const [language, setLanguage] = useState<string | null>(null);
+  const [destination, setDestination] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const step = STEPS[stepIndex];
   const isLastStep = stepIndex === STEPS.length - 1;
-  const canContinue = step === 'language' ? language !== null : true;
+  const canContinue = step === 'language' ? language !== null : destination !== null;
 
   const finish = async () => {
-    if (!session || !language) return;
+    if (!session || !language || !destination) return;
     setSaving(true);
     setError(null);
+    // The city pack starts loading (or building) once the Encounters tab opens: see usePack.
     const { error: updateError } = await supabase
       .from('profiles')
-      .update({ target_language: language, onboarding_complete: true })
+      .update({ target_language: language, destination_city: destination, onboarding_complete: true })
       .eq('id', session.user.id);
     if (updateError) {
       setError("We couldn't save your choice. Check your connection and try again.");
@@ -66,6 +70,9 @@ export default function SetupScreen() {
       scroll
       header={
         <View style={styles.topBar}>
+          {stepIndex > 0 ? (
+            <IconButton icon={ChevronLeft} accessibilityLabel="Back" onPress={() => setStepIndex(stepIndex - 1)} />
+          ) : null}
           <View style={styles.progressBlock}>
             <Text variant="tiny" color={colors.inkMuted}>
               STEP {stepIndex + 1} OF {STEPS.length}
@@ -91,33 +98,49 @@ export default function SetupScreen() {
           {error ? <FormMessage message={error} /> : null}
           <Button
             label={isLastStep ? 'Continue' : 'Next'}
-            onPress={finish}
+            onPress={isLastStep ? finish : () => setStepIndex(stepIndex + 1)}
             disabled={!canContinue}
             loading={saving}
-            accessibilityHint={canContinue ? undefined : 'Choose a language first'}
+            accessibilityHint={canContinue ? undefined : step === 'language' ? 'Choose a language first' : 'Choose a city first'}
           />
         </View>
       }>
-      <Animated.View entering={FadeInDown.duration(motion.base)} style={styles.header}>
-        <Text variant="title" accessibilityRole="header">
-          Which language are you learning?
-        </Text>
-        <Text variant="body" color={colors.inkMuted}>
-          You can add more languages later.
-        </Text>
-      </Animated.View>
-
-      <View style={styles.list} accessibilityRole="radiogroup">
-        {LANGUAGES.map((option, index) => (
-          <Animated.View key={option.code} entering={FadeInDown.duration(motion.base).delay(80 + index * motion.stagger)}>
-            <LanguageCard
-              option={option}
-              selected={language === option.code}
-              onSelect={() => setLanguage(option.code)}
-            />
+      {step === 'language' ? (
+        <>
+          <Animated.View entering={FadeInDown.duration(motion.base)} style={styles.header}>
+            <Text variant="title" accessibilityRole="header">
+              Which language are you learning?
+            </Text>
+            <Text variant="body" color={colors.inkMuted}>
+              You can add more languages later.
+            </Text>
           </Animated.View>
-        ))}
-      </View>
+
+          <View style={styles.list} accessibilityRole="radiogroup">
+            {LANGUAGES.map((option, index) => (
+              <Animated.View key={option.code} entering={FadeInDown.duration(motion.base).delay(80 + index * motion.stagger)}>
+                <LanguageCard
+                  option={option}
+                  selected={language === option.code}
+                  onSelect={() => setLanguage(option.code)}
+                />
+              </Animated.View>
+            ))}
+          </View>
+        </>
+      ) : (
+        <>
+          <Animated.View key="destination" entering={FadeInDown.duration(motion.base)} style={styles.header}>
+            <Text variant="title" accessibilityRole="header">
+              Where are you going?
+            </Text>
+            <Text variant="body" color={colors.inkMuted}>
+              We&apos;ll tailor your lessons, quizzes and scenes to it. You can change it any time on Profile.
+            </Text>
+          </Animated.View>
+          <CityPicker selected={destination} onSelect={setDestination} />
+        </>
+      )}
     </Screen>
   );
 }

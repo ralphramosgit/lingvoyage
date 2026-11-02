@@ -6,6 +6,8 @@ export type Profile = {
   target_language: string | null;
   native_language: string;
   onboarding_complete: boolean;
+  /** A city slug from GET /cities (issue #38). null until the learner picks one. */
+  destination_city: string | null;
   created_at: string;
 };
 

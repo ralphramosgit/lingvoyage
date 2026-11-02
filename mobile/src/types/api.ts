@@ -204,3 +204,62 @@ export type ApiErrorBody = {
     message: string;
   };
 };
+
+// ---------------------------------------------------------------------------
+// Local packs (backend/app/locations): the cities, and each city's pack
+// ---------------------------------------------------------------------------
+
+/** A supported city, from GET /cities. */
+export type City = {
+  /** Permanent once shipped: profiles and packs point at it. */
+  slug: string;
+  name: string;
+  hanzi: string;
+  pinyin: string;
+  /** "" for the municipalities (Beijing, Shanghai, Chongqing). */
+  province: string;
+  /** The city center, for "Use my location". */
+  lat: number;
+  lng: number;
+};
+
+export type PackStage = 'plan' | 'research' | 'deep_dive' | 'verify' | 'generate' | 'publish';
+
+/** One line of the agent's trace: what it's doing, written for the learner to read. */
+export type PackStep = {
+  /** ISO time, UTC. */
+  t: string;
+  stage: PackStage;
+  /** stage, search, read, found, write, check, done or error. */
+  kind: string;
+  text: string;
+  /** Which agent: food, transport, menu:chen-mapo-tofu, scene:airport, unit:food… */
+  worker?: string | null;
+  url?: string | null;
+};
+
+/** From POST /packs/{city} and GET /packs/{city}/status. */
+export type PackStatus = {
+  city: string;
+  /** none: nothing built and nothing running. Only queued and running mean the agent is working right now. */
+  status: 'none' | 'queued' | 'running' | 'ready' | 'failed';
+  stage: PackStage | null;
+  /** The last 50 trace steps, newest last. */
+  steps: PackStep[];
+  counts: { facts: number; places: number; sources: number };
+  /** Set when a ready pack exists, even an expired one that's being refreshed. */
+  ready_pack_id: string | null;
+  refreshing: boolean;
+  error: { code: string; message: string } | null;
+};
+
+/** From GET /packs/{city}: what the city's pack adds to the app. */
+export type LocalPack = {
+  id: string;
+  city: string;
+  built_at: string;
+  encounters: Scenario[];
+  unit_notes: LocalUnitNotes[];
+  quizzes: LocalQuiz[];
+  sources: Source[];
+};

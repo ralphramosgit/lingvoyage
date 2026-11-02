@@ -76,6 +76,8 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
           <Stack.Screen name="unit/[unitId]/checkpoint" />
           <Stack.Screen name="quiz/[quizId]" />
           <Stack.Screen name="essentials" />
+          <Stack.Screen name="destination" />
+          <Stack.Screen name="pack" />
         </Stack.Protected>
       </Stack>
 

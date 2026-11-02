@@ -46,7 +46,14 @@
           "microphonePermission": "Lingvoyage uses the microphone so you can speak with characters in Encounters."
         }
       ],
-      "expo-asset"
+      "expo-asset",
+      "expo-web-browser",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Lingvoyage uses your location once, to pick the nearest city for your lessons and scenes. It isn't saved."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
