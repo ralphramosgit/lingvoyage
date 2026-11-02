@@ -6,6 +6,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { ErrorState } from '@/components/ErrorState';
 import { FormMessage } from '@/components/FormMessage';
 import { Pill } from '@/components/Pill';
+import { LocalEncounters } from '@/components/pack/LocalEncounters';
 import { PackStatusCard } from '@/components/pack/PackStatusCard';
 import { LockedScenarioCard, ScenarioCard } from '@/components/ScenarioCard';
 import { Screen } from '@/components/Screen';
@@ -49,6 +50,8 @@ export default function EncountersScreen() {
       <Animated.View entering={FadeInDown.duration(motion.base).delay(motion.stagger)} style={styles.pack}>
         <PackStatusCard />
       </Animated.View>
+
+      <LocalEncounters completedScenarioIds={completedScenarioIds} />
 
       <Text variant="heading" style={styles.sectionTitle}>
         Travel scenes

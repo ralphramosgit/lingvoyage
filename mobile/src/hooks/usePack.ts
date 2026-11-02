@@ -79,8 +79,9 @@ async function applyStatus(city: string, status: PackStatus, mine: number) {
     try {
       const pack = await api.getPack(city);
       if (mine === generation) update({ pack });
-    } catch {
-      // The status still shows; the pack loads on the next status change or retry.
+    } catch (caught) {
+      // The status still shows; retry() loads the pack again.
+      if (mine === generation) update({ error: asPackError(caught) });
     }
   }
   schedulePoll();

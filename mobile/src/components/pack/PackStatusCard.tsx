@@ -13,33 +13,15 @@ import { packSummary } from '@/lib/packVisuals';
 import { colors, motion, radii, spacing, tints } from '@/theme/theme';
 
 /**
- * The learner's city pack, at the top of the Encounters tab: set a destination, the agent building it
- * (only while a run is really going), ready, or what went wrong. Everything else in the app works
- * the same whatever this says.
+ * The learner's city pack, at the top of the Encounters tab: the agent building it (only while a run is
+ * really going), ready, or what went wrong. Choosing or changing the city lives on Profile, not here.
+ * Everything else in the app works the same whatever this says.
  */
 export function PackStatusCard() {
   const { cities } = useCities();
   const { city, status, pack, error, loading, building, justFinished, retry, dismissFinished } = usePack();
 
-  if (!city) {
-    return (
-      <Card
-        onPress={() => router.push('/destination')}
-        accessibilityLabel="Where are you going? Set your destination to get lessons and scenes for your city."
-        style={styles.row}>
-        <View style={[styles.icon, { backgroundColor: tints.sun.bg }]}>
-          <MapPin size={22} color={tints.sun.fg} />
-        </View>
-        <View style={styles.flex}>
-          <Text variant="subheading">Where are you going?</Text>
-          <Text variant="caption" color={colors.inkMuted}>
-            Set your destination to get lessons and scenes for your city.
-          </Text>
-        </View>
-        <ChevronRight size={20} color={colors.inkMuted} />
-      </Card>
-    );
-  }
+  if (!city) return null; // the learner sets a destination on Profile
 
   const name = cityName(cities, city);
 
@@ -60,14 +42,13 @@ export function PackStatusCard() {
       <Card style={styles.column}>
         <Text variant="subheading">{paused ? `${name} isn't ready yet` : `We couldn't check your ${name} pack`}</Text>
         <Text variant="caption" color={colors.inkMuted}>
-          {error.message} Your lessons and scenes work as usual.
+          {error.message} Your lessons and scenes work as usual{paused ? ', and you can change your city on Profile' : ''}.
         </Text>
-        <View style={styles.actions}>
-          {canRetry(error) ? (
+        {canRetry(error) ? (
+          <View style={styles.actions}>
             <Button label="Try again" icon={RotateCcw} variant="secondary" size="md" onPress={retry} loading={loading} />
-          ) : null}
-          <Button label="Change city" variant="ghost" size="md" onPress={() => router.push('/destination')} />
-        </View>
+          </View>
+        ) : null}
       </Card>
     );
   }

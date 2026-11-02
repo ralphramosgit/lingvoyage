@@ -1,5 +1,4 @@
 import { router } from 'expo-router';
-import * as WebBrowser from 'expo-web-browser';
 import { ChevronLeft, Circle, CircleCheck, ExternalLink, RotateCcw, TriangleAlert } from 'lucide-react-native';
 import { useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
@@ -15,6 +14,7 @@ import { Text } from '@/components/Text';
 import { cityName, useCities } from '@/hooks/useCities';
 import { canRetry, usePack } from '@/hooks/usePack';
 import { packSummary, shortDate, STAGES, StepIcon, stepAccessibilityLabel, workerLabel } from '@/lib/packVisuals';
+import { openSource } from '@/lib/sources';
 import type { PackStatus, PackStep } from '@/types/api';
 import { colors, motion, radii, spacing } from '@/theme/theme';
 
@@ -32,10 +32,6 @@ function stageStates(status: PackStatus): Record<string, StageState> {
     else states[stage.id] = 'waiting';
   });
   return states;
-}
-
-function openSource(url: string) {
-  void WebBrowser.openBrowserAsync(url);
 }
 
 /** What the research agent is doing, live while it builds the learner's city pack, and how a ready pack was built. */
@@ -59,10 +55,10 @@ export default function PackScreen() {
       <Screen header={header}>
         <View style={styles.empty}>
           <Text variant="body" color={colors.inkMuted} align="center">
-            {error ? error.message : 'Pick where you\'re going and an agent researches your city for you.'}
+            {error ? error.message : 'Set where you\'re going on Profile, and an agent researches your city for you.'}
           </Text>
           {error && canRetry(error) ? <Button label="Try again" icon={RotateCcw} variant="secondary" onPress={retry} /> : null}
-          <Button label={city ? 'Change city' : 'Set your destination'} variant="ghost" onPress={() => router.push('/destination')} />
+          <Button label="Go to Profile" variant="ghost" onPress={() => router.navigate('/profile')} />
         </View>
       </Screen>
     );

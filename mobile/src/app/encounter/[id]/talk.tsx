@@ -261,7 +261,7 @@ export default function TalkScreen() {
     );
   }
 
-  const tint = scenarioTint(scenario.id);
+  const tint = scenarioTint(scenario.id, 0, scenario.icon);
   const { character } = scenario;
   const suggestionsOn = suggestionsPref ?? conversation.learnerCount < 2;
   const showSuggestions = suggestionsOn && suggestions.length > 0 && !complete && !recorder.isRecording && !voice.draft;

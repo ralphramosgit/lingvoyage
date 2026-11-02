@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
-import { BookOpen, ChevronLeft, Circle, Clock, Gauge, MapPin, Mic } from 'lucide-react-native';
+import { BookOpen, ChevronLeft, ChevronRight, Circle, Clock, Gauge, Globe, MapPin, Mic } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -14,12 +14,15 @@ import { FormMessage } from '@/components/FormMessage';
 import { IconButton } from '@/components/IconButton';
 import { LessonRow } from '@/components/lesson/LessonRow';
 import { Pill } from '@/components/Pill';
+import { PressableScale } from '@/components/PressableScale';
 import { Screen } from '@/components/Screen';
+import { SourcesSheet } from '@/components/SourcesSheet';
 import { SpeakerButton } from '@/components/SpeakerButton';
 import { Text } from '@/components/Text';
 import { useScenario } from '@/hooks/useScenarios';
 import { stopPlayback } from '@/lib/audio';
 import { useLessonFinished } from '@/lib/lessonProgress';
+import { shortDay } from '@/lib/packVisuals';
 import { ScenarioIcon, scenarioTint } from '@/lib/scenarioVisuals';
 import { colors, layout, motion, radii, shadows, spacing, tints } from '@/theme/theme';
 
@@ -33,6 +36,7 @@ export default function EncounterPrepScreen() {
   const { scenario, loading, error, reload, notFound } = useScenario(id);
   const insets = useSafeAreaInsets();
   const [phraseError, setPhraseError] = useState<string | null>(null);
+  const [sourcesOpen, setSourcesOpen] = useState(false);
   const isFinished = useLessonFinished(scenario?.id);
 
   useEffect(() => () => stopPlayback(), []);
@@ -57,10 +61,13 @@ export default function EncounterPrepScreen() {
     );
   }
 
-  const tint = scenarioTint(scenario.id);
+  const tint = scenarioTint(scenario.id, 0, scenario.icon);
   const palette = tints[tint];
   const { character } = scenario;
   const lessons = scenario.lessons ?? [];
+  // Local encounters (from the city pack) say where their real details came from.
+  const sources = scenario.sources ?? [];
+  const checkedOn = scenario.checked_at ? shortDay(scenario.checked_at) : null;
   const finishedCount = lessons.filter((lesson) => isFinished(lesson.id)).length;
   // The footer's practice button picks up where the learner left off.
   const practiceTarget = lessons.find((lesson) => !isFinished(lesson.id)) ?? lessons[0];
@@ -102,6 +109,22 @@ export default function EncounterPrepScreen() {
                 <Pill label={scenario.difficulty} icon={Gauge} tone="neutral" />
                 <Pill label={`${scenario.minutes} min`} icon={Clock} tone="neutral" />
               </View>
+              {sources.length > 0 ? (
+                <PressableScale
+                  onPress={() => setSourcesOpen(true)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Real details from the web${checkedOn ? `, checked ${checkedOn}` : ''}. Show the ${sources.length} sources.`}
+                  style={styles.sourcesLine}>
+                  <Globe size={16} color={colors.sky700} />
+                  <Text variant="caption" color={colors.inkMuted} style={styles.flexShrink}>
+                    Real details from the web{checkedOn ? `, checked ${checkedOn}` : ''} ·{' '}
+                    <Text variant="caption" color={colors.sky700}>
+                      Sources
+                    </Text>
+                  </Text>
+                  <ChevronRight size={14} color={colors.sky700} />
+                </PressableScale>
+              ) : null}
             </Animated.View>
 
             <Animated.View entering={FadeInDown.duration(motion.base).delay(60)}>
@@ -217,6 +240,15 @@ export default function EncounterPrepScreen() {
           />
         </View>
       </View>
+
+      {sourcesOpen ? (
+        <SourcesSheet
+          sources={sources}
+          checkedOn={checkedOn}
+          onClose={() => setSourcesOpen(false)}
+          bottomInset={insets.bottom}
+        />
+      ) : null}
     </View>
   );
 }
@@ -244,6 +276,7 @@ const styles = StyleSheet.create({
   },
   placeRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs + 2 },
   pills: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xs },
+  sourcesLine: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs + 2, minHeight: layout.minTouchTarget },
   characterCard: { flexDirection: 'row', alignItems: 'center', gap: spacing.lg, marginBottom: spacing.xl },
   sections: { gap: spacing.xxl, paddingTop: spacing.xs },
   section: { gap: spacing.md },
