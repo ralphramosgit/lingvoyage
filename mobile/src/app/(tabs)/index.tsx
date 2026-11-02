@@ -8,7 +8,6 @@ import { ErrorState } from '@/components/ErrorState';
 import { FormMessage } from '@/components/FormMessage';
 import { Pill } from '@/components/Pill';
 import { LocalEncounters } from '@/components/pack/LocalEncounters';
-import { PackStatusCard } from '@/components/pack/PackStatusCard';
 import { type SceneView, SceneToggle } from '@/components/pack/SceneToggle';
 import { LockedScenarioCard, ScenarioCard } from '@/components/ScenarioCard';
 import { Screen } from '@/components/Screen';
@@ -60,17 +59,20 @@ export default function EncountersScreen() {
         <Pill label="Mandarin Chinese" icon={Languages} tone="sky" style={styles.languagePill} />
       </Animated.View>
 
-      <Animated.View entering={FadeInDown.duration(motion.base).delay(motion.stagger)} style={styles.pack}>
-        <PackStatusCard />
-      </Animated.View>
-
       {toggle && cityPack.city ? (
         <View style={styles.toggle}>
           <SceneToggle city={cityName(cities, cityPack.city)} value={view} onChange={setView} />
         </View>
       ) : null}
 
-      {toggle && view === 'city' ? (
+      {/* Until the city pack is in, which scenes to show isn't known yet: plain placeholders, not the default scenes. */}
+      {cityPack.arriving ? (
+        <View style={[styles.list, styles.loading]}>
+          {[0, 1, 2].map((key) => (
+            <SkeletonCard key={key} />
+          ))}
+        </View>
+      ) : toggle && view === 'city' ? (
         <LocalEncounters completedScenarioIds={completedScenarioIds} />
       ) : (
         <DefaultScenes completedScenarioIds={completedScenarioIds} />
@@ -134,7 +136,7 @@ const styles = StyleSheet.create({
   },
   nihaoText: { fontWeight: '600' },
   languagePill: { marginTop: spacing.xs },
-  pack: { marginTop: spacing.lg },
+  loading: { marginTop: spacing.xxl },
   toggle: { marginTop: spacing.xl },
   sectionTitle: { marginTop: spacing.xxl, marginBottom: spacing.md },
   list: { gap: spacing.md },

@@ -14,9 +14,12 @@ from app.tutor import (
     asks_travelers_question,
     build_messages,
     build_system_prompt,
+    drop_asked_questions,
     finalize_reply,
     generate_reply,
+    line_problems,
     merge_goal_ids,
+    question_count,
     strip_emojis,
 )
 
@@ -179,12 +182,28 @@ def test_system_prompt_includes_scene_goals_and_progress() -> None:
     assert '"learner_hanzi"' in prompt and '"learner_english"' in prompt
 
 
+def test_system_prompt_lists_the_goals_still_to_do_in_order() -> None:
+    prompt = build_system_prompt(_scenario("restaurant"), ["party_size", "special_request"])
+    assert "Goals still to do, in order: [order_dish] Order a dish; then [pay] Ask for the bill\n" in prompt
+    assert "sets up the first goal still to do, so that answering it does that goal" in prompt
+
+    done = build_system_prompt(_scenario("restaurant"), ["party_size", "order_dish", "special_request", "pay"])
+    assert "Goals still to do, in order: none, so say a natural goodbye\n" in done
+
+
+def test_system_prompt_asks_one_question_and_suggestions_that_fit_it() -> None:
+    prompt = build_system_prompt(_scenario("restaurant"), [])
+    assert "end every reply with exactly one short, easy question for the traveler" in prompt
+    assert "never two (not 好！要辣吗？喝什么？)" in prompt
+    assert "Every one must make sense said right now: an answer to your question" in prompt
+    assert "Never suggest a goal they've already done" in prompt
+
+
 def test_system_prompt_follows_the_script_and_keeps_roles_apart() -> None:
     prompt = build_system_prompt(_scenario("airport"), [])
     assert "1. You open: 你好！欢迎来成都！你找什么？" in prompt
     assert "Then ask: 你要去哪里？" in prompt
     assert "巴士在五号门外面。" in prompt
-    assert "end every reply with one short, easy question for the traveler" in prompt
     assert "Never jump ahead: don't ask about spice, drinks or a second dish before they've ordered" in prompt
     assert "offer two or three real options by name from the scene details" in prompt
     assert "never just 在那里 on its own" in prompt
@@ -202,6 +221,8 @@ def test_script_never_gives_the_character_a_travelers_question() -> None:
             # Only the part after "You" is the character's line.
             yours = step.split("You:", 1)[-1] if "You:" in step else step.split("You open:", 1)[-1]
             assert asks_travelers_question(scenario, yours) is None, (scenario_id, step)
+            # The script is what the character copies: one question per line there too.
+            assert question_count(yours) <= 1, (scenario_id, step)
 
 
 # --- role check -------------------------------------------------------------
@@ -221,6 +242,44 @@ def test_asks_travelers_question_spots_the_learners_lines() -> None:
 
     train = _scenario("train")
     assert asks_travelers_question(train, "去杭州的火车下午三点半出发。") is None
+
+
+def test_suggestions_drop_questions_the_learner_already_asked() -> None:
+    airport = _scenario("airport")
+    suggestions = [
+        Phrase(hanzi="我要去熊猫酒店。", pinyin="", english=""),
+        Phrase(hanzi="我的行李在哪里？", pinyin="", english=""),
+        Phrase(hanzi="巴士在哪里？", pinyin="", english=""),
+    ]
+    kept = drop_asked_questions(airport, suggestions, ["你好", "行李 在哪里?"])
+    assert [phrase.hanzi for phrase in kept] == ["我要去熊猫酒店。", "巴士在哪里？"]
+    assert drop_asked_questions(airport, suggestions, []) == suggestions
+
+
+def test_generate_reply_drops_suggestions_already_asked(monkeypatch: pytest.MonkeyPatch) -> None:
+    suggestions = [Phrase(hanzi="我要去酒店。", pinyin="", english=""), Phrase(hanzi="行李在哪里？", pinyin="", english="")]
+    client = _FakeClient(_reply(hanzi="你的行李在三号转盘。你要去哪里？", suggestions=suggestions))
+    _use_client(monkeypatch, client)
+    history = [ChatLine(role="npc", text="你找什么？")]
+    reply = generate_reply(_scenario("airport"), history, [], "行李在哪里？")
+    assert [phrase.hanzi for phrase in reply.suggestions] == ["我要去酒店。"]
+
+
+def test_question_count_counts_each_question_once() -> None:
+    assert question_count("你好！几位？") == 1
+    assert question_count("好！你坐巴士还是滴滴？") == 1
+    assert question_count("真的吗？？") == 1
+    assert question_count("好！要辣吗？喝什么？") == 2
+    assert question_count("Hǎo! Is that ok? 好吗？") == 2
+    assert question_count("不客气！再见！") == 0
+
+
+def test_line_problems_finds_a_role_swap_and_a_second_question() -> None:
+    airport = _scenario("airport")
+    assert line_problems(airport, "你的行李在三号转盘。你要去哪里？") == []
+    assert len(line_problems(airport, "好。巴士在哪里？")) == 1
+    assert len(line_problems(airport, "你好！你找什么？你要去哪里？")) == 1
+    assert len(line_problems(airport, "好！你要去哪里？巴士在哪里？")) == 2
 
 
 class _FakeClient:
@@ -272,6 +331,22 @@ def test_first_reply_is_kept_if_the_second_swaps_too(monkeypatch: pytest.MonkeyP
     client = _FakeClient(_reply(hanzi="巴士在哪里？"), _reply(hanzi="行李在哪里？"))
     _use_client(monkeypatch, client)
     assert generate_reply(_scenario("airport"), [], [], "你好").hanzi == "巴士在哪里？"
+
+
+def test_two_questions_are_asked_again(monkeypatch: pytest.MonkeyPatch) -> None:
+    client = _FakeClient(_reply(hanzi="好！要辣吗？喝什么？"), _reply(hanzi="好！要辣吗？"))
+    _use_client(monkeypatch, client)
+    reply = generate_reply(_scenario("restaurant"), [], ["party_size"], "我要一碗牛肉面。")
+    assert reply.hanzi == "好！要辣吗？"
+    assert len(client.systems) == 2
+    assert '"好！要辣吗？喝什么？"' in client.systems[1]
+    assert "It asks 2 questions; ask only one." in client.systems[1]
+
+
+def test_first_reply_is_kept_if_the_second_is_no_better(monkeypatch: pytest.MonkeyPatch) -> None:
+    client = _FakeClient(_reply(hanzi="好！要辣吗？喝什么？"), _reply(hanzi="几位？要辣吗？"))
+    _use_client(monkeypatch, client)
+    assert generate_reply(_scenario("restaurant"), [], [], "你好").hanzi == "好！要辣吗？喝什么？"
 
 
 def test_system_prompt_with_no_progress_says_none() -> None:

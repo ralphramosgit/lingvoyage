@@ -1,6 +1,7 @@
 import { type AudioPlayer, type AudioStatus, createAudioPlayer, setAudioModeAsync } from 'expo-audio';
 import { Directory, File, Paths } from 'expo-file-system';
 import { useSyncExternalStore } from 'react';
+import { Platform } from 'react-native';
 
 import { api } from './api';
 
@@ -50,9 +51,21 @@ export function invalidatePlaybackMode() {
 
 async function ensurePlaybackMode() {
   if (playbackModeReady) return;
+  // The mic stream leaves iOS in 'measurement' mode, which plays everything much quieter: every reply
+  // after the learner speaks. expo-audio only resets the mode when it sets a category without options,
+  // and 'doNotMix' is the one without, so it goes first. 'duckOthers' then keeps the reset mode.
+  if (Platform.OS === 'ios') {
+    await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: false, interruptionMode: 'doNotMix' });
+  }
   // allowsRecording false keeps iOS on the loudspeaker instead of the earpiece.
   await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: false, interruptionMode: 'duckOthers' });
   playbackModeReady = true;
+}
+
+/** Back to playback right away, e.g. when a recording ends, so the next reply doesn't start mid-switch. */
+export async function restorePlaybackMode() {
+  playbackModeReady = false;
+  await ensurePlaybackMode();
 }
 
 // On iOS, expo-audio deactivates the audio session about 100 ms after a player pauses or
@@ -103,10 +116,26 @@ export function stopPlayback() {
   setPlayback({ playingKey: null });
 }
 
+// Now and then a line doesn't start (iOS was still settling the audio session) and nothing says so: the
+// learner had to tap replay. If it still hasn't started after this long, it's played again, once.
+const START_CHECK_MS = 1000;
+let startCheck: ReturnType<typeof setTimeout> | null = null;
+
+function checkStarted(audio: AudioPlayer, key: string) {
+  if (startCheck) clearTimeout(startCheck);
+  startCheck = setTimeout(() => {
+    startCheck = null;
+    if (player !== audio || playback.playingKey !== key) return; // released, stopped, finished or replaced
+    if (!audio.playing && audio.currentTime < 0.1) audio.play();
+  }, START_CHECK_MS);
+}
+
 export async function playUri(uri: string, options: { rate?: number; key?: string } = {}) {
   await ensurePlaybackMode();
   const audio = getPlayer();
-  if (audio.playing) audio.pause();
+  const key = options.key ?? uri;
+  // No pause() first: replace() stops the current line itself, and pause() also has iOS shut the audio
+  // session 100 ms later, which could cut off the new line before it got going.
   // With 'duckOthers', expo-audio halves a playing player's volume when the iOS audio session is
   // interrupted (recording can do that), and only restores it if iOS says to resume. This one player is
   // reused for every line, so without this each reply could play at half the volume of the last.
@@ -115,7 +144,8 @@ export async function playUri(uri: string, options: { rate?: number; key?: strin
   // 'high' pitch correction keeps slow replay sounding natural instead of deep.
   audio.setPlaybackRate(options.rate ?? 1, 'high');
   audio.play();
-  setPlayback({ playingKey: options.key ?? uri });
+  setPlayback({ playingKey: key });
+  checkStarted(audio, key);
 }
 
 // ---------------------------------------------------------------------------
