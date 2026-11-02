@@ -1,5 +1,16 @@
 import Constants from 'expo-constants';
-import { Award, Eye, Languages, LogOut, type LucideIcon, Map as MapIcon, Volume2 } from 'lucide-react-native';
+import { router } from 'expo-router';
+import {
+  Award,
+  ChevronRight,
+  Eye,
+  Languages,
+  LogOut,
+  type LucideIcon,
+  Map as MapIcon,
+  MapPin,
+  Volume2,
+} from 'lucide-react-native';
 import { useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, Switch, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -8,6 +19,7 @@ import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
+import { useCities } from '@/hooks/useCities';
 import { useEncounterProgress } from '@/hooks/useEncounterProgress';
 import { useScenarios } from '@/hooks/useScenarios';
 import { useAuth } from '@/lib/auth';
@@ -32,12 +44,15 @@ export default function ProfileScreen() {
   const { settings, updateSetting } = useSettings();
   const { completedCount, completedScenarioIds, loading: progressLoading } = useEncounterProgress();
   const { scenarios } = useScenarios();
+  const { cities } = useCities();
   const [signingOut, setSigningOut] = useState(false);
 
   const email = session?.user.email;
   const displayName = profile?.display_name?.trim() || 'Traveler';
   const totalScenes = scenarios?.length ?? 3;
   const version = Constants.expoConfig?.version ?? '1.0.0';
+  const destination = cities?.find((city) => city.slug === profile?.destination_city) ?? null;
+  const destinationLabel = destination?.name ?? (profile?.destination_city ? profile.destination_city : 'Not set yet');
 
   const confirmSignOut = () => {
     Alert.alert('Log out?', 'You can log back in any time with your email and password.', [
@@ -85,6 +100,26 @@ export default function ProfileScreen() {
           <Text variant="hanzi" color={colors.sky700}>
             中文
           </Text>
+        </Card>
+        <Card
+          onPress={() => router.push('/destination')}
+          accessibilityLabel={`Going to: ${destinationLabel}. Change your destination.`}
+          style={styles.languageRow}>
+          <View style={styles.rowIcon}>
+            <MapPin size={20} color={colors.sky700} />
+          </View>
+          <View style={styles.flex}>
+            <Text variant="caption" color={colors.inkMuted}>
+              Going to
+            </Text>
+            <Text variant="subheading">{destinationLabel}</Text>
+          </View>
+          {destination ? (
+            <Text variant="hanzi" color={colors.sky700}>
+              {destination.hanzi}
+            </Text>
+          ) : null}
+          <ChevronRight size={20} color={colors.inkMuted} />
         </Card>
       </Animated.View>
 
