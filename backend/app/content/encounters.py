@@ -29,7 +29,7 @@ from app.locations.cities import City
 from app.locations.models import ContentItem, Fact
 from app.locations.store import PackStore
 from app.research.trace import Trace
-from app.scenarios import LocalRef, ScenarioDefinition, Source
+from app.scenarios import LocalRef, ScenarioDefinition, Source, get_scenario
 from app.tutor import asks_travelers_question
 
 MAX_SCENES = 6
@@ -37,6 +37,18 @@ MAX_PARALLEL = 3
 MAX_LINE = 30  # Chinese characters in one stretch of the character's speech ("at most about 25")
 MAX_SOURCES = 8
 _SNAKE_RE = re.compile(r"^[a-z][a-z0-9_]*$")
+# Steps every scene of a kind shares. A scene may have one; the others come from what's special about the place.
+_GENERIC_GOAL_RE = re.compile(
+    r"how many (people|of you)|\bparty\b|table for|\bthe bill\b|\bpay(ing)?\b|\bcheck,? please|"
+    r"\bsay (hello|hi|thank|thanks|goodbye|bye)|\bgreet|\bthank|^order (a|some) (dish|food|meal)$",
+    re.IGNORECASE,
+)
+_GOAL_STOP_WORDS = {"ask", "say", "the", "your", "you", "for", "and", "are", "how", "what", "where", "when"}
+MAX_GENERIC_GOALS = 1
+_GREETING_RE = re.compile(r"你好|您好|欢迎")
+_PAYING_RE = re.compile(r"买单|结账|付钱|付款|扫码|扫这里|微信|支付宝|现金|pay|bill", re.IGNORECASE)
+MIN_DISHES_OFFERED = 2  # a restaurant script names this many real dishes before the traveler orders
+OFFER_WITHIN_STEPS = 3
 
 Icon = Literal["PlaneLanding", "BedDouble", "UtensilsCrossed", "TrainFront", "ShoppingBag", "CarTaxiFront", "Landmark"]
 Voice = Literal["ELEVENLABS_VOICE_ID_RESTAURANT", "ELEVENLABS_VOICE_ID_TRAIN", "ELEVENLABS_VOICE_ID_HOTEL"]
@@ -160,7 +172,24 @@ def _scene_texts(scenario: ScenarioDefinition) -> list[str]:
     return texts
 
 
-def check_encounter(scenario: ScenarioDefinition, facts: list[Fact]) -> list[str]:
+def _goal_words(label: str) -> set[str]:
+    return set(re.findall(r"[a-z]{3,}", label.lower())) - _GOAL_STOP_WORDS
+
+
+def generic_goals(scenario: ScenarioDefinition, template: ScenarioDefinition | None = None) -> list[str]:
+    """Goals any scene of its kind could have, or copied from the hand-written scene it follows."""
+    template_words = [_goal_words(goal.label) for goal in template.goals] if template else []
+
+    def copied(label: str) -> bool:
+        words = _goal_words(label)
+        return any(words and other and len(words & other) / len(words | other) >= 0.6 for other in template_words)
+
+    return [goal.label for goal in scenario.goals if _GENERIC_GOAL_RE.search(goal.label) or copied(goal.label)]
+
+
+def check_encounter(
+    scenario: ScenarioDefinition, facts: list[Fact], template: ScenarioDefinition | None = None
+) -> list[str]:
     """Everything wrong with a scene that the models' own validators don't catch."""
     problems: list[str] = []
     if len(scenario.title) > 60:
@@ -175,6 +204,14 @@ def check_encounter(scenario: ScenarioDefinition, facts: list[Fact]) -> list[str
     goal_ids = [goal.id for goal in scenario.goals]
     if len(set(goal_ids)) != len(goal_ids) or not all(_SNAKE_RE.match(goal_id) for goal_id in goal_ids):
         problems.append("goal ids must be unique snake_case")
+    generic = generic_goals(scenario, template)
+    if len(generic) > MAX_GENERIC_GOALS:
+        listed = "; ".join(f'"{label}"' for label in generic)
+        problems.append(
+            f"these goals are steps any scene has, or copy the example scene: {listed}. Keep at most one; build the "
+            "others from what's special about this place in the facts (a dish and how it's eaten, a line, a ticket, "
+            "a time)"
+        )
     for goal in scenario.goals:
         if "traveler" in goal.label.lower():
             problems.append(f'goal "{goal.label}" should be written to the learner, as something they do ("Order the mapo tofu")')
@@ -188,6 +225,10 @@ def check_encounter(scenario: ScenarioDefinition, facts: list[Fact]) -> list[str
 
     if not scenario.scene_outline or not scenario.scene_outline[0].startswith("You open:"):
         problems.append('the first outline step must start with "You open:"')
+    elif not _GREETING_RE.search(scenario.scene_outline[0]) or not re.search(r"[？?]", scenario.scene_outline[0]):
+        problems.append(
+            'the opening line must greet the traveler and ask the first question of the visit, like "You open: 你好！几位？"'
+        )
     if not 4 <= len(scenario.scene_outline) <= 8:
         problems.append(f"the outline has {len(scenario.scene_outline)} steps; write 4 to 8")
     for step in scenario.scene_outline:
@@ -212,6 +253,24 @@ def check_encounter(scenario: ScenarioDefinition, facts: list[Fact]) -> list[str
     problems += checks.level_problems(
         spoken, allowed, "Not taught in the lessons' words: use simpler words, or teach them in a lesson's words."
     )
+    return problems
+
+
+def visit_flow_problems(scenario: ScenarioDefinition, facts: list[Fact], kind: str) -> list[str]:
+    """A restaurant script has to offer real dishes before the order, and end with paying."""
+    if kind != "restaurant":
+        return []
+    problems: list[str] = []
+    dishes = {fact.data.get("dish_hanzi") for fact in facts if fact.category == "menu_item"} - {None, ""}
+    opening = " ".join(scenario.scene_outline[:OFFER_WITHIN_STEPS])
+    offered = {dish for dish in dishes if dish in opening}
+    if len(dishes) >= MIN_DISHES_OFFERED and len(offered) < MIN_DISHES_OFFERED:
+        problems.append(
+            f"in the first {OFFER_WITHIN_STEPS} outline steps, the character must offer at least {MIN_DISHES_OFFERED} real "
+            "dishes by name before the traveler orders (我们有麻婆豆腐和回锅肉), so the learner knows what's on the menu"
+        )
+    if not any(_PAYING_RE.search(step) for step in scenario.scene_outline[-3:]):
+        problems.append("the script must end with paying (the traveler asks for the bill, 买单, and pays), then goodbye")
     return problems
 
 
@@ -240,7 +299,8 @@ def build_encounter(
         )
     except pydantic.ValidationError as error:
         return None, validation_problems(error, "scene")
-    problems = check_encounter(scenario, facts)
+    problems = check_encounter(scenario, facts, get_scenario(plan.template))
+    problems += visit_flow_problems(scenario, facts, plan.kind)
     return (None, problems) if problems else (scenario, [])
 
 
