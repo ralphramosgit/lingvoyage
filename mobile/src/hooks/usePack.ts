@@ -29,11 +29,9 @@ export type PackState = {
   /** The last request failed: offline, a limit, or new packs paused. Polling carries on after a blip. */
   error: PackError | null;
   loading: boolean;
-  /** A build finished while the app was open: the Encounters tab says so once. */
-  justFinished: boolean;
 };
 
-const EMPTY: PackState = { city: null, status: null, pack: null, error: null, loading: false, justFinished: false };
+const EMPTY: PackState = { city: null, status: null, pack: null, error: null, loading: false };
 
 let state: PackState = EMPTY;
 const listeners = new Set<() => void>();
@@ -73,8 +71,7 @@ function schedulePoll() {
 
 async function applyStatus(city: string, status: PackStatus, mine: number) {
   if (mine !== generation) return;
-  const finished = isBuilding(state.status) && status.status === 'ready';
-  update({ status, error: null, loading: false, justFinished: state.justFinished || finished });
+  update({ status, error: null, loading: false });
   if (status.ready_pack_id && state.pack?.id !== status.ready_pack_id) {
     try {
       const pack = await api.getPack(city);
@@ -156,12 +153,11 @@ export function usePack() {
   const retry = useCallback(() => {
     if (state.city) void start(state.city);
   }, []);
-  const dismissFinished = useCallback(() => update({ justFinished: false }), []);
 
   // Still on its way: the status, or the pack itself once the status says a ready one exists.
   const arriving =
     snapshot.city !== null &&
     snapshot.error === null &&
     (snapshot.loading || snapshot.status === null || (snapshot.status.ready_pack_id !== null && snapshot.pack === null));
-  return { ...snapshot, building: isBuilding(snapshot.status), arriving, retry, dismissFinished };
+  return { ...snapshot, building: isBuilding(snapshot.status), arriving, retry };
 }

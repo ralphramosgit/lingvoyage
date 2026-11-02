@@ -29,7 +29,7 @@ What a scene contains (the examples at the end show each field):
 - lessons: 2 practice lessons. Each teaches one sentence pattern ([slots] in square brackets) and up to 8 words, then has 4 to 6 questions mixing "choice" and "build". In a build question the tiles, joined together, spell the solution's characters exactly (leave out punctuation), and extra_tiles never repeat an answer tile. In a choice question, answer is the index of the right option, and ＿＿ marks a gap.
 
 Beginner rules:
-1. The character's lines in the outline are short and simple: at most about 25 characters each, in beginner words (the list below), like the examples.
+1. The character's lines in the outline are short and simple: at most about 25 characters each, in beginner words (the list below), like the examples. Each line asks one question at most, so the learner answers one thing at a time.
 2. Every piece of Chinese has pinyin with tone marks, words separated by spaces, with 一 and 不 written as said (yì wǎn, bú yào).
 3. Key phrases are the traveler's lines. The character never says them, and never asks the traveler the questions that are the traveler's to ask.
 4. Prices are whole yuan, said with 块 (三十八块). Every price and every metro line number must come from the facts: don't invent any, and don't add up a total.

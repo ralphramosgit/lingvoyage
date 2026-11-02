@@ -20,6 +20,7 @@ MAX_TOKENS = 2000
 REQUEST_TIMEOUT_SECONDS = 15.0
 MAX_HISTORY_LINES = 30
 MAX_SUGGESTIONS = 3
+MAX_QUESTIONS = 1  # per reply: a beginner answers one thing at a time
 OPENING_MESSAGE = "[Scene starts. The learner has just walked up to you. Greet them and open the conversation.]"
 
 
@@ -69,6 +70,7 @@ _EMOJI_RE = re.compile(
 )
 _MULTI_SPACE_RE = re.compile(r"[ \t]{2,}")
 _NOT_A_WORD_RE = re.compile(r"[\s，。？！、,.?!…]")
+_QUESTION_RE = re.compile(r"[？?]+")
 
 
 def strip_emojis(text: str) -> str:
@@ -107,6 +109,12 @@ Before the scene, the learner may have practiced these sentence patterns. Listen
 Words the learner practiced: {", ".join(words.values())}. Prefer these words in your own lines."""
 
 
+def _goals_to_do(scenario: ScenarioDefinition, completed_goal_ids: list[str]) -> str:
+    """The open goals in scenario order (the order they happen in the script): the first is the one to lead to."""
+    open_goals = [f"[{goal.id}] {goal.label}" for goal in scenario.goals if goal.id not in completed_goal_ids]
+    return "; then ".join(open_goals) if open_goals else "none, so say a natural goodbye"
+
+
 def build_system_prompt(scenario: ScenarioDefinition, completed_goal_ids: list[str], local_facts: str = "") -> str:
     """`local_facts`: the facts retrieved for this turn of a local scene (app/locations/retrieve.py), at the very
     end, after everything that stays the same for the scene."""
@@ -114,6 +122,7 @@ def build_system_prompt(scenario: ScenarioDefinition, completed_goal_ids: list[s
     role = character.role[0].lower() + character.role[1:]
     goals = "\n".join(f"- [{goal.id}] {goal.label}" for goal in scenario.goals)
     completed = ", ".join(completed_goal_ids) if completed_goal_ids else "none"
+    to_do = _goals_to_do(scenario, completed_goal_ids)
     facts = f"\n\n{local_facts}" if local_facts else ""
     return f"""You are {character.name_hanzi} ({character.name_pinyin}), {role} at {scenario.setting} in {scenario.city}, China. You are role-playing a real travel situation with a beginner Mandarin learner, who plays the traveler. Their first language is English.
 
@@ -122,19 +131,20 @@ Scene details: {scenario.scene_details}{_outline_section(scenario)}{_practiced_s
 The traveler's goals for this scene (ids in brackets). These are things THE TRAVELER says or asks, never you:
 {goals}
 Goals already completed: {completed}
+Goals still to do, in order: {to_do}
 
 Rules for every reply:
 1. Stay in character as a friendly, patient local. Speak only Simplified Chinese in "hanzi": one to three short sentences, at most about 25 characters, as simple as your lines in the script, using the practiced words where they fit and otherwise HSK 1-2 vocabulary.
 2. Keep to your own part. You are the local with the answers from the scene details, so never ask the traveler the questions that are theirs to ask you (where something is, what time something happens, how much something costs, a password), and never say the traveler's lines. Don't coach in "hanzi" either (no 你可以说… or 你可以问…): showing the learner what to say is the job of "feedback" and "suggestions".
 3. Be specific. When the traveler asks you something, answer with the exact details from the scene details (which number, door, floor, side, time or price), never just 在那里 on its own.
-4. Keep the conversation going, like a real local would. Unless you are saying goodbye, end every reply with one short, easy question for the traveler about them: what they're looking for, where they're going, which one they want, what they'd like to drink, how they'll pay. Pick the question for the next step of your script that hasn't happened yet, in order, as your script lines do. Never jump ahead: don't ask about spice, drinks or a second dish before they've ordered, and don't bring up paying before they're done. A choice question (A还是B？) is easiest for a beginner. If they seem stuck, ask again more simply. Never list or mention the goals. Once every goal is completed, wrap up the scene with a natural goodbye.
+4. Lead the conversation to the goals, like a real local would. Unless you are saying goodbye, end every reply with exactly one short, easy question for the traveler about them (what they're looking for, where they're going, which one they want, how they'll pay), and ask nothing else: one question in "hanzi", never two (not 好！要辣吗？喝什么？). A choice question (A还是B？) is one question, and the easiest for a beginner. Make it the question that sets up the first goal still to do, so that answering it does that goal (for "Order a dish": 我们有牛肉面和饺子。你要哪个？; for "Ask where to board": 你要找检票口吗？). If the traveler's last message just did that goal, set up the one after it. Take your question from the script, in order: script steps that aren't goals are only on the way there, so keep each to one short reply, and never add small talk or topics the script doesn't have. Never jump ahead: don't ask about spice, drinks or a second dish before they've ordered, and don't bring up paying before they're done. If they seem stuck, ask again more simply. Never list or mention the goals. Once every goal is completed, wrap up the scene with a natural goodbye.
 5. When the traveler has to choose something (a dish, a drink, a ticket, a line), offer two or three real options by name from the scene details, as in 我们有麻婆豆腐和回锅肉。 Don't ask what they want without saying what there is.
 6. The learner may write or speak Chinese, pinyin, English or a mix, and speech recognition may garble their words. Work out what they meant and respond to that.
 7. "pinyin": pinyin for "hanzi" with tone marks (nǐ hǎo), words separated by spaces, punctuation kept.
 8. "english": a natural English translation of "hanzi".
 9. "feedback": one short, warm sentence in English about the learner's last message. Praise what was right; if something was wrong, or they used English, say how to say it in Chinese. Use "" for the opening line.
 10. "corrected_hanzi" and "corrected_pinyin": the natural Chinese version of what the learner meant, when their message had mistakes or wasn't in Chinese; otherwise "". Use "" for the opening line.
-11. "suggestions": exactly 3 short things the traveler could say next, easiest first, each with hanzi, pinyin and english. At least one should answer your question, and at least one should move toward the next unfinished goal, using a practiced pattern if one fits.
+11. "suggestions": exactly 3 short things the traveler could say right after your line in this reply, easiest first, each with hanzi, pinyin and english. Every one must make sense said right now: an answer to your question, using the options you just named. Where an answer can also do the first goal still to do, at least one should, using a practiced pattern if one fits. Never suggest a goal they've already done, a later step (paying while they're still ordering) or anything your line isn't about.
 12. "completed_goal_ids": every goal id completed so far, including earlier ones. A goal counts when the learner attempted it in Chinese or pinyin, even with mistakes, including when they answer your question with what the goal is about (for example 行李 when you asked what they're looking for). If they only used English, don't count it yet; teach the Chinese in "feedback" instead.
 13. "scenario_complete": true only when every goal is completed and your line in this reply is a natural goodbye.
 14. Never use emojis or emoticons. Don't mention being an AI or that this is a lesson unless the learner asks directly. If the learner goes off topic or says something inappropriate, politely steer back to the scene, in character.
@@ -197,27 +207,59 @@ def finalize_reply(reply: TutorReply, scenario: ScenarioDefinition, client_compl
 
 
 # ---------------------------------------------------------------------------
-# Role check: the character must not ask the traveler's questions
+# Line checks: the character asks one question, and never the traveler's
 # ---------------------------------------------------------------------------
+
+
+def _key_questions(scenario: ScenarioDefinition) -> list[tuple[str, str]]:
+    """The scene's key phrases that are questions: as written, and as bare words without spaces or punctuation."""
+    questions: list[tuple[str, str]] = []
+    for phrase in scenario.key_phrases:
+        if phrase.hanzi.rstrip().endswith(("？", "?")) and (bare := _NOT_A_WORD_RE.sub("", phrase.hanzi)):
+            questions.append((phrase.hanzi, bare))
+    return questions
 
 
 def asks_travelers_question(scenario: ScenarioDefinition, hanzi: str) -> str | None:
     """The scene's key-phrase question that `hanzi` contains, if any. Key phrases are the learner's
     lines, so the character saying one (e.g. 你的行李在哪里？ at the airport) has swapped roles."""
     line = _NOT_A_WORD_RE.sub("", hanzi)
-    for phrase in scenario.key_phrases:
-        if phrase.hanzi.rstrip().endswith(("？", "?")):
-            question = _NOT_A_WORD_RE.sub("", phrase.hanzi)
-            if question and question in line:
-                return phrase.hanzi
-    return None
+    return next((written for written, bare in _key_questions(scenario) if bare in line), None)
 
 
-def _role_swap_note(hanzi: str) -> str:
-    return (
-        f'\n\nYour last draft line was "{hanzi}". That is the traveler\'s question to ask you, not yours. '
-        "Write the reply again in your own part: answer them, offer help, or ask about their plans."
-    )
+def drop_asked_questions(
+    scenario: ScenarioDefinition, suggestions: list[Phrase], learner_lines: list[str]
+) -> list[Phrase]:
+    """The suggestions without the key questions the learner has already asked (the character answered
+    them), e.g. no 我的行李在哪里？ once they've asked 行李在哪里？."""
+    said = [_NOT_A_WORD_RE.sub("", line) for line in learner_lines]
+    asked = [bare for _, bare in _key_questions(scenario) if any(bare in line for line in said)]
+    return [phrase for phrase in suggestions if not any(bare in _NOT_A_WORD_RE.sub("", phrase.hanzi) for bare in asked)]
+
+
+def question_count(hanzi: str) -> int:
+    """Questions in the character's line: each run of question marks is one (A还是B？ counts once)."""
+    return len(_QUESTION_RE.findall(hanzi))
+
+
+def line_problems(scenario: ScenarioDefinition, hanzi: str) -> list[str]:
+    """What's wrong with the character's line, said to Claude when asking again. [] when it's fine."""
+    problems: list[str] = []
+    if asks_travelers_question(scenario, hanzi):
+        problems.append(
+            "That is the traveler's question to ask you, not yours. Write the reply again in your own part: "
+            "answer them, offer help, or ask about their plans."
+        )
+    if (count := question_count(hanzi)) > MAX_QUESTIONS:
+        problems.append(
+            f"It asks {count} questions; ask only one. Keep the one that sets up the first goal still to do, "
+            "and drop the others."
+        )
+    return problems
+
+
+def _ask_again_note(hanzi: str, problems: list[str]) -> str:
+    return f'\n\nYour last draft line was "{hanzi}". ' + " ".join(problems)
 
 
 # ---------------------------------------------------------------------------
@@ -307,15 +349,21 @@ def generate_reply(
 
     reply = _ask_claude(client, system, messages, attempts=2)
 
-    # Now and then the character asks the traveler's question (e.g. 巴士在哪里？). Ask once more,
-    # without the overload retry to stay inside the Lambda timeout; if that fails, keep the first reply.
-    if asks_travelers_question(scenario, reply.hanzi):
-        logger.warning("Character said the traveler's line %r in scenario %s; asking again", reply.hanzi, scenario.id)
+    # Now and then the character asks the traveler's question (e.g. 巴士在哪里？) or two questions at
+    # once. Ask once more, without the overload retry to stay inside the Lambda timeout, and keep the
+    # second reply only if it's better; if asking again fails, keep the first.
+    problems = line_problems(scenario, reply.hanzi)
+    if problems:
+        logger.warning(
+            "Character's line %r in scenario %s: %s Asking again", reply.hanzi, scenario.id, " ".join(problems)
+        )
         try:
-            second = _ask_claude(client, system + _role_swap_note(reply.hanzi), messages, attempts=1)
+            second = _ask_claude(client, system + _ask_again_note(reply.hanzi, problems), messages, attempts=1)
         except ApiError:
             second = None
-        if second is not None and not asks_travelers_question(scenario, second.hanzi):
+        if second is not None and len(line_problems(scenario, second.hanzi)) < len(problems):
             reply = second
 
-    return finalize_reply(reply, scenario, client_completed_ids)
+    learner_lines = [line.text for line in history if line.role == "learner"] + ([learner_text] if learner_text else [])
+    suggestions = drop_asked_questions(scenario, reply.suggestions, learner_lines)
+    return finalize_reply(reply.model_copy(update={"suggestions": suggestions}), scenario, client_completed_ids)

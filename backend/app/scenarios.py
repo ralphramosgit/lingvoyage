@@ -120,7 +120,7 @@ SCENARIOS: list[ScenarioDefinition] = [
             "You open: 你好！欢迎来成都！你找什么？",
             "The traveler asks where their luggage is (or says 行李). You: 你的行李在三号转盘，在那里。 Then ask: 你要去哪里？",
             "The traveler says they want to go to their hotel. You: 好！哪个酒店？",
-            "The traveler names the hotel. You: 熊猫酒店？好！你坐巴士还是滴滴？",
+            "The traveler names the hotel. You: 熊猫酒店，好的！你坐巴士还是滴滴？",
             "The traveler asks where the bus or the DiDi is (or picks one). You: 巴士在五号门外面。 or "
             "滴滴在二号门外面。 Then ask: 还需要什么吗？",
             "If the traveler asks where the restroom is, you: 厕所在二号门旁边。",

@@ -13,7 +13,7 @@ import * as Haptics from 'expo-haptics';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSharedValue, withTiming } from 'react-native-reanimated';
 
-import { invalidatePlaybackMode, stopPlayback, waitForAudioSessionToSettle } from '@/lib/audio';
+import { invalidatePlaybackMode, restorePlaybackMode, stopPlayback, waitForAudioSessionToSettle } from '@/lib/audio';
 import { bytesToBase64, PCM_SAMPLE_RATE, pcmDurationMs, pcmLevel, pcmToWav } from '@/lib/pcm';
 
 // Recordings normally come from the mic *stream* (16 kHz PCM), which lets the app show live
@@ -56,10 +56,9 @@ function deleteQuietly(uri: string | null) {
 }
 
 async function leaveRecordingMode() {
-  // Without this, iOS keeps the "play and record" session and plays replies quietly
-  // through the earpiece instead of the speaker.
-  await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true });
-  invalidatePlaybackMode();
+  // Without this, iOS keeps the recording session and plays replies quietly, or through the earpiece
+  // instead of the speaker. Doing it now, not when the reply arrives, keeps the switch out of its way.
+  await restorePlaybackMode();
 }
 
 export function useVoiceRecorder(options: { onPcm?: (pcm: Uint8Array) => void } = {}) {
