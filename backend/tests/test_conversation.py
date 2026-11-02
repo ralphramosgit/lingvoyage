@@ -50,8 +50,10 @@ def fake_services(monkeypatch: pytest.MonkeyPatch) -> dict[str, list[object]]:
         history: list[ChatLine],
         client_completed_ids: list[str],
         learner_text: str | None,
+        local_facts: str = "",
     ) -> TutorReply:
         calls["tutor"].append((scenario.id, history, client_completed_ids, learner_text))
+        calls.setdefault("local_facts", []).append(local_facts)
         return _reply()
 
     monkeypatch.setattr(speech, "synthesize", fake_synthesize)

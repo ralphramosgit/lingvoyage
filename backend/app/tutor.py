@@ -107,11 +107,14 @@ Before the scene, the learner may have practiced these sentence patterns. Listen
 Words the learner practiced: {", ".join(words.values())}. Prefer these words in your own lines."""
 
 
-def build_system_prompt(scenario: ScenarioDefinition, completed_goal_ids: list[str]) -> str:
+def build_system_prompt(scenario: ScenarioDefinition, completed_goal_ids: list[str], local_facts: str = "") -> str:
+    """`local_facts`: the facts retrieved for this turn of a local scene (app/locations/retrieve.py), at the very
+    end, after everything that stays the same for the scene."""
     character = scenario.character
     role = character.role[0].lower() + character.role[1:]
     goals = "\n".join(f"- [{goal.id}] {goal.label}" for goal in scenario.goals)
     completed = ", ".join(completed_goal_ids) if completed_goal_ids else "none"
+    facts = f"\n\n{local_facts}" if local_facts else ""
     return f"""You are {character.name_hanzi} ({character.name_pinyin}), {role} at {scenario.setting} in {scenario.city}, China. You are role-playing a real travel situation with a beginner Mandarin learner, who plays the traveler. Their first language is English.
 
 Scene details: {scenario.scene_details}{_outline_section(scenario)}{_practiced_section(scenario)}
@@ -134,7 +137,7 @@ Rules for every reply:
 11. "completed_goal_ids": every goal id completed so far, including earlier ones. A goal counts when the learner attempted it in Chinese or pinyin, even with mistakes, including when they answer your question with what the goal is about (for example 行李 when you asked what they're looking for). If they only used English, don't count it yet; teach the Chinese in "feedback" instead.
 12. "scenario_complete": true only when every goal is completed and your line in this reply is a natural goodbye.
 13. Never use emojis or emoticons. Don't mention being an AI or that this is a lesson unless the learner asks directly. If the learner goes off topic or says something inappropriate, politely steer back to the scene, in character.
-14. "learner_hanzi", "learner_pinyin" and "learner_english" show the learner what they just said, under their message. "learner_hanzi": their last message in Simplified Chinese exactly as they said it, keeping their words and mistakes (write pinyin as characters, leave any English words as they are); "" if it had no Chinese or pinyin. "learner_pinyin": pinyin for "learner_hanzi" with tone marks, words separated by spaces. "learner_english": a natural English translation of their whole last message; "" if it was entirely in English. Use "" for all three on the opening line."""
+14. "learner_hanzi", "learner_pinyin" and "learner_english" show the learner what they just said, under their message. "learner_hanzi": their last message in Simplified Chinese exactly as they said it, keeping their words and mistakes (write pinyin as characters, leave any English words as they are); "" if it had no Chinese or pinyin. "learner_pinyin": pinyin for "learner_hanzi" with tone marks, words separated by spaces. "learner_english": a natural English translation of their whole last message; "" if it was entirely in English. Use "" for all three on the opening line.{facts}"""
 
 
 def build_messages(history: list[ChatLine], learner_text: str | None) -> list[MessageParam]:
@@ -294,10 +297,11 @@ def generate_reply(
     history: list[ChatLine],
     client_completed_ids: list[str],
     learner_text: str | None,
+    local_facts: str = "",
 ) -> TutorReply:
     client = _get_client()
     completed = merge_goal_ids(scenario, client_completed_ids)
-    system = build_system_prompt(scenario, completed)
+    system = build_system_prompt(scenario, completed, local_facts)
     messages = build_messages(history, learner_text)
 
     reply = _ask_claude(client, system, messages, attempts=2)
