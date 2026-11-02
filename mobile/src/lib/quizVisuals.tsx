@@ -1,4 +1,4 @@
-import { Ear, Languages, Layers, type LucideIcon, Shuffle } from 'lucide-react-native';
+import { Ear, Landmark, Languages, Layers, type LucideIcon, Shuffle } from 'lucide-react-native';
 
 import { findUnit } from '@/content/lessons/units';
 import type { Quiz, QuizSectionId } from '@/content/quizzes/types';
@@ -6,7 +6,8 @@ import type { TintName } from '@/theme/theme';
 
 import { PART_TINTS, UnitIcon, unitIcon } from './unitVisuals';
 
-const ICONS: Record<string, LucideIcon> = { Ear, Languages, Layers, Shuffle };
+// Landmark: the city pack's culture quiz (the others use unit icons: TrainFront, UtensilsCrossed).
+const ICONS: Record<string, LucideIcon> = { Ear, Landmark, Languages, Layers, Shuffle };
 
 /** A quiz's icon, named by its lucide component name: one of the quiz icons, or any unit icon. For props that take an icon. */
 export function quizIcon(name: string): LucideIcon {
@@ -25,6 +26,7 @@ const SECTION_TINTS: Record<QuizSectionId, TintName> = {
   units: 'sky',
   mixed: 'sky',
   skills: 'mint',
+  local: 'sun',
 };
 
 /** Unit quizzes take their unit's part color, as on the Lessons tab. */

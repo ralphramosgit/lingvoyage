@@ -1,6 +1,7 @@
 import type { UnitExercise } from '@/content/lessons/types';
 
-export type QuizSectionId = 'units' | 'mixed' | 'skills';
+/** local: the learner's city pack (issue #40), shown only when the pack has quizzes. */
+export type QuizSectionId = 'units' | 'mixed' | 'skills' | 'local';
 
 export type QuizSection = {
   id: QuizSectionId;

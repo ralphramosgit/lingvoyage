@@ -1,6 +1,7 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, BookOpen, RotateCcw } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/Button';
 import { LessonCompleteView } from '@/components/lesson/LessonComplete';
@@ -10,8 +11,11 @@ import type { Unit } from '@/content/lessons/types';
 import { findUnit } from '@/content/lessons/units';
 import { findQuiz } from '@/content/quizzes/quizzes';
 import type { Quiz } from '@/content/quizzes/types';
+import { usePack } from '@/hooks/usePack';
 import { stopPlayback } from '@/lib/audio';
 import { shuffled } from '@/lib/lessons';
+import { localQuizzes } from '@/lib/localCourse';
+import { colors } from '@/theme/theme';
 
 function exitToQuizzes() {
   stopPlayback();
@@ -21,12 +25,21 @@ function exitToQuizzes() {
 
 export default function QuizPlayerScreen() {
   const { quizId } = useLocalSearchParams<{ quizId: string }>();
-  const quiz = findQuiz(quizId);
+  const cityPack = usePack();
+  // A city pack's quiz (local-<city>-<topic>, issue #40) comes from the pack.
+  const quiz = findQuiz(quizId) ?? localQuizzes(cityPack.pack).find((item) => item.id === quizId);
   // Bumped by "Try again", which starts the quiz over with the questions in a new order.
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => () => stopPlayback(), []);
 
+  if (!quiz && quizId?.startsWith('local-') && cityPack.arriving) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator color={colors.sky600} size="large" />
+      </View>
+    );
+  }
   if (!quiz || quiz.exercises.length === 0) return <QuizNotFound />;
   return (
     <QuizFlow
@@ -72,3 +85,7 @@ function QuizFlow({ quiz, onTryAgain }: { quiz: Quiz; onTryAgain: () => void }) 
     />
   );
 }
+
+const styles = StyleSheet.create({
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg },
+});

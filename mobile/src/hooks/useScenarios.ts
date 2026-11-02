@@ -73,13 +73,8 @@ export function useScenario(id: string | undefined) {
   }
 
   const scenario = cityPack.pack?.encounters.find((item) => item.id === id) ?? null;
-  // Still arriving: the pack's status, or the pack itself once the status says one is ready.
-  const waiting =
-    cityPack.city !== null &&
-    cityPack.error === null &&
-    (cityPack.loading || cityPack.status === null || (cityPack.status.ready_pack_id !== null && cityPack.pack === null));
-  const loading = scenario === null && waiting;
-  const error = scenario === null && !waiting && cityPack.error ? cityPack.error.message : null;
+  const loading = scenario === null && cityPack.arriving;
+  const error = scenario === null && !cityPack.arriving && cityPack.error ? cityPack.error.message : null;
   const reload = async () => cityPack.retry();
   return { scenario, loading, error, reload, notFound: scenario === null && !loading && error === null };
 }

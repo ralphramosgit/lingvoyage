@@ -107,6 +107,10 @@ export async function playUri(uri: string, options: { rate?: number; key?: strin
   await ensurePlaybackMode();
   const audio = getPlayer();
   if (audio.playing) audio.pause();
+  // With 'duckOthers', expo-audio halves a playing player's volume when the iOS audio session is
+  // interrupted (recording can do that), and only restores it if iOS says to resume. This one player is
+  // reused for every line, so without this each reply could play at half the volume of the last.
+  audio.volume = 1;
   audio.replace({ uri });
   // 'high' pitch correction keeps slow replay sounding natural instead of deep.
   audio.setPlaybackRate(options.rate ?? 1, 'high');

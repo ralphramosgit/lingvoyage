@@ -158,5 +158,10 @@ export function usePack() {
   }, []);
   const dismissFinished = useCallback(() => update({ justFinished: false }), []);
 
-  return { ...snapshot, building: isBuilding(snapshot.status), retry, dismissFinished };
+  // Still on its way: the status, or the pack itself once the status says a ready one exists.
+  const arriving =
+    snapshot.city !== null &&
+    snapshot.error === null &&
+    (snapshot.loading || snapshot.status === null || (snapshot.status.ready_pack_id !== null && snapshot.pack === null));
+  return { ...snapshot, building: isBuilding(snapshot.status), arriving, retry, dismissFinished };
 }

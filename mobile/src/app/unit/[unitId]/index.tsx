@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowRight, BookOpen, Check, ChevronLeft, ChevronRight, Clock, Mic, Target, Trophy } from 'lucide-react-native';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,12 +12,18 @@ import { IconButton } from '@/components/IconButton';
 import { LessonRow } from '@/components/lesson/LessonRow';
 import { Pill } from '@/components/Pill';
 import { PressableScale } from '@/components/PressableScale';
+import { SourcesSheet } from '@/components/SourcesSheet';
 import { Text } from '@/components/Text';
+import { LocalNotes } from '@/components/units/LocalNotes';
 import { UnitNotFound } from '@/components/units/UnitNotFound';
 import type { Unit } from '@/content/lessons/types';
 import { findUnit, PARTS, UNITS } from '@/content/lessons/units';
+import { cityName, useCities } from '@/hooks/useCities';
+import { usePack } from '@/hooks/usePack';
 import { useScenarios } from '@/hooks/useScenarios';
 import { firstUnfinished, isCheckpointDone, isLessonDone, isUnitDone, lessonsDone } from '@/lib/course';
+import { localUnitNotes } from '@/lib/localCourse';
+import { shortDay } from '@/lib/packVisuals';
 import { setLastUnit, useUnitProgress } from '@/lib/unitProgress';
 import { PART_TINTS, UnitIcon } from '@/lib/unitVisuals';
 import { colors, layout, motion, radii, shadows, spacing, tints } from '@/theme/theme';
@@ -47,6 +53,10 @@ function UnitDetail({ unit }: { unit: Unit }) {
   const insets = useSafeAreaInsets();
   const progress = useUnitProgress();
   const { scenarios } = useScenarios();
+  const { cities } = useCities();
+  const cityPack = usePack();
+  const local = localUnitNotes(cityPack.pack, unit.id);
+  const [sourcesOpen, setSourcesOpen] = useState(false);
 
   const tint = tints[PART_TINTS[unit.part]];
   const part = PARTS.find((item) => item.id === unit.part);
@@ -153,6 +163,18 @@ function UnitDetail({ unit }: { unit: Unit }) {
             </Card>
           </Animated.View>
 
+          {local && cityPack.city ? (
+            <Animated.View entering={FadeInDown.duration(motion.base).delay(motion.stagger * 4)}>
+              <LocalNotes
+                notes={local}
+                city={cityName(cities, cityPack.city)}
+                lessonDone={local.lesson ? isLessonDone(progress, unit.id, local.lesson.id) : false}
+                onOpenLesson={openLesson}
+                onOpenSources={() => setSourcesOpen(true)}
+              />
+            </Animated.View>
+          ) : null}
+
           {unit.encounterId ? (
             <Animated.View entering={FadeInDown.duration(motion.base).delay(motion.stagger * 4)} style={styles.section}>
               <Text variant="heading">Now try it for real</Text>
@@ -219,6 +241,16 @@ function UnitDetail({ unit }: { unit: Unit }) {
           <Button label={footer.label} icon={ArrowRight} iconPosition="right" onPress={footer.onPress} />
         </View>
       </View>
+
+      {sourcesOpen && local ? (
+        <SourcesSheet
+          sources={local.sources}
+          checkedOn={local.checked_at ? shortDay(local.checked_at) : null}
+          what="these notes"
+          onClose={() => setSourcesOpen(false)}
+          bottomInset={insets.bottom}
+        />
+      ) : null}
     </View>
   );
 }
