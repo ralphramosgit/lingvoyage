@@ -1,5 +1,5 @@
 import { type Href, router } from 'expo-router';
-import { AudioLines, BookA, type LucideIcon, Puzzle, ScrollText, Table2 } from 'lucide-react-native';
+import { AudioLines, BookA, Grid3x3, type LucideIcon, Puzzle, ScrollText, Table2 } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
@@ -13,10 +13,17 @@ type Section = { title: string; description: string; icon: LucideIcon; tint: Tin
 const SECTIONS: Section[] = [
   {
     title: 'Pinyin & pronunciation',
-    description: 'The four tones and the sounds that differ from English.',
+    description: 'The four tones, tone pairs, and the sounds that differ from English.',
     icon: AudioLines,
     tint: 'sky',
     href: '/essentials/pinyin',
+  },
+  {
+    title: 'Pinyin chart',
+    description: 'Every syllable. Tap one to hear all four tones.',
+    icon: Grid3x3,
+    tint: 'sun',
+    href: '/essentials/chart',
   },
   {
     title: 'Vocabulary',

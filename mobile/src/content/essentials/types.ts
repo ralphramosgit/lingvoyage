@@ -19,7 +19,29 @@ export type Tone = { number: 1 | 2 | 3 | 4 | 5; name: string; howItSounds: strin
 /** An initial or final that sounds different from English, with a character to hear it in. */
 export type Sound = { sound: string; howItSounds: string; example: Entry };
 
-export type PinyinGuide = { intro: string; tones: Tone[]; initials: Sound[]; finals: Sound[] };
+/** Two-syllable words starting with one tone, one word for each tone that can follow (4 tones + neutral). */
+export type TonePairGroup = { first: 1 | 2 | 3 | 4; words: Entry[] };
+
+/** A rule for how a tone changes next to another one, with a word to hear it in. */
+export type ToneChange = { label: string; title: string; rule: string; example: Entry };
+
+export type PinyinGuide = {
+  intro: string;
+  tones: Tone[];
+  tonePairs: TonePairGroup[];
+  toneChanges: ToneChange[];
+  initials: Sound[];
+  finals: Sound[];
+};
+
+/** One character for a syllable in one tone: the character and what it means. */
+export type ToneChar = readonly [hanzi: string, english: string];
+
+/** Tones 1 to 4 of one syllable; null where no everyday character has that tone. */
+export type ToneSlots = readonly [ToneChar | null, ToneChar | null, ToneChar | null, ToneChar | null];
+
+/** A column of the pinyin chart: the sound a syllable starts with ("" for none). */
+export type ChartInitial = { id: string; label: string; hint: string };
 
 export type VocabGroup = { id: string; title: string; description: string; words: Entry[] };
 

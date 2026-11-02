@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/Text';
@@ -14,7 +15,8 @@ export function SoundRow({
   example,
   divider = false,
 }: {
-  badge: string;
+  /** Text like "zh", or a drawing like a tone's shape. */
+  badge: string | ReactNode;
   title?: string;
   howItSounds: string;
   example: Entry;
@@ -24,9 +26,13 @@ export function SoundRow({
     <View style={[styles.row, divider ? styles.divider : null]}>
       <View style={styles.top}>
         <View style={styles.badge}>
-          <Text variant="subheading" color={colors.sky700}>
-            {badge}
-          </Text>
+          {typeof badge === 'string' ? (
+            <Text variant="subheading" color={colors.sky700}>
+              {badge}
+            </Text>
+          ) : (
+            badge
+          )}
         </View>
         <View style={styles.flex}>
           {title ? <Text variant="bodyStrong">{title}</Text> : null}
