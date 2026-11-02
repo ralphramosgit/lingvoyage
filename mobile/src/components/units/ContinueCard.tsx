@@ -1,6 +1,7 @@
-import { ArrowRight, MessagesSquare, Trophy } from 'lucide-react-native';
+import { ArrowRight, MessagesSquare } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 
+import { Seagull } from '@/components/art/Seagull';
 import { Button } from '@/components/Button';
 import { Text } from '@/components/Text';
 import type { ContinueTarget } from '@/lib/course';
@@ -43,7 +44,7 @@ export function ContinueCard({ target, onOpen }: { target: ContinueTarget; onOpe
             {title}
           </Text>
         </View>
-        {target.kind === 'complete' ? <Trophy size={36} color={colors.sun300} /> : null}
+        <Seagull size={72} mood={target.kind === 'complete' ? 'cheer' : 'happy'} />
       </View>
       <Button
         label={button}

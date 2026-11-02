@@ -1,9 +1,10 @@
-import { CloudOff, RotateCcw } from 'lucide-react-native';
-import { StyleSheet, View } from 'react-native';
+import { RotateCcw } from 'lucide-react-native';
+import { StyleSheet } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
-import { colors, radii, spacing } from '@/theme/theme';
+import { colors, spacing } from '@/theme/theme';
 
+import { Seagull } from './art/Seagull';
 import { Button } from './Button';
 import { Card } from './Card';
 import { Text } from './Text';
@@ -22,9 +23,7 @@ export function ErrorState({
   return (
     <Animated.View entering={FadeIn.duration(200)}>
       <Card style={styles.card}>
-        <View style={styles.icon}>
-          <CloudOff size={26} color={colors.sky700} />
-        </View>
+        <Seagull size={88} mood="worried" />
         <Text variant="subheading" align="center">
           {title}
         </Text>
@@ -39,14 +38,5 @@ export function ErrorState({
 
 const styles = StyleSheet.create({
   card: { alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.xxl },
-  icon: {
-    width: 56,
-    height: 56,
-    borderRadius: radii.full,
-    backgroundColor: colors.sky100,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.xs,
-  },
   button: { marginTop: spacing.sm, alignSelf: 'center' },
 });

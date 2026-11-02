@@ -122,15 +122,22 @@ def check_elevenlabs() -> None:
         return
     report("ElevenLabs TTS", True, f"{len(audio) // 1024} KB of MP3 from the default voice")
 
-    for env_name in ("ELEVENLABS_VOICE_ID_RESTAURANT", "ELEVENLABS_VOICE_ID_TRAIN", "ELEVENLABS_VOICE_ID_HOTEL"):
-        voice_id = getattr(settings, env_name.lower())
-        if not voice_id:
-            continue
-        try:
-            speech.synthesize("Ni hao.", voice_id)
-            report(f"ElevenLabs TTS ({env_name})", True)
-        except ApiError as error:
-            report(f"ElevenLabs TTS ({env_name})", False, error.message)
+    for gender in ("female", "male"):
+        if not settings.voice_pool(gender, "young") and not settings.voice_pool(gender, "older"):
+            report(
+                f"ElevenLabs {gender} voices",
+                False,
+                f"ELEVENLABS_VOICES_{gender.upper()}_YOUNG and _OLDER are both empty",
+                f"These characters will speak with ELEVENLABS_VOICE_ID. Add {gender} voices (guide 03).",
+            )
+        for age in ("young", "older"):
+            env_name = f"ELEVENLABS_VOICES_{gender.upper()}_{age.upper()}"
+            for voice_id in settings.voice_pool(gender, age):
+                try:
+                    speech.synthesize("Ni hao.", voice_id)
+                    report(f"ElevenLabs TTS ({env_name}: {voice_id})", True)
+                except ApiError as error:
+                    report(f"ElevenLabs TTS ({env_name}: {voice_id})", False, error.message)
 
     try:
         transcript = speech.transcribe(audio, "audio/mpeg")

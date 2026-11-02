@@ -1,30 +1,33 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
-import { BookOpen, ChevronLeft, ChevronRight, Circle, Clock, Gauge, Globe, MapPin, Mic } from 'lucide-react-native';
+import { BookOpen, ChevronLeft, ChevronRight, Circle, Globe, Mic } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Chibi } from '@/components/art/Chibi';
+import { SceneBackdrop } from '@/components/art/SceneBackdrop';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
-import { CharacterAvatar } from '@/components/CharacterAvatar';
 import { ErrorState } from '@/components/ErrorState';
 import { FormMessage } from '@/components/FormMessage';
 import { IconButton } from '@/components/IconButton';
 import { LessonRow } from '@/components/lesson/LessonRow';
-import { Pill } from '@/components/Pill';
 import { PressableScale } from '@/components/PressableScale';
 import { Screen } from '@/components/Screen';
 import { SourcesSheet } from '@/components/SourcesSheet';
 import { SpeakerButton } from '@/components/SpeakerButton';
 import { Text } from '@/components/Text';
+import { VoyageLoader } from '@/components/VoyageLoader';
 import { useScenario } from '@/hooks/useScenarios';
 import { stopPlayback } from '@/lib/audio';
+import { lookFor } from '@/lib/characterLooks';
 import { useLessonFinished } from '@/lib/lessonProgress';
 import { shortDay } from '@/lib/packVisuals';
-import { ScenarioIcon, scenarioTint } from '@/lib/scenarioVisuals';
-import { colors, layout, motion, radii, shadows, spacing, tints } from '@/theme/theme';
+import { sceneKind } from '@/lib/scenarioVisuals';
+import { colors, layout, motion, radii, shadows, spacing } from '@/theme/theme';
+
+const HERO_HEIGHT = 250;
 
 function goBack() {
   if (router.canGoBack()) router.back();
@@ -50,7 +53,7 @@ export default function EncounterPrepScreen() {
           </View>
         }
         contentStyle={styles.center}>
-        {loading ? <ActivityIndicator color={colors.sky600} size="large" /> : null}
+        {loading ? <VoyageLoader /> : null}
         {error ? <ErrorState title="Couldn't load this encounter" message={error} onRetry={reload} /> : null}
         {notFound ? (
           <Text variant="body" align="center" color={colors.inkMuted}>
@@ -61,8 +64,6 @@ export default function EncounterPrepScreen() {
     );
   }
 
-  const tint = scenarioTint(scenario.id, 0, scenario.icon);
-  const palette = tints[tint];
   const { character } = scenario;
   const lessons = scenario.lessons ?? [];
   // Local encounters (from the city pack) say where their real details came from.
@@ -86,135 +87,130 @@ export default function EncounterPrepScreen() {
         style={styles.flex}
         contentContainerStyle={{ paddingBottom: (lessons.length > 0 ? 180 : 120) + insets.bottom }}
         showsVerticalScrollIndicator={false}>
-        <LinearGradient colors={palette.gradient} style={{ paddingTop: insets.top + spacing.sm }}>
-          <View style={styles.column}>
-            <View style={styles.backRow}>
-              <IconButton icon={ChevronLeft} accessibilityLabel="Back to encounters" onPress={goBack} variant="surface" iconSize={22} />
-            </View>
-
-            <Animated.View entering={FadeInDown.duration(motion.base)} style={styles.hero}>
-              <View style={[styles.heroTile, { backgroundColor: colors.surface }]}>
-                <ScenarioIcon name={scenario.icon} size={34} color={palette.fg} strokeWidth={2} />
-              </View>
-              <Text variant="title" accessibilityRole="header">
-                {scenario.title}
-              </Text>
-              <View style={styles.placeRow}>
-                <MapPin size={16} color={colors.inkMuted} />
-                <Text variant="caption" color={colors.inkMuted} style={styles.flexShrink}>
-                  {scenario.city} · {scenario.setting}
-                </Text>
-              </View>
-              <View style={styles.pills}>
-                <Pill label={scenario.difficulty} icon={Gauge} tone="neutral" />
-                <Pill label={`${scenario.minutes} min`} icon={Clock} tone="neutral" />
-              </View>
-              {sources.length > 0 ? (
-                <PressableScale
-                  onPress={() => setSourcesOpen(true)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Real details from the web${checkedOn ? `, checked ${checkedOn}` : ''}. Show the ${sources.length} sources.`}
-                  style={styles.sourcesLine}>
-                  <Globe size={16} color={colors.sky700} />
-                  <Text variant="caption" color={colors.inkMuted} style={styles.flexShrink}>
-                    Real details from the web{checkedOn ? `, checked ${checkedOn}` : ''} ·{' '}
-                    <Text variant="caption" color={colors.sky700}>
-                      Sources
-                    </Text>
-                  </Text>
-                  <ChevronRight size={14} color={colors.sky700} />
-                </PressableScale>
-              ) : null}
-            </Animated.View>
-
-            <Animated.View entering={FadeInDown.duration(motion.base).delay(60)}>
-              <Card style={styles.characterCard}>
-                <CharacterAvatar char={character.avatar_char} size={60} tint={tint} ring />
-                <View style={styles.flex}>
-                  <Text variant="tiny" color={colors.inkMuted}>
-                    YOU&apos;LL BE TALKING TO
-                  </Text>
-                  <Text variant="subheading">
-                    {character.name_hanzi}{' '}
-                    <Text variant="bodyMedium" color={colors.inkMuted}>
-                      {character.name_pinyin}
-                    </Text>
-                  </Text>
-                  <Text variant="caption" color={colors.inkMuted}>
-                    {character.name_english} · {character.role}
-                  </Text>
-                </View>
-              </Card>
-            </Animated.View>
+        {/* The place, with the character standing in it. */}
+        <View style={[styles.hero, { height: HERO_HEIGHT + insets.top }]}>
+          <SceneBackdrop scene={sceneKind(scenario.icon)} />
+          <View style={[styles.column, styles.backRow, { paddingTop: insets.top + spacing.sm }]}>
+            <IconButton icon={ChevronLeft} accessibilityLabel="Back to encounters" onPress={goBack} variant="surface" iconSize={22} />
           </View>
-        </LinearGradient>
+          <Animated.View entering={FadeInUp.duration(motion.slow)} style={styles.character}>
+            <Chibi look={lookFor(scenario)} size={176} />
+          </Animated.View>
+          <Animated.View
+            entering={FadeInDown.duration(motion.base).delay(motion.base)}
+            style={styles.nameCard}
+            accessible
+            accessibilityLabel={`You'll be talking to ${character.name_english}, ${character.role}`}>
+            <Text variant="subheading">
+              {character.name_hanzi}{' '}
+              <Text variant="label" color={colors.inkMuted}>
+                {character.name_pinyin}
+              </Text>
+            </Text>
+            <Text variant="caption" color={colors.inkMuted}>
+              {character.role}
+            </Text>
+          </Animated.View>
+        </View>
 
-        <View style={[styles.column, styles.sections]}>
-          <Animated.View entering={FadeInDown.duration(motion.base).delay(120)} style={styles.section}>
-            <Text variant="heading">Your goals</Text>
-            <Card padded={false}>
-              {scenario.goals.map((goal, index) => (
-                <View key={goal.id} style={[styles.goalRow, index > 0 ? styles.rowDivider : null]}>
-                  <Circle size={20} color={colors.line} strokeWidth={2.5} />
-                  <Text variant="bodyMedium" style={styles.flex}>
-                    {goal.label}
+        <View style={styles.sheet}>
+          <Animated.View entering={FadeInDown.duration(motion.base)} style={[styles.column, styles.titles]}>
+            <Text variant="title" accessibilityRole="header">
+              {scenario.title}
+            </Text>
+            <Text variant="body" color={colors.inkMuted}>
+              {scenario.city} · {scenario.setting}
+            </Text>
+            <Text variant="caption" color={colors.inkMuted}>
+              {scenario.difficulty} · {scenario.minutes} min
+            </Text>
+            {sources.length > 0 ? (
+              <PressableScale
+                onPress={() => setSourcesOpen(true)}
+                accessibilityRole="button"
+                accessibilityLabel={`Real details from the web${checkedOn ? `, checked ${checkedOn}` : ''}. Show the ${sources.length} sources.`}
+                style={styles.sourcesLine}>
+                <Globe size={16} color={colors.sky700} />
+                <Text variant="caption" color={colors.inkMuted} style={styles.flexShrink}>
+                  Real details from the web{checkedOn ? `, checked ${checkedOn}` : ''} ·{' '}
+                  <Text variant="caption" color={colors.sky700}>
+                    Sources
                   </Text>
-                </View>
-              ))}
-            </Card>
+                </Text>
+                <ChevronRight size={14} color={colors.sky700} />
+              </PressableScale>
+            ) : null}
           </Animated.View>
 
-          {lessons.length > 0 ? (
-            <Animated.View entering={FadeInDown.duration(motion.base).delay(180)} style={styles.section}>
-              <View style={styles.sectionTitle}>
-                <Text variant="heading">Practice first</Text>
-                <Pill label="Optional" tone="neutral" />
-              </View>
-              <Text variant="caption" color={colors.inkMuted}>
-                Short quizzes on the words and sentences in this scene. Pick any lesson, do them all, or skip straight to
-                the encounter.
-              </Text>
+          <View style={[styles.column, styles.sections]}>
+            <Animated.View entering={FadeInDown.duration(motion.base).delay(120)} style={styles.section}>
+              <Text variant="heading">Your goals</Text>
               <Card padded={false}>
-                {lessons.map((lesson, index) => (
-                  <LessonRow
-                    key={lesson.id}
-                    lesson={lesson}
-                    number={index + 1}
-                    finished={isFinished(lesson.id)}
-                    divider={index > 0}
-                    onPress={() => openLesson(lesson.id)}
-                  />
+                {scenario.goals.map((goal, index) => (
+                  <View key={goal.id} style={[styles.goalRow, index > 0 ? styles.rowDivider : null]}>
+                    <Circle size={20} color={colors.line} strokeWidth={2.5} />
+                    <Text variant="bodyMedium" style={styles.flex}>
+                      {goal.label}
+                    </Text>
+                  </View>
                 ))}
               </Card>
             </Animated.View>
-          ) : null}
 
-          <Animated.View entering={FadeInDown.duration(motion.base).delay(240)} style={styles.section}>
-            <Text variant="heading">Key phrases</Text>
-            <Text variant="caption" color={colors.inkMuted}>
-              Tap the speaker to hear each one. Audio is saved on your phone, so replays are free.
-            </Text>
-            {phraseError ? <FormMessage message={phraseError} /> : null}
-            <Card padded={false}>
-              {scenario.key_phrases.map((phrase, index) => (
-                <View key={phrase.hanzi} style={[styles.phraseRow, index > 0 ? styles.rowDivider : null]}>
-                  <View style={styles.flex}>
-                    <Text variant="hanziLarge">{phrase.hanzi}</Text>
-                    <Text variant="label" color={colors.inkMuted}>
-                      {phrase.pinyin}
-                    </Text>
-                    <Text variant="caption">{phrase.english}</Text>
-                  </View>
-                  <SpeakerButton
-                    text={phrase.hanzi}
-                    label={`Play ${phrase.english}`}
-                    size={44}
-                    onError={(message) => setPhraseError(message)}
-                  />
+            {lessons.length > 0 ? (
+              <Animated.View entering={FadeInDown.duration(motion.base).delay(180)} style={styles.section}>
+                <View style={styles.sectionTitle}>
+                  <Text variant="heading">Practice first</Text>
+                  <Text variant="caption" color={colors.inkMuted}>
+                    Optional
+                  </Text>
                 </View>
-              ))}
-            </Card>
-          </Animated.View>
+                <Text variant="caption" color={colors.inkMuted}>
+                  Short quizzes on the words and sentences in this scene. Pick any lesson, do them all, or skip straight to
+                  the encounter.
+                </Text>
+                <Card padded={false}>
+                  {lessons.map((lesson, index) => (
+                    <LessonRow
+                      key={lesson.id}
+                      lesson={lesson}
+                      number={index + 1}
+                      finished={isFinished(lesson.id)}
+                      divider={index > 0}
+                      onPress={() => openLesson(lesson.id)}
+                    />
+                  ))}
+                </Card>
+              </Animated.View>
+            ) : null}
+
+            <Animated.View entering={FadeInDown.duration(motion.base).delay(240)} style={styles.section}>
+              <Text variant="heading">Key phrases</Text>
+              <Text variant="caption" color={colors.inkMuted}>
+                Tap the speaker to hear each one. Audio is saved on your phone, so replays are free.
+              </Text>
+              {phraseError ? <FormMessage message={phraseError} /> : null}
+              <Card padded={false}>
+                {scenario.key_phrases.map((phrase, index) => (
+                  <View key={phrase.hanzi} style={[styles.phraseRow, index > 0 ? styles.rowDivider : null]}>
+                    <View style={styles.flex}>
+                      <Text variant="hanziLarge">{phrase.hanzi}</Text>
+                      <Text variant="label" color={colors.inkMuted}>
+                        {phrase.pinyin}
+                      </Text>
+                      <Text variant="caption">{phrase.english}</Text>
+                    </View>
+                    <SpeakerButton
+                      text={phrase.hanzi}
+                      label={`Play ${phrase.english}`}
+                      size={44}
+                      onError={(message) => setPhraseError(message)}
+                    />
+                  </View>
+                ))}
+              </Card>
+            </Animated.View>
+          </View>
         </View>
       </ScrollView>
 
@@ -264,23 +260,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: layout.screenPadding,
   },
   backRow: { paddingVertical: spacing.sm, alignItems: 'flex-start' },
-  hero: { gap: spacing.sm, marginTop: spacing.sm, marginBottom: spacing.xl },
-  heroTile: {
-    width: 68,
-    height: 68,
-    borderRadius: radii.card + 4,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.sm,
-    ...shadows.card,
+  hero: { backgroundColor: colors.sky100 },
+  // Stands at the bottom of the picture; the sheet below covers the shoulders, as if behind a counter.
+  character: { position: 'absolute', bottom: radii.sheet - 14, left: layout.screenPadding - 8 },
+  nameCard: {
+    position: 'absolute',
+    left: layout.screenPadding + 168,
+    right: layout.screenPadding,
+    bottom: radii.sheet + spacing.xl,
+    paddingHorizontal: spacing.md + 2,
+    paddingVertical: spacing.sm + 2,
+    borderRadius: radii.card,
+    backgroundColor: colors.surface,
+    ...shadows.raised,
   },
-  placeRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs + 2 },
-  pills: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xs },
+  sheet: {
+    marginTop: -radii.sheet,
+    paddingTop: spacing.xxl,
+    borderTopLeftRadius: radii.sheet,
+    borderTopRightRadius: radii.sheet,
+    backgroundColor: colors.bg,
+  },
+  titles: { gap: spacing.xs, marginBottom: spacing.xl },
   sourcesLine: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs + 2, minHeight: layout.minTouchTarget },
-  characterCard: { flexDirection: 'row', alignItems: 'center', gap: spacing.lg, marginBottom: spacing.xl },
   sections: { gap: spacing.xxl, paddingTop: spacing.xs },
   section: { gap: spacing.md },
-  sectionTitle: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  sectionTitle: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: spacing.sm },
   goalRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.lg, paddingVertical: spacing.md + 2 },
   phraseRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.lg, paddingVertical: spacing.md + 2 },
   rowDivider: { borderTopWidth: 1, borderTopColor: colors.line },

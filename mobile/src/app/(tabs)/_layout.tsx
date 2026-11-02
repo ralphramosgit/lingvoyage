@@ -1,7 +1,8 @@
 import { Tabs } from 'expo-router/js-tabs';
 import { BookOpen, ListChecks, MessagesSquare, NotebookText, UserRound } from 'lucide-react-native';
 
-import { colors, fonts } from '@/theme/theme';
+import { VoyageTabBar } from '@/components/VoyageTabBar';
+import { colors } from '@/theme/theme';
 
 // Open on Encounters, the middle tab, even though Lessons comes first in the tab bar (e.g. right after sign-in).
 export const unstable_settings = {
@@ -11,13 +12,11 @@ export const unstable_settings = {
 export default function TabsLayout() {
   return (
     <Tabs
+      tabBar={(props) => <VoyageTabBar {...props} />}
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.sky600,
-        tabBarInactiveTintColor: colors.inkMuted,
-        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.line },
-        // 11, not 12, so "Encounters" fits a fifth of a 360pt-wide phone without being cut off.
-        tabBarLabelStyle: { fontFamily: fonts.semibold, fontSize: 11 },
+        // Screens slide across as the boat in the tab bar sails between tabs.
+        animation: 'shift',
         sceneStyle: { backgroundColor: colors.bg },
       }}>
       <Tabs.Screen

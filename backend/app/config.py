@@ -1,5 +1,6 @@
 """Settings: real environment variables first, then backend/.env as a fallback."""
 
+import zlib
 from functools import lru_cache
 from pathlib import Path
 
@@ -26,9 +27,11 @@ class Settings(BaseSettings):
 
     elevenlabs_api_key: str = ""
     elevenlabs_voice_id: str = ""
-    elevenlabs_voice_id_restaurant: str = ""
-    elevenlabs_voice_id_train: str = ""
-    elevenlabs_voice_id_hotel: str = ""
+    # Voices by who's speaking: comma-separated voice IDs, e.g. ELEVENLABS_VOICES_FEMALE_YOUNG=id1,id2.
+    elevenlabs_voices_female_young: str = ""
+    elevenlabs_voices_female_older: str = ""
+    elevenlabs_voices_male_young: str = ""
+    elevenlabs_voices_male_older: str = ""
     elevenlabs_tts_model: str = "eleven_flash_v2_5"
     elevenlabs_stt_model: str = "scribe_v2"
     elevenlabs_realtime_stt_model: str = "scribe_v2_realtime"
@@ -59,12 +62,18 @@ class Settings(BaseSettings):
     def _no_trailing_slash(cls, value: str) -> str:
         return value.rstrip("/")
 
-    def voice_id_for(self, voice_env: str | None) -> str:
-        """Per-scenario voice (e.g. ELEVENLABS_VOICE_ID_TRAIN), falling back to ELEVENLABS_VOICE_ID."""
-        if voice_env:
-            override = getattr(self, voice_env.lower(), "")
-            if isinstance(override, str) and override:
-                return override
+    def voice_pool(self, gender: str, age: str) -> list[str]:
+        """The voice IDs for, e.g., an older woman (ELEVENLABS_VOICES_FEMALE_OLDER)."""
+        value = getattr(self, f"elevenlabs_voices_{gender}_{age}", "")
+        return [voice_id.strip() for voice_id in value.split(",") if voice_id.strip()]
+
+    def voice_id_for(self, gender: str, age: str, name: str) -> str:
+        """A voice that matches the character: one from their gender and age's pool, picked by their name so a
+        character always sounds the same. Then the same gender at the other age, then ELEVENLABS_VOICE_ID."""
+        for pool_age in (age, "older" if age == "young" else "young"):
+            pool = self.voice_pool(gender, pool_age)
+            if pool:
+                return pool[zlib.crc32(name.encode("utf-8")) % len(pool)]
         return self.elevenlabs_voice_id
 
 

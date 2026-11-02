@@ -44,7 +44,6 @@ export function LocalEncounters({ completedScenarioIds }: { completedScenarioIds
           <Animated.View key={scenario.id} entering={FadeInDown.duration(motion.base).delay(index * motion.stagger)}>
             <ScenarioCard
               scenario={scenario}
-              index={index}
               completed={completedScenarioIds.has(scenario.id)}
               onPress={() => router.push({ pathname: '/encounter/[id]', params: { id: scenario.id } })}
             />
@@ -58,5 +57,5 @@ export function LocalEncounters({ completedScenarioIds }: { completedScenarioIds
 const styles = StyleSheet.create({
   sectionTitle: { marginTop: spacing.xxl, marginBottom: spacing.xs },
   note: { marginBottom: spacing.md },
-  list: { gap: spacing.md },
+  list: { gap: spacing.lg },
 });

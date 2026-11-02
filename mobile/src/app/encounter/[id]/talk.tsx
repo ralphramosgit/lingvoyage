@@ -3,7 +3,6 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   BackHandler,
   Keyboard,
@@ -17,6 +16,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { SceneBackdrop } from '@/components/art/SceneBackdrop';
+import { SeagullFlyBy } from '@/components/art/SeagullFlyBy';
 import { CharacterAvatar } from '@/components/CharacterAvatar';
 import { ErrorState } from '@/components/ErrorState';
 import { IconButton } from '@/components/IconButton';
@@ -29,14 +30,15 @@ import { MicPermissionCard } from '@/components/talk/MicPermissionCard';
 import { SuggestionsRow } from '@/components/talk/SuggestionsRow';
 import { VoiceTranscript, type VoiceTranscriptState } from '@/components/talk/VoiceTranscript';
 import { Text } from '@/components/Text';
+import { VoyageLoader } from '@/components/VoyageLoader';
 import { useConversation } from '@/hooks/useConversation';
 import { speechHints, useLiveTranscript } from '@/hooks/useLiveTranscript';
 import { useScenario } from '@/hooks/useScenarios';
 import { useVoiceDraft } from '@/hooks/useVoiceDraft';
 import { MAX_RECORDING_MS, useVoiceRecorder } from '@/hooks/useVoiceRecorder';
-import { clearConversationAudio, releasePlayer } from '@/lib/audio';
+import { clearConversationAudio, releasePlayer, usePlayback } from '@/lib/audio';
 import { recordEncounter } from '@/lib/progress';
-import { scenarioTint } from '@/lib/scenarioVisuals';
+import { sceneKind } from '@/lib/scenarioVisuals';
 import { useSettings } from '@/lib/settings';
 import { colors, layout, spacing } from '@/theme/theme';
 
@@ -48,6 +50,7 @@ export default function TalkScreen() {
   const { scenario, loading, error, reload } = useScenario(id);
   const insets = useSafeAreaInsets();
   const { settings } = useSettings();
+  const { playingKey } = usePlayback();
 
   const conversation = useConversation(scenario, { autoPlay: settings.autoPlay });
   const live = useLiveTranscript();
@@ -255,14 +258,15 @@ export default function TalkScreen() {
           </View>
         }
         contentStyle={styles.center}>
-        {loading ? <ActivityIndicator color={colors.sky600} size="large" /> : null}
+        {loading ? <VoyageLoader label="Getting the scene ready…" /> : null}
         {error ? <ErrorState title="Couldn't load this encounter" message={error} onRetry={reload} /> : null}
       </Screen>
     );
   }
 
-  const tint = scenarioTint(scenario.id, 0, scenario.icon);
   const { character } = scenario;
+  // Any of the character's lines playing (normal or slow) moves their mouth in the header.
+  const speaking = playingKey?.startsWith('line') ?? false;
   const suggestionsOn = suggestionsPref ?? conversation.learnerCount < 2;
   const showSuggestions = suggestionsOn && suggestions.length > 0 && !complete && !recorder.isRecording && !voice.draft;
 
@@ -283,11 +287,15 @@ export default function TalkScreen() {
 
   return (
     <View style={styles.flex}>
+      {/* The place, behind everything, softened so the chat reads over it. */}
+      <SceneBackdrop scene={sceneKind(scenario.icon)} />
+      <View pointerEvents="none" style={styles.wash} />
+
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + spacing.xs }]}>
         <View style={[styles.column, styles.headerRow]}>
           <IconButton icon={ChevronLeft} accessibilityLabel="Leave encounter" onPress={leave} iconSize={24} color={colors.ink} />
-          <CharacterAvatar char={character.avatar_char} size={40} tint={tint} />
+          <CharacterAvatar scenario={scenario} size={46} talking={speaking} animated />
           <View style={styles.headerText}>
             <Text variant="subheading" numberOfLines={1}>
               {character.name_hanzi}{' '}
@@ -311,11 +319,11 @@ export default function TalkScreen() {
         </View>
       </View>
 
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={styles.fill} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         {/* Chat */}
         <ScrollView
           ref={scrollRef}
-          style={styles.flex}
+          style={styles.fill}
           contentContainerStyle={[styles.column, styles.chat]}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="interactive"
@@ -329,8 +337,7 @@ export default function TalkScreen() {
                   <NpcBubble
                     key={message.id}
                     message={message}
-                    avatarChar={character.avatar_char}
-                    tint={tint}
+                    scenario={scenario}
                     showPinyin={settings.showPinyin}
                     englishVisible={englishOverrides[message.id] ?? settings.autoEnglish}
                     onToggleEnglish={() =>
@@ -349,7 +356,7 @@ export default function TalkScreen() {
                 return null;
             }
           })}
-          {thinking ? <ThinkingBubble avatarChar={character.avatar_char} tint={tint} name={character.name_english} /> : null}
+          {thinking ? <ThinkingBubble scenario={scenario} /> : null}
         </ScrollView>
 
         {/* Bottom area: the input, or once the encounter is over, the complete bar */}
@@ -367,7 +374,7 @@ export default function TalkScreen() {
             </View>
           </View>
         ) : (
-          <View style={styles.bottom}>
+          <View>
             <View style={styles.column}>
               {permissionCard ? (
                 <MicPermissionCard
@@ -425,6 +432,8 @@ export default function TalkScreen() {
         )}
       </KeyboardAvoidingView>
 
+      <SeagullFlyBy top={insets.top + 92} size={52} delay={700} />
+
       {sheetVisible ? (
         <CompletionSheet
           goals={scenario.goals}
@@ -443,10 +452,12 @@ export default function TalkScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.bg },
+  fill: { flex: 1 },
   center: { justifyContent: 'center' },
+  wash: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: 'rgba(245,250,255,0.58)' },
   column: { width: '100%', maxWidth: layout.maxContentWidth, alignSelf: 'center' },
   header: {
-    backgroundColor: colors.surface,
+    backgroundColor: 'rgba(255,255,255,0.94)',
     borderBottomWidth: 1,
     borderBottomColor: colors.line,
   },
@@ -459,6 +470,5 @@ const styles = StyleSheet.create({
   },
   headerText: { flex: 1 },
   chat: { padding: spacing.lg, gap: spacing.lg, paddingBottom: spacing.xxl },
-  bottom: { backgroundColor: colors.bg },
   inputDock: { backgroundColor: colors.surface },
 });

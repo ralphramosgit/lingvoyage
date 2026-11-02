@@ -1,128 +1,110 @@
-import { ChevronRight, CircleCheck, Clock, Gauge, Lock, type LucideIcon, MapPin, Target } from 'lucide-react-native';
+import { Check, ChevronRight, type LucideIcon } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 
-import { ScenarioIcon, scenarioTint } from '@/lib/scenarioVisuals';
-import { colors, radii, spacing, tints } from '@/theme/theme';
+import { Chibi } from '@/components/art/Chibi';
+import { SceneBackdrop } from '@/components/art/SceneBackdrop';
+import { lookFor } from '@/lib/characterLooks';
+import { sceneKind } from '@/lib/scenarioVisuals';
+import { colors, radii, shadows, spacing } from '@/theme/theme';
 import type { Scenario } from '@/types/api';
 
-import { Card } from './Card';
-import { CharacterAvatar } from './CharacterAvatar';
-import { Pill } from './Pill';
+import { PressableScale } from './PressableScale';
 import { Text } from './Text';
 
-function Meta({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
+const ART_HEIGHT = 128;
+
+/** A scene to pick: its place drawn across the top with the character in it, then what it's about. */
+export function ScenarioCard({
+  scenario,
+  completed,
+  onPress,
+}: {
+  scenario: Scenario;
+  completed: boolean;
+  onPress: () => void;
+}) {
+  const { character } = scenario;
+
   return (
-    <View style={styles.meta}>
-      <Icon size={14} color={colors.inkMuted} />
-      <Text variant="caption" color={colors.inkMuted}>
-        {label}
+    <PressableScale
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${scenario.title}. ${scenario.subtitle}. ${scenario.city}, with ${character.name_english}, ${scenario.minutes} minutes.${completed ? ' Completed.' : ''}`}
+      accessibilityHint="Opens the encounter"
+      style={styles.card}>
+      <View style={styles.art}>
+        <SceneBackdrop scene={sceneKind(scenario.icon)} />
+        <Chibi look={lookFor(scenario)} size={ART_HEIGHT - 8} animated={false} style={styles.character} />
+        {completed ? (
+          <View style={styles.done}>
+            <Check size={14} color="#FFFFFF" strokeWidth={3} />
+            <Text variant="tiny" color="#FFFFFF">
+              Done
+            </Text>
+          </View>
+        ) : null}
+      </View>
+
+      <View style={styles.body}>
+        <View style={styles.flex}>
+          <Text variant="subheading">{scenario.title}</Text>
+          <Text variant="caption" color={colors.inkMuted} numberOfLines={1}>
+            with {character.name_english} · {scenario.minutes} min
+          </Text>
+        </View>
+        <ChevronRight size={20} color={colors.inkMuted} />
+      </View>
+    </PressableScale>
+  );
+}
+
+/** A scene or unit that isn't ready yet: quiet, so it doesn't compete with the ones that are. */
+export function LockedScenarioCard({ title, icon: Icon }: { title: string; icon: LucideIcon }) {
+  return (
+    <View style={styles.locked} accessible accessibilityLabel={`${title}, coming soon`}>
+      <Icon size={20} color={colors.inkMuted} strokeWidth={2} />
+      <Text variant="bodyMedium" color={colors.inkMuted} style={styles.flex}>
+        {title}
+      </Text>
+      <Text variant="tiny" color={colors.inkMuted}>
+        Soon
       </Text>
     </View>
   );
 }
 
-export function ScenarioCard({
-  scenario,
-  completed,
-  index,
-  onPress,
-}: {
-  scenario: Scenario;
-  completed: boolean;
-  index: number;
-  onPress: () => void;
-}) {
-  const tint = scenarioTint(scenario.id, index, scenario.icon);
-  const palette = tints[tint];
-  const { character } = scenario;
-
-  return (
-    <Card
-      onPress={onPress}
-      accessibilityLabel={`${scenario.title}. ${scenario.subtitle}. ${scenario.city}, with ${character.name_english}. ${scenario.goals.length} goals, ${scenario.difficulty}.${completed ? ' Completed.' : ''}`}
-      accessibilityHint="Opens the encounter"
-      style={styles.card}>
-      <View style={styles.top}>
-        <View style={[styles.tile, { backgroundColor: palette.bg }]}>
-          <ScenarioIcon name={scenario.icon} size={28} color={palette.fg} strokeWidth={2} />
-        </View>
-        <View style={styles.titles}>
-          <Text variant="subheading">{scenario.title}</Text>
-          <Text variant="caption" color={colors.inkMuted}>
-            {scenario.subtitle}
-          </Text>
-        </View>
-      </View>
-
-      <View style={styles.metaRow}>
-        <Pill label={scenario.city} icon={MapPin} tone="sky" />
-        <Meta icon={Target} label={`${scenario.goals.length} goals`} />
-        <Meta icon={Gauge} label={scenario.difficulty} />
-        <Meta icon={Clock} label={`${scenario.minutes} min`} />
-      </View>
-
-      <View style={styles.divider} />
-
-      <View style={styles.bottom}>
-        <CharacterAvatar char={character.avatar_char} size={32} tint={tint} />
-        <View style={styles.characterText}>
-          <Text variant="label" numberOfLines={1}>
-            {character.name_hanzi} <Text variant="label" color={colors.inkMuted}>{character.name_pinyin}</Text>
-          </Text>
-          <Text variant="tiny" color={colors.inkMuted} numberOfLines={1}>
-            {character.role}
-          </Text>
-        </View>
-        {completed ? <Pill label="Completed" icon={CircleCheck} tone="success" /> : null}
-        <ChevronRight size={20} color={colors.inkMuted} />
-      </View>
-    </Card>
-  );
-}
-
-export function LockedScenarioCard({ title, icon: Icon }: { title: string; icon: LucideIcon }) {
-  return (
-    <View style={styles.locked} accessible accessibilityLabel={`${title}, coming soon`}>
-      <View style={[styles.tile, styles.lockedTile]}>
-        <Icon size={26} color={colors.inkMuted} strokeWidth={2} />
-      </View>
-      <View style={styles.titles}>
-        <Text variant="subheading" color={colors.inkMuted}>
-          {title}
-        </Text>
-        <Pill label="Coming soon" tone="neutral" />
-      </View>
-      <Lock size={20} color={colors.inkMuted} />
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  card: { gap: spacing.md },
-  top: { flexDirection: 'row', gap: spacing.lg, alignItems: 'center' },
-  tile: {
-    width: 56,
-    height: 56,
+  flex: { flex: 1 },
+  card: {
+    backgroundColor: colors.surface,
     borderRadius: radii.card,
-    alignItems: 'center',
-    justifyContent: 'center',
+    overflow: 'hidden',
+    ...shadows.card,
   },
-  titles: { flex: 1, gap: 2 },
-  metaRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: spacing.md, rowGap: spacing.sm },
-  meta: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  divider: { height: 1, backgroundColor: colors.line },
-  bottom: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  characterText: { flex: 1 },
+  art: { height: ART_HEIGHT, backgroundColor: colors.sky100, overflow: 'hidden' },
+  character: { position: 'absolute', bottom: -6, left: spacing.lg },
+  done: {
+    position: 'absolute',
+    top: spacing.md,
+    right: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.full,
+    backgroundColor: colors.success,
+  },
+  body: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.lg },
   locked: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.lg,
-    padding: spacing.lg,
+    gap: spacing.md,
+    paddingHorizontal: spacing.lg,
+    minHeight: 56,
     borderRadius: radii.card,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderStyle: 'dashed',
     borderColor: colors.line,
-    backgroundColor: '#F8FBFE',
   },
-  lockedTile: { backgroundColor: '#EEF3F8' },
 });

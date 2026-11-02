@@ -39,8 +39,8 @@ export const spacing = {
 
 export const radii = {
   input: 12,
-  card: 16,
-  sheet: 24,
+  card: 20,
+  sheet: 28,
   full: 999,
 } as const;
 
@@ -80,9 +80,9 @@ export type TypographyVariant = keyof typeof typography;
 export const shadows = {
   card: {
     shadowColor: '#0B1F33',
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.07,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
     elevation: 2,
   },
   raised: {

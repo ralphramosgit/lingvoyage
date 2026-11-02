@@ -28,5 +28,6 @@ npx expo-doctor
 
 - `src/app/` routes (Expo Router): `(auth)` welcome, sign up, sign in; `setup`; `(tabs)` Encounters and Profile; `encounter/[id]` prep, `encounter/[id]/lesson/[lessonId]` practice lesson and `encounter/[id]/talk` conversation.
 - `src/components/` shared UI (Button, TextField, Card, Pill, IconButton, Screen, CharacterAvatar, SkeletonCard, ...).
+- `src/components/art/` the illustrations, all SVG animated with Reanimated (no image files): the seagull pal, the chibi characters (their looks come from `src/lib/characterLooks.ts`), the scene backgrounds, the sailboat and waves.
 - `src/lib/` env, Supabase client, API client, audio helpers.
 - `src/hooks/`, `src/theme/`, `src/types/`.

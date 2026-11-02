@@ -1,8 +1,25 @@
 """Encounter content. The single source of truth for scenarios, goals, key phrases and lessons."""
 
-from pydantic import BaseModel, Field
+import re
+import zlib
+from typing import Any, Literal
+
+from pydantic import BaseModel, Field, model_validator
 
 from app.lessons import AIRPORT_LESSONS, HOTEL_LESSONS, RESTAURANT_LESSONS, TRAIN_LESSONS, Lesson
+
+Gender = Literal["female", "male"]
+Age = Literal["young", "older"]
+
+# Name and role cues, for characters written before they had a gender and age (older city packs).
+_FEMALE = re.compile(
+    r"auntie|\baunt\b|granny|grandma|madam|\bms\b|\bmrs\b|\bmiss\b|lady|sister|waitress|hostess|"
+    r"阿姨|大妈|奶奶|婆婆|姐|女士|小姐|妹",
+    re.IGNORECASE,
+)
+_MALE = re.compile(r"uncle|grandpa|\bmr\b|brother|大爷|大叔|叔|爷爷|伯|先生|哥|师傅", re.IGNORECASE)
+_OLDER = re.compile(r"auntie|\baunt\b|granny|grandma|grandpa|uncle|阿姨|大妈|奶奶|婆婆|大爷|大叔|爷爷|伯|老", re.IGNORECASE)
+_OLDER_ROLE = re.compile(r"owner|boss|manager|老板|经理", re.IGNORECASE)
 
 
 class Character(BaseModel):
@@ -11,6 +28,26 @@ class Character(BaseModel):
     name_english: str
     role: str
     avatar_char: str
+    # Pick the character's voice (config.voice_id_for) and how the app draws them, so the two always match.
+    gender: Gender
+    age: Age
+
+    @model_validator(mode="before")
+    @classmethod
+    def _guess_gender_and_age(cls, data: Any) -> Any:
+        """Fills in a missing gender or age from the name and role ("Auntie Wang" is an older woman)."""
+        if not isinstance(data, dict) or ("gender" in data and "age" in data):
+            return data
+        name = f"{data.get('name_english', '')} {data.get('name_hanzi', '')}"
+        role = str(data.get("role", ""))
+        if _FEMALE.search(f"{name} {role}"):
+            gender = "female"
+        elif _MALE.search(name):
+            gender = "male"
+        else:
+            gender = "female" if zlib.crc32(name.encode("utf-8")) % 2 == 0 else "male"
+        age = "older" if _OLDER.search(name) or _OLDER_ROLE.search(role) else "young"
+        return {"gender": gender, "age": age, **data}
 
 
 class Goal(BaseModel):
@@ -59,17 +96,16 @@ class Scenario(BaseModel):
 
 
 class ScenarioDefinition(Scenario):
-    """Server-only fields: used for the AI prompt and voice choice, never sent to the app."""
+    """Server-only fields: used for the AI prompt, never sent to the app."""
 
     scene_details: str
     # How the scene should go, beat by beat, using the language the lessons teach.
     scene_outline: list[str]
-    voice_env: str | None = None  # None: the default voice
     local: LocalRef | None = None  # local encounters only
 
     def public(self) -> Scenario:
         return Scenario.model_validate(
-            self.model_dump(exclude={"scene_details", "scene_outline", "voice_env", "local"})
+            self.model_dump(exclude={"scene_details", "scene_outline", "local"})
         )
 
     @property
@@ -94,6 +130,8 @@ SCENARIOS: list[ScenarioDefinition] = [
             name_english="Xiao Lin",
             role="Airport staff",
             avatar_char="林",
+            gender="female",
+            age="young",
         ),
         goals=[
             Goal(id="find_luggage", label="Ask where your luggage is"),
@@ -144,6 +182,8 @@ SCENARIOS: list[ScenarioDefinition] = [
             name_english="Auntie Wang",
             role="Noodle shop owner",
             avatar_char="王",
+            gender="female",
+            age="older",
         ),
         goals=[
             Goal(id="party_size", label="Say how many people"),
@@ -180,7 +220,6 @@ SCENARIOS: list[ScenarioDefinition] = [
             "The traveler says how they'll pay. You: 好，谢谢！再见！",
         ],
         lessons=RESTAURANT_LESSONS,
-        voice_env="ELEVENLABS_VOICE_ID_RESTAURANT",
     ),
     ScenarioDefinition(
         id="train",
@@ -198,6 +237,8 @@ SCENARIOS: list[ScenarioDefinition] = [
             name_english="Li Ming",
             role="Information desk staff",
             avatar_char="李",
+            gender="male",
+            age="young",
         ),
         goals=[
             Goal(id="ask_politely", label="Ask politely for help"),
@@ -232,7 +273,6 @@ SCENARIOS: list[ScenarioDefinition] = [
             "The traveler says thank you and goodbye. You: 不客气！一路平安！",
         ],
         lessons=TRAIN_LESSONS,
-        voice_env="ELEVENLABS_VOICE_ID_TRAIN",
     ),
     ScenarioDefinition(
         id="hotel",
@@ -250,6 +290,8 @@ SCENARIOS: list[ScenarioDefinition] = [
             name_english="Manager Chen",
             role="Front desk manager",
             avatar_char="陈",
+            gender="male",
+            age="older",
         ),
         goals=[
             Goal(id="reservation", label="Say you have a reservation"),
@@ -285,7 +327,6 @@ SCENARIOS: list[ScenarioDefinition] = [
             "The traveler says thank you. You: 不客气！再见！",
         ],
         lessons=HOTEL_LESSONS,
-        voice_env="ELEVENLABS_VOICE_ID_HOTEL",
     ),
 ]
 

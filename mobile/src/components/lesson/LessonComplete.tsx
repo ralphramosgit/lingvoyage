@@ -1,8 +1,9 @@
-import { ArrowLeft, ArrowRight, Mic, PartyPopper } from 'lucide-react-native';
+import { ArrowLeft, ArrowRight, Mic } from 'lucide-react-native';
 import type { ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, ZoomIn } from 'react-native-reanimated';
 
+import { Seagull } from '@/components/art/Seagull';
 import { Button } from '@/components/Button';
 import { Text } from '@/components/Text';
 import { lessonSummary } from '@/lib/lessons';
@@ -32,8 +33,8 @@ export function LessonCompleteView({
       contentContainerStyle={[styles.column, styles.body, { paddingBottom: bottomInset + spacing.xl }]}
       showsVerticalScrollIndicator={false}>
       <View style={styles.cheer}>
-        <Animated.View entering={ZoomIn.duration(motion.slow)} style={styles.badge}>
-          <PartyPopper size={40} color="#A16207" strokeWidth={2} />
+        <Animated.View entering={ZoomIn.duration(motion.slow)}>
+          <Seagull size={136} mood="cheer" />
         </Animated.View>
         <Animated.View entering={FadeInDown.duration(motion.base).delay(motion.stagger)} style={styles.text}>
           <Text variant="title" align="center" accessibilityRole="header">
@@ -131,16 +132,6 @@ const styles = StyleSheet.create({
   },
   body: { flexGrow: 1, justifyContent: 'center', gap: spacing.xxxl, paddingTop: spacing.xl },
   cheer: { alignItems: 'center', gap: spacing.lg },
-  badge: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    backgroundColor: colors.sun100,
-    borderWidth: 3,
-    borderColor: colors.sun300,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   text: { gap: spacing.sm },
   score: {
     alignItems: 'center',

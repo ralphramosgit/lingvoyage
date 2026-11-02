@@ -35,6 +35,23 @@ export function scenarioTint(id: string, index = 0, icon?: string): TintName {
   return TINTS[id] ?? (icon ? ICON_TINTS[icon] : undefined) ?? FALLBACK_TINTS[index % FALLBACK_TINTS.length];
 }
 
+export type SceneKind = 'airport' | 'restaurant' | 'train' | 'hotel' | 'market' | 'taxi' | 'landmark' | 'harbor';
+
+const SCENE_KINDS: Record<string, SceneKind> = {
+  PlaneLanding: 'airport',
+  UtensilsCrossed: 'restaurant',
+  TrainFront: 'train',
+  BedDouble: 'hotel',
+  ShoppingBag: 'market',
+  CarTaxiFront: 'taxi',
+  Landmark: 'landmark',
+};
+
+/** Which illustrated place a scene is drawn in, from its icon. */
+export function sceneKind(icon: string): SceneKind {
+  return SCENE_KINDS[icon] ?? 'harbor';
+}
+
 type IconProps = { size: number; color: string; strokeWidth?: number };
 
 /** The scenario's icon, named by its lucide component name in the backend content. */

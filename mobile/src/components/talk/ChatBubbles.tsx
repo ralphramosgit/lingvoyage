@@ -21,7 +21,8 @@ import { SpeakerButton } from '@/components/SpeakerButton';
 import { Text } from '@/components/Text';
 import type { ErrorMessage, LearnerMessage, NpcMessage } from '@/hooks/useConversation';
 import { playUri, SLOW_RATE, usePlayback } from '@/lib/audio';
-import { colors, motion, radii, shadows, spacing, type TintName } from '@/theme/theme';
+import { colors, motion, radii, shadows, spacing } from '@/theme/theme';
+import type { Scenario } from '@/types/api';
 
 const BUBBLE_MAX_WIDTH = '84%';
 const LEARNER_DIVIDER = '#BAE6FD';
@@ -38,15 +39,13 @@ function sameWords(a: string, b: string): boolean {
 
 export function NpcBubble({
   message,
-  avatarChar,
-  tint,
+  scenario,
   showPinyin,
   englishVisible,
   onToggleEnglish,
 }: {
   message: NpcMessage;
-  avatarChar: string;
-  tint: TintName;
+  scenario: Scenario;
   showPinyin: boolean;
   englishVisible: boolean;
   onToggleEnglish: () => void;
@@ -63,7 +62,7 @@ export function NpcBubble({
 
   return (
     <Animated.View entering={FadeInDown.duration(motion.base)} style={styles.npcRow}>
-      <CharacterAvatar char={avatarChar} size={34} tint={tint} />
+      <CharacterAvatar scenario={scenario} size={38} talking={playingKey === normalKey || playingKey === slowKey} />
       <View style={[styles.bubble, styles.npcBubble]}>
         <Text variant="hanziLarge" selectable>
           {reply.hanzi}
@@ -244,15 +243,15 @@ function Dot({ index }: { index: number }) {
   return <Animated.View style={[styles.dot, style]} />;
 }
 
-export function ThinkingBubble({ avatarChar, tint, name }: { avatarChar: string; tint: TintName; name: string }) {
+export function ThinkingBubble({ scenario }: { scenario: Scenario }) {
   return (
     <Animated.View
       entering={FadeIn.duration(motion.fast)}
       style={styles.npcRow}
       accessible
-      accessibilityLabel={`${name} is thinking`}
+      accessibilityLabel={`${scenario.character.name_english} is thinking`}
       accessibilityLiveRegion="polite">
-      <CharacterAvatar char={avatarChar} size={34} tint={tint} />
+      <CharacterAvatar scenario={scenario} size={38} />
       <View style={[styles.bubble, styles.npcBubble, styles.thinking]}>
         <Dot index={0} />
         <Dot index={1} />

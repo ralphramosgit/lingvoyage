@@ -1,14 +1,14 @@
 import { router } from 'expo-router';
-import { CarTaxiFront, Languages, ShoppingBag } from 'lucide-react-native';
+import { CarTaxiFront, ShoppingBag } from 'lucide-react-native';
 import { useState } from 'react';
 import { RefreshControl, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { ErrorState } from '@/components/ErrorState';
 import { FormMessage } from '@/components/FormMessage';
-import { Pill } from '@/components/Pill';
 import { LocalEncounters } from '@/components/pack/LocalEncounters';
 import { type SceneView, SceneToggle } from '@/components/pack/SceneToggle';
+import { PalHero } from '@/components/PalHero';
 import { LockedScenarioCard, ScenarioCard } from '@/components/ScenarioCard';
 import { Screen } from '@/components/Screen';
 import { SkeletonCard } from '@/components/SkeletonCard';
@@ -18,7 +18,7 @@ import { useEncounterProgress } from '@/hooks/useEncounterProgress';
 import { usePack } from '@/hooks/usePack';
 import { useScenarios } from '@/hooks/useScenarios';
 import { useAuth } from '@/lib/auth';
-import { colors, motion, radii, spacing } from '@/theme/theme';
+import { colors, motion, spacing } from '@/theme/theme';
 
 export default function EncountersScreen() {
   const { profile } = useAuth();
@@ -43,20 +43,7 @@ export default function EncountersScreen() {
         <RefreshControl refreshing={loading && scenarios !== null} onRefresh={reload} tintColor={colors.sky600} />
       }>
       <Animated.View entering={FadeInDown.duration(motion.base)} style={styles.header}>
-        <View style={styles.greetingRow}>
-          <Text variant="title" style={styles.greeting} accessibilityRole="header">
-            Nǐ hǎo, {name}
-          </Text>
-          <View style={styles.nihao}>
-            <Text variant="hanzi" style={styles.nihaoText} color={colors.sky700}>
-              你好
-            </Text>
-          </View>
-        </View>
-        <Text variant="body" color={colors.inkMuted}>
-          Pick a scene and start talking.
-        </Text>
-        <Pill label="Mandarin Chinese" icon={Languages} tone="sky" style={styles.languagePill} />
+        <PalHero name={name} />
       </Animated.View>
 
       {toggle && cityPack.city ? (
@@ -103,7 +90,6 @@ function DefaultScenes({ completedScenarioIds }: { completedScenarioIds: Set<str
           <Animated.View key={scenario.id} entering={FadeInDown.duration(motion.base).delay(index * motion.stagger)}>
             <ScenarioCard
               scenario={scenario}
-              index={index}
               completed={completedScenarioIds.has(scenario.id)}
               onPress={() => router.push({ pathname: '/encounter/[id]', params: { id: scenario.id } })}
             />
@@ -112,7 +98,7 @@ function DefaultScenes({ completedScenarioIds }: { completedScenarioIds: Set<str
       </View>
 
       <Text variant="heading" style={styles.sectionTitle}>
-        Coming soon
+        On the horizon
       </Text>
       <Animated.View
         entering={FadeInDown.duration(motion.base).delay(((scenarios?.length ?? 3) + 1) * motion.stagger)}
@@ -125,19 +111,9 @@ function DefaultScenes({ completedScenarioIds }: { completedScenarioIds: Set<str
 }
 
 const styles = StyleSheet.create({
-  header: { gap: spacing.sm, paddingTop: spacing.lg, marginBottom: spacing.sm },
-  greetingRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.md },
-  greeting: { flexShrink: 1 },
-  nihao: {
-    backgroundColor: colors.sky100,
-    borderRadius: radii.input,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-  },
-  nihaoText: { fontWeight: '600' },
-  languagePill: { marginTop: spacing.xs },
+  header: { paddingTop: spacing.md },
   loading: { marginTop: spacing.xxl },
   toggle: { marginTop: spacing.xl },
   sectionTitle: { marginTop: spacing.xxl, marginBottom: spacing.md },
-  list: { gap: spacing.md },
+  list: { gap: spacing.lg },
 });
