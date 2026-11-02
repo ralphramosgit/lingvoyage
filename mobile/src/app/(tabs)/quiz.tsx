@@ -12,7 +12,10 @@ import { Text } from '@/components/Text';
 import type { Unit } from '@/content/lessons/types';
 import { findUnit, PARTS, UNITS } from '@/content/lessons/units';
 import { QUIZ_SECTIONS, quizzesIn, readyQuizzes, unitQuizzes } from '@/content/quizzes/quizzes';
-import type { Quiz, QuizSectionId } from '@/content/quizzes/types';
+import type { Quiz, QuizSection, QuizSectionId } from '@/content/quizzes/types';
+import { cityName, useCities } from '@/hooks/useCities';
+import { usePack } from '@/hooks/usePack';
+import { localQuizzes } from '@/lib/localCourse';
 import { quizIcon } from '@/lib/quizVisuals';
 import { type UnitProgress, useUnitProgress } from '@/lib/unitProgress';
 import { colors, layout, motion, radii, spacing } from '@/theme/theme';
@@ -35,12 +38,29 @@ export default function QuizScreen() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [navHeight, setNavHeight] = useState(0);
   const scrollRef = useRef<ScrollViewInstance>(null);
+  const { cities } = useCities();
+  const cityPack = usePack();
+
+  // The learner's city gets its own section (issue #40) once its pack has quizzes, or while a first
+  // build is really writing them.
+  const local = localQuizzes(cityPack.pack);
+  const writingLocal = cityPack.building && cityPack.status?.ready_pack_id === null;
+  const name = cityPack.city ? cityName(cities, cityPack.city) : '';
+  const localSection: QuizSection | null =
+    cityPack.city && (local.length > 0 || writingLocal)
+      ? { id: 'local', tab: name, title: `${name} quizzes`, summary: `Real places, dishes and prices in ${name}.` }
+      : null;
+  const sections = localSection ? [...QUIZ_SECTIONS, localSection] : QUIZ_SECTIONS;
+  // Back to Units if the city section goes away (a new destination without quizzes).
+  const shown = sections.some((item) => item.id === section) ? section : 'units';
 
   // Follows the Lessons tab until the learner picks a unit here.
   const unit = findUnit(pickedUnitId) ?? startingUnit(progress);
   const index = UNITS.indexOf(unit);
-  const current = QUIZ_SECTIONS.find((item) => item.id === section) ?? QUIZ_SECTIONS[0];
-  const quizzes = section === 'units' ? unitQuizzes(unit.id) : quizzesIn(section);
+  const current = sections.find((item) => item.id === shown) ?? QUIZ_SECTIONS[0];
+  let quizzes = quizzesIn(shown);
+  if (shown === 'units') quizzes = unitQuizzes(unit.id);
+  else if (shown === 'local') quizzes = local;
   const ready = readyQuizzes(unit.id);
 
   const scrollToTop = () => scrollRef.current?.scrollTo({ y: 0, animated: false });
@@ -70,8 +90,8 @@ export default function QuizScreen() {
           style={styles.navBar}>
           <View style={styles.column}>
             <QuizNavBar
-              sections={QUIZ_SECTIONS}
-              section={section}
+              sections={sections}
+              section={shown}
               onSelectSection={selectSection}
               unit={unit}
               unitNumber={index + 1}
@@ -89,9 +109,9 @@ export default function QuizScreen() {
           contentContainerStyle={[styles.column, styles.content]}
           showsVerticalScrollIndicator={false}>
           {/* Re-keyed so a new section or unit fades in. */}
-          <Animated.View key={section === 'units' ? unit.id : section} entering={FadeIn.duration(motion.base)} style={styles.group}>
+          <Animated.View key={shown === 'units' ? unit.id : shown} entering={FadeIn.duration(motion.base)} style={styles.group}>
             <View style={styles.groupTitle}>
-              {section === 'units' ? (
+              {shown === 'units' ? (
                 <>
                   <Text variant="tiny" color={colors.inkMuted}>
                     UNIT {index + 1} · {quizCount(ready)}
@@ -128,14 +148,16 @@ export default function QuizScreen() {
             ) : (
               <View style={styles.empty}>
                 <Text variant="body" align="center" color={colors.inkMuted}>
-                  Quizzes for {unit.title} come once its lessons are ready.
+                  {shown === 'local'
+                    ? `Your ${name} quizzes are being written from what the agent finds.`
+                    : `Quizzes for ${unit.title} come once its lessons are ready.`}
                 </Text>
               </View>
             )}
           </Animated.View>
         </ScrollView>
 
-        {menuOpen && section === 'units' ? (
+        {menuOpen && shown === 'units' ? (
           <QuizUnitMenu parts={PARTS} units={UNITS} selectedId={unit.id} top={navHeight} onPick={pickUnit} onClose={closeMenu} />
         ) : null}
       </View>

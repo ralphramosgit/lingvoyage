@@ -1,6 +1,7 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, ArrowRight, Mic, Trophy } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/Button';
 import { LessonCompleteView, UpNext } from '@/components/lesson/LessonComplete';
@@ -9,10 +10,14 @@ import { LessonPlayer } from '@/components/lesson/LessonPlayer';
 import { UnitNotFound } from '@/components/units/UnitNotFound';
 import type { Unit, UnitLesson } from '@/content/lessons/types';
 import { findUnit, UNITS } from '@/content/lessons/units';
+import { cityName, useCities } from '@/hooks/useCities';
+import { usePack } from '@/hooks/usePack';
 import { stopPlayback } from '@/lib/audio';
 import { isCheckpointDone, isLessonDone, isUnitDone, nextUnit } from '@/lib/course';
 import { nextLesson } from '@/lib/lessons';
+import { localUnitNotes } from '@/lib/localCourse';
 import { recordLesson, setLastUnit, useUnitProgress } from '@/lib/unitProgress';
+import { colors } from '@/theme/theme';
 
 /** Back to the unit screen. */
 function exitToUnit(unitId: string) {
@@ -25,11 +30,29 @@ export default function UnitLessonScreen() {
   const { unitId, lessonId } = useLocalSearchParams<{ unitId: string; lessonId: string }>();
   const unit = findUnit(unitId);
   const lessonIndex = unit ? unit.lessons.findIndex((lesson) => lesson.id === lessonId) : -1;
+  const cityPack = usePack();
+  const { cities } = useCities();
 
   useEffect(() => () => stopPlayback(), []);
   useEffect(() => {
     if (unit) setLastUnit(unit.id);
   }, [unit]);
+
+  // A local practice lesson (local-<city>-<unit>, issue #40) comes from the city pack, not the course.
+  if (unit && lessonId?.startsWith('local-')) {
+    const local = localUnitNotes(cityPack.pack, unit.id)?.lesson;
+    if (local && local.id === lessonId && cityPack.city) {
+      return <LocalLessonFlow key={local.id} unit={unit} lesson={local} city={cityName(cities, cityPack.city)} />;
+    }
+    if (cityPack.arriving) {
+      return (
+        <View style={styles.center}>
+          <ActivityIndicator color={colors.sky600} size="large" />
+        </View>
+      );
+    }
+    return <UnitNotFound />;
+  }
 
   if (!unit || lessonIndex < 0) return <UnitNotFound />;
 
@@ -119,3 +142,37 @@ function UnitLessonFlow({ unit, lesson, number }: { unit: Unit; lesson: UnitLess
     />
   );
 }
+
+/**
+ * A city pack's practice lesson in the same player. Its tick is saved like any lesson's, but it isn't in
+ * the unit's lessons, so it never counts toward finishing the unit and isn't in the checkpoint.
+ */
+function LocalLessonFlow({ unit, lesson, city }: { unit: Unit; lesson: UnitLesson; city: string }) {
+  return (
+    <LessonPlayer
+      title={lesson.title}
+      exercises={lesson.exercises}
+      renderLearn={(onAudioError) => (
+        <LessonIntro
+          lesson={lesson}
+          number={1}
+          total={1}
+          eyebrow={`LOCAL PRACTICE · ${city.toUpperCase()}`}
+          onAudioError={onAudioError}
+        />
+      )}
+      exitHint="Goes back to the unit"
+      onExit={() => exitToUnit(unit.id)}
+      onFinished={(firstTry, total) => recordLesson(unit.id, lesson.id, firstTry, total)}
+      renderDone={({ firstTry, total, bottomInset }) => (
+        <LessonCompleteView heading="Lesson complete!" title={lesson.title} firstTry={firstTry} total={total} bottomInset={bottomInset}>
+          <Button label="Back to the unit" icon={ArrowLeft} onPress={() => exitToUnit(unit.id)} />
+        </LessonCompleteView>
+      )}
+    />
+  );
+}
+
+const styles = StyleSheet.create({
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg },
+});

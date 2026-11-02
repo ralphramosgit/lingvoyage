@@ -9,16 +9,19 @@ import { openSource } from '@/lib/sources';
 import { colors, layout, motion, radii, spacing } from '@/theme/theme';
 import type { Source } from '@/types/api';
 
-/** The pages a local encounter's real details came from (issue #39). Each opens in the in-app browser. */
+/** The pages local content came from: a scene's details (#39) or a unit's notes (#40). Each opens in the in-app browser. */
 export function SourcesSheet({
   sources,
   checkedOn,
+  what = "this scene's details",
   onClose,
   bottomInset,
 }: {
   sources: Source[];
   /** "Oct 31". */
   checkedOn: string | null;
+  /** What the sources are for, e.g. "these notes". */
+  what?: string;
   onClose: () => void;
   bottomInset: number;
 }) {
@@ -37,8 +40,8 @@ export function SourcesSheet({
             <IconButton icon={X} accessibilityLabel="Close sources" onPress={onClose} />
           </View>
           <Text variant="caption" color={colors.inkMuted}>
-            An AI agent found this scene&apos;s details on these pages{checkedOn ? ` on ${checkedOn}` : ''}. Prices and hours
-            may have changed since.
+            An AI agent found {what} on these pages{checkedOn ? ` on ${checkedOn}` : ''}. Prices and hours may have
+            changed since.
           </Text>
           <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
             {sources.map((source, index) => (

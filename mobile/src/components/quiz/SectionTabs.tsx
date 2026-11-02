@@ -6,7 +6,7 @@ import { Text } from '@/components/Text';
 import type { QuizSection, QuizSectionId } from '@/content/quizzes/types';
 import { colors, motion, radii, spacing } from '@/theme/theme';
 
-/** The Quiz tab's sections (Units, Mixed, Skills), with a highlight that slides to the selected one, like PartTabs. */
+/** The Quiz tab's sections (Units, Mixed, Skills, and the learner's city), with a highlight that slides to the selected one, like PartTabs. */
 export function SectionTabs({
   sections,
   selected,
@@ -50,8 +50,14 @@ export function SectionTabs({
               accessibilityLabel={`${section.title}. ${section.summary}`}
               accessibilityState={{ selected: active }}
               hitSlop={{ top: spacing.xs, bottom: spacing.xs }}
-              style={styles.tab}>
-              <Text variant="label" color={active ? '#FFFFFF' : colors.inkMuted} numberOfLines={1}>
+              style={[styles.tab, sections.length > 3 ? styles.tabTight : null]}>
+              <Text
+                variant="label"
+                color={active ? '#FFFFFF' : colors.inkMuted}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                // Measured on an iPhone SE (320 pt), four tabs: Guangzhou, the longest city, needs 77%.
+                minimumFontScale={0.75}>
                 {section.tab}
               </Text>
             </Pressable>
@@ -80,4 +86,5 @@ const styles = StyleSheet.create({
     backgroundColor: colors.sky600,
   },
   tab: { flex: 1, minHeight: 40, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.sm },
+  tabTight: { paddingHorizontal: spacing.xs },
 });

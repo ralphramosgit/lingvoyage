@@ -19,18 +19,21 @@ export function LessonIntro({
   lesson,
   number,
   total,
+  eyebrow,
   onAudioError,
 }: {
   lesson: LessonIntroContent;
   number: number;
   total: number;
+  /** Replaces "LESSON 1 OF 4", e.g. "LOCAL PRACTICE · CHENGDU". */
+  eyebrow?: string;
   onAudioError: (message: string) => void;
 }) {
   return (
     <View style={styles.container}>
       <Animated.View entering={FadeInDown.duration(motion.base)} style={styles.heading}>
         <Text variant="tiny" color={colors.sky700}>
-          LESSON {number} OF {total}
+          {eyebrow ?? `LESSON ${number} OF ${total}`}
         </Text>
         <Text variant="title" accessibilityRole="header">
           {lesson.title}
