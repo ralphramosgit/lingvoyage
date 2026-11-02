@@ -1,6 +1,6 @@
 """Checks for generated content: beginner level, and every number coming from a fact.
 
-The content agents (encounters now, lessons and quizzes in #36) write Chinese for beginners from
+The content agents (encounters, #35; local notes, lessons and quizzes, #36) write Chinese for beginners from
 the facts the research agent found. These checks run on every draft, and what they find goes back
 to the agent to fix: characters above beginner level that the lessons don't teach, and prices or
 metro line numbers that aren't in the facts.
@@ -121,6 +121,21 @@ def fact_numbers(facts: Iterable[FactDraft]) -> tuple[set[int], set[int]]:
     return prices, lines
 
 
+def number_problems(texts: Iterable[str], facts: Iterable[FactDraft]) -> list[str]:
+    """Prices and metro line numbers in `texts` that none of the facts give."""
+    texts = list(texts)
+    prices, lines = fact_numbers(facts)
+    problems = [
+        f"the price {value} yuan isn't in the facts; use only prices from the facts, with no totals"
+        for value in sorted(set().union(*(prices_in(text) for text in texts)) - prices)
+    ]
+    problems += [
+        f"metro line {value} isn't in the facts; use only lines from the facts"
+        for value in sorted(set().union(*(lines_in(text) for text in texts)) - lines)
+    ]
+    return problems
+
+
 # ---------------------------------------------------------------------------
 # Level
 # ---------------------------------------------------------------------------
@@ -158,3 +173,12 @@ def above_level(texts: Iterable[str], allowed: set[str] | frozenset[str]) -> dic
             if char not in allowed and char not in found:
                 found[char] = text
     return found
+
+
+def level_problems(texts: Iterable[str], allowed: set[str] | frozenset[str], advice: str) -> list[str]:
+    """One problem listing the characters above beginner level (at most 8), or none."""
+    hard = above_level(texts, allowed)
+    if not hard:
+        return []
+    listed = ", ".join(f'{char} (in "{text}")' for char, text in list(hard.items())[:8])
+    return [f"above beginner level: {listed}. {advice}"]

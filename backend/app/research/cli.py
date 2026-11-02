@@ -20,6 +20,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from app.content.models import LocalQuiz, LocalUnitNotes
 from app.locations.cities import CITIES, find_city
 from app.locations.store import InMemoryPackStore, PackStore, RunAlreadyActive, get_store
 from app.research.briefs import TOPICS
@@ -63,6 +64,9 @@ def print_report(report: PackReport) -> None:
     print(f"Scenes: {len(report.encounters)}")
     for scenario in report.encounters:
         print(f"  {scenario.id}: {scenario.title}")
+    units = [item.unit_id for item in report.course if isinstance(item, LocalUnitNotes)]
+    quizzes = [item.title for item in report.course if isinstance(item, LocalQuiz)]
+    print(f"Local notes: {len(units)} units ({', '.join(units)}) · Quizzes: {len(quizzes)} ({', '.join(quizzes)})")
     print(f"Web: {usage.get('web_search_requests', 0)} searches, {usage.get('web_fetch_requests', 0)} page reads")
     for model, totals in usage.get("models", {}).items():
         print(
@@ -92,7 +96,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--topics", help=f"comma-separated, from: {', '.join(TOPICS)} (default: all)")
     parser.add_argument("--dry-run", action="store_true", help="don't save anything; print the facts as JSON")
     parser.add_argument("--no-deep-dive", action="store_true", help="skip reading restaurant menus")
-    parser.add_argument("--no-content", action="store_true", help="skip writing scenes (python -m app.content.cli later)")
+    parser.add_argument(
+        "--no-content", action="store_true", help="skip writing scenes, notes and quizzes (python -m app.content.cli later)"
+    )
     parser.add_argument(
         "--quick", action="store_true", help="one small worker (transport unless --topics), no menus: a cheap check"
     )

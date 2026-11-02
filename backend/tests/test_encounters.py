@@ -10,7 +10,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app import speech, tutor
-from app.content import checks, cli, encounters, lookup, prompts
+from app.content import checks, cli, drafts, encounters, lookup, prompts
 from app.content.encounters import DraftPhrase, EncounterDraft, EncounterPlan
 from app.locations.cities import find_city
 from app.locations.models import ContentItem, Fact, FactDraft
@@ -298,7 +298,7 @@ def test_a_scene_that_never_passes_is_skipped() -> None:
     _made_up_price(bad)
     client, trace = FakeWriter(bad), new_trace()
     assert _write(client, trace) is None
-    assert len(client.requests) == encounters.MAX_ROUNDS and trace.steps[-1]["kind"] == "error"
+    assert len(client.requests) == drafts.MAX_ROUNDS and trace.steps[-1]["kind"] == "error"
 
 
 def test_claude_errors_skip_the_scene() -> None:
