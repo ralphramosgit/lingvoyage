@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
+import { usePack } from '@/hooks/usePack';
 import { api, errorMessage } from '@/lib/api';
 import type { Scenario } from '@/types/api';
 
@@ -56,9 +57,29 @@ export function useScenarios(): ScenariosState {
   return { scenarios, loading, error, reload };
 }
 
-/** One scenario by id, loading the list if the cache is empty (e.g. after a reload). */
+/**
+ * One scenario by id, loading the list if the cache is empty (e.g. after a reload). Local encounters
+ * (local-<city>-<place>, issue #39) come from the learner's city pack instead, so they work on every
+ * screen a built-in one does. One that isn't in the current pack (refreshed, or another city) is notFound.
+ */
 export function useScenario(id: string | undefined) {
-  const { scenarios, loading, error, reload } = useScenarios();
-  const scenario = scenarios?.find((item) => item.id === id) ?? null;
-  return { scenario, loading, error, reload, notFound: !loading && !error && scenarios !== null && !scenario };
+  const builtIn = useScenarios();
+  const cityPack = usePack();
+
+  if (!id?.startsWith('local-')) {
+    const scenario = builtIn.scenarios?.find((item) => item.id === id) ?? null;
+    const { loading, error, reload } = builtIn;
+    return { scenario, loading, error, reload, notFound: !loading && !error && builtIn.scenarios !== null && !scenario };
+  }
+
+  const scenario = cityPack.pack?.encounters.find((item) => item.id === id) ?? null;
+  // Still arriving: the pack's status, or the pack itself once the status says one is ready.
+  const waiting =
+    cityPack.city !== null &&
+    cityPack.error === null &&
+    (cityPack.loading || cityPack.status === null || (cityPack.status.ready_pack_id !== null && cityPack.pack === null));
+  const loading = scenario === null && waiting;
+  const error = scenario === null && !waiting && cityPack.error ? cityPack.error.message : null;
+  const reload = async () => cityPack.retry();
+  return { scenario, loading, error, reload, notFound: scenario === null && !loading && error === null };
 }

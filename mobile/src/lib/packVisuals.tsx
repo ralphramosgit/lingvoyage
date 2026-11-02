@@ -75,3 +75,9 @@ export function packSummary(pack: LocalPack): string {
 export function shortDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
+
+/** "Oct 31" for a plain date like "2026-10-31", read as a local day (not midnight UTC, which shifts it). */
+export function shortDay(ymd: string): string {
+  const [year, month, day] = ymd.split('-').map(Number);
+  return new Date(year, month - 1, day).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}

@@ -21,10 +21,11 @@ import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
 import { useCities } from '@/hooks/useCities';
 import { useEncounterProgress } from '@/hooks/useEncounterProgress';
+import { usePack } from '@/hooks/usePack';
 import { useScenarios } from '@/hooks/useScenarios';
 import { useAuth } from '@/lib/auth';
 import { type Settings, useSettings } from '@/lib/settings';
-import { colors, fonts, motion, radii, spacing } from '@/theme/theme';
+import { colors, fonts, motion, radii, spacing, tints } from '@/theme/theme';
 
 function initialsOf(name: string | null | undefined, email: string | undefined): string {
   const source = name?.trim() || email?.split('@')[0] || '?';
@@ -45,14 +46,19 @@ export default function ProfileScreen() {
   const { completedCount, completedScenarioIds, loading: progressLoading } = useEncounterProgress();
   const { scenarios } = useScenarios();
   const { cities } = useCities();
+  const { pack } = usePack();
   const [signingOut, setSigningOut] = useState(false);
 
   const email = session?.user.email;
   const displayName = profile?.display_name?.trim() || 'Traveler';
-  const totalScenes = scenarios?.length ?? 3;
+  // Built-in scenes plus the current city's local ones; finished ones elsewhere (another city) don't count here.
+  const sceneIds = new Set([...(scenarios ?? []), ...(pack?.encounters ?? [])].map((scenario) => scenario.id));
+  const totalScenes = scenarios ? sceneIds.size : 3 + (pack?.encounters.length ?? 0);
+  const scenesFinished = scenarios ? [...completedScenarioIds].filter((id) => sceneIds.has(id)).length : completedScenarioIds.size;
   const version = Constants.expoConfig?.version ?? '1.0.0';
   const destination = cities?.find((city) => city.slug === profile?.destination_city) ?? null;
-  const destinationLabel = destination?.name ?? (profile?.destination_city ? profile.destination_city : 'Not set yet');
+  const destinationSet = Boolean(profile?.destination_city);
+  const destinationLabel = destination?.name ?? profile?.destination_city ?? 'Set your destination';
 
   const confirmSignOut = () => {
     Alert.alert('Log out?', 'You can log back in any time with your email and password.', [
@@ -101,18 +107,28 @@ export default function ProfileScreen() {
             中文
           </Text>
         </Card>
+        {/* The one place to choose or change the city (onboarding asks once too). */}
         <Card
           onPress={() => router.push('/destination')}
-          accessibilityLabel={`Going to: ${destinationLabel}. Change your destination.`}
-          style={styles.languageRow}>
-          <View style={styles.rowIcon}>
-            <MapPin size={20} color={colors.sky700} />
+          accessibilityLabel={
+            destinationSet
+              ? `Going to: ${destinationLabel}. Change your destination.`
+              : 'Where are you going? Set your destination to get lessons and scenes for your city.'
+          }
+          style={[styles.languageRow, destinationSet ? null : styles.destinationPrompt]}>
+          <View style={[styles.rowIcon, destinationSet ? null : { backgroundColor: tints.sun.bg }]}>
+            <MapPin size={20} color={destinationSet ? colors.sky700 : tints.sun.fg} />
           </View>
           <View style={styles.flex}>
             <Text variant="caption" color={colors.inkMuted}>
-              Going to
+              {destinationSet ? 'Going to' : 'Where are you going?'}
             </Text>
             <Text variant="subheading">{destinationLabel}</Text>
+            {destinationSet ? null : (
+              <Text variant="caption" color={colors.inkMuted}>
+                Get lessons and scenes for your city.
+              </Text>
+            )}
           </View>
           {destination ? (
             <Text variant="hanzi" color={colors.sky700}>
@@ -143,7 +159,7 @@ export default function ProfileScreen() {
               <ActivityIndicator color={colors.sky600} style={styles.statLoader} />
             ) : (
               <Text style={styles.statNumber}>
-                {completedScenarioIds.size}
+                {scenesFinished}
                 <Text variant="bodyMedium" color={colors.inkMuted}>
                   {' '}
                   / {totalScenes}
@@ -211,6 +227,7 @@ const styles = StyleSheet.create({
   initials: { fontFamily: fonts.extrabold, fontSize: 30, lineHeight: 36 },
   section: { gap: spacing.md, marginTop: spacing.xl },
   languageRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  destinationPrompt: { borderWidth: 2, borderColor: colors.sun300, backgroundColor: tints.sun.bg },
   rowIcon: {
     width: 40,
     height: 40,

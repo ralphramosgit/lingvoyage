@@ -32,7 +32,7 @@ export function ScenarioCard({
   index: number;
   onPress: () => void;
 }) {
-  const tint = scenarioTint(scenario.id, index);
+  const tint = scenarioTint(scenario.id, index, scenario.icon);
   const palette = tints[tint];
   const { character } = scenario;
 
