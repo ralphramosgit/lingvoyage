@@ -1,6 +1,6 @@
 # Lingvoyage mobile app
 
-Expo SDK 57 app (Expo Router, TypeScript) that runs in **Expo Go** on iPhone.
+Expo SDK 58 app (Expo Router, TypeScript) that runs in **Expo Go** on iPhone.
 
 ## Run it
 
