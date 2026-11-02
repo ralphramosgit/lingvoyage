@@ -12,20 +12,24 @@ Before a scene, learners can take optional **practice lessons**: short quizzes (
 
 ```
 iPhone (Expo Go)
-  ├── Supabase Auth ......... sign up / log in, profile, progress
-  └── Lingvoyage API (FastAPI) .. runs on your PC now, AWS Lambda later
+  ├── Supabase Auth + Postgres ..... sign up / log in, profile, progress, destination
+  └── Lingvoyage API (FastAPI) ..... AWS Lambda lingvoyage-api (or uvicorn on your PC)
          ├── ElevenLabs Speech-to-Text (Scribe v2)
-         ├── Claude API (Haiku 5.5)
-         └── ElevenLabs Text-to-Speech (Flash v2.5)
+         ├── Claude API (Haiku 5.5) .. the characters, with the city's facts (RAG)
+         ├── ElevenLabs Text-to-Speech (Flash v2.5)
+         └── City packs ─ async ─> Research worker (AWS Lambda lingvoyage-research)
+                ├── Claude Opus 5.5 + web search: 4 research agents at once
+                ├── Claude Sonnet 5.5: writes scenes, notes, practice lessons, quizzes
+                └── Supabase: location_packs, location_facts, location_content
 ```
 
-See `docs/architecture.png` for the diagram.
+See [`docs/architecture.png`](docs/architecture.png) for the diagram, and [`docs/features/agentic-workflow.md`](docs/features/agentic-workflow.md) for how the city-pack agents work: the pipeline, tools, guardrails, measured cost and a demo script.
 
 | Folder | What's in it |
 |---|---|
-| `mobile/` | Expo SDK 57 app (Expo Router, TypeScript) |
+| `mobile/` | Expo SDK 58 app (Expo Router, TypeScript) |
 | `backend/` | FastAPI app (Python 3.13), runs locally with uvicorn and on AWS Lambda via Mangum |
-| `docs/` | Setup guides, architecture diagram, build prompt |
+| `docs/` | Setup guides, architecture diagram, feature docs (`docs/features/`), build prompt |
 
 ## Quickstart
 
