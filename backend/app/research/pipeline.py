@@ -1,22 +1,24 @@
 """A city's local pack, stage by stage: plan, research, menu deep dive, verify, generate, publish.
 
-The checked facts are saved at the end of verify, then the content agents write from them (the
-encounters, #35; lessons and quizzes come in #36). A scene that can't be written is skipped: the
-pack is still published with its facts.
+The checked facts are saved at the end of verify, then the two content agents write from them at
+the same time: the encounters (#35), and the units' local notes, practice lessons and quizzes (#36).
+A piece that can't be written is skipped: the pack is still published with its facts.
 """
 
 import logging
 from collections.abc import Callable, Iterable
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field, replace
 from typing import Any
 
 import anthropic
 
 from app.config import get_settings
-from app.content import encounters
+from app.content import course, encounters
+from app.content.course import CourseItem
 from app.errors import ApiError
 from app.locations.cities import City, find_city
-from app.locations.models import FactDraft
+from app.locations.models import Fact, FactDraft
 from app.locations.store import PackStore, StoreError
 from app.research import workers
 from app.research.briefs import menu_brief, plan_briefs
@@ -42,6 +44,7 @@ class PackReport:
     error: str | None = None
     facts: list[FactDraft] = field(default_factory=list)
     encounters: list[ScenarioDefinition] = field(default_factory=list)
+    course: list[CourseItem] = field(default_factory=list)
     workers: list[WorkerResult] = field(default_factory=list)
     usage: dict[str, Any] = field(default_factory=dict)
 
@@ -117,21 +120,8 @@ def run_pack(
         trace.set_counts(report.facts)
 
         if content:
-            with trace.stage("generate", f"Writing scenes for {city.name}"):
-                try:
-                    report.encounters = encounters.generate_encounters(
-                        client,
-                        store,
-                        pack.id,
-                        city,
-                        saved,
-                        trace,
-                        model=settings.anthropic_generator_model,
-                        effort=settings.anthropic_generator_effort,
-                    )
-                except Exception:  # a bug in writing scenes shouldn't lose the research
-                    logger.exception("Writing scenes for pack %s failed", pack.id)
-                    trace.step("generate", "error", "Couldn't write the scenes; the facts are still published")
+            with trace.stage("generate", f"Writing scenes, local notes and quizzes for {city.name}"):
+                report.encounters, report.course = _generate(client, store, pack.id, city, saved, trace)
 
         with trace.stage("publish", f"Publishing {len(report.facts)} facts"):
             store.finish_pack(pack.id)
@@ -148,6 +138,29 @@ def run_pack(
         report.usage = trace.usage()
         trace.flush(force=True)
     return report
+
+
+def _generate(
+    client: anthropic.Anthropic, store: PackStore, pack_id: str, city: City, facts: list[Fact], trace: Trace
+) -> tuple[list[ScenarioDefinition], list[CourseItem]]:
+    """Both content agents at once. A bug in one shouldn't lose the research, or the other's work."""
+    settings = get_settings()
+    options = {"model": settings.anthropic_generator_model, "effort": settings.anthropic_generator_effort}
+    writers: dict[str, Callable[[], list[Any]]] = {
+        "scenes": lambda: encounters.generate_encounters(client, store, pack_id, city, facts, trace, **options),
+        "local notes and quizzes": lambda: course.generate_course(client, store, pack_id, city, facts, trace, **options),
+    }
+    results: dict[str, list[Any]] = {}
+    with ThreadPoolExecutor(max_workers=len(writers)) as pool:
+        running = {name: pool.submit(write) for name, write in writers.items()}
+        for name, future in running.items():
+            try:
+                results[name] = future.result()
+            except Exception:
+                logger.exception("Writing %s for pack %s failed", name, pack_id)
+                trace.step("generate", "error", f"Couldn't write the {name}; the facts are still published")
+                results[name] = []
+    return results["scenes"], results["local notes and quizzes"]
 
 
 def _fail(store: PackStore, trace: Trace, report: PackReport, code: str, text: str) -> PackReport:

@@ -167,7 +167,7 @@ def test_stuck_run_times_out(
     api: Callable[[str], TestClient], store: InMemoryPackStore, started: list[str], clock: Clock
 ) -> None:
     api("user-1").post("/packs/chengdu")
-    clock.advance(minutes=16)
+    clock.advance(minutes=21)
     status = api("user-1").get("/packs/chengdu/status").json()
     assert status["status"] == "failed" and status["error"]["code"] == "timed_out"
     assert "took too long" in status["error"]["message"]
@@ -304,11 +304,17 @@ def test_pack_content(api: Callable[[str], TestClient], store: InMemoryPackStore
         ],
     )
     encounter = SCENARIOS[0].model_copy(update={"id": "local-chengdu-airport"}).model_dump()
+    note = {"title": "Teahouses", "body": "Locals spend afternoons there.", "terms": [], "fact_ids": ["f1"]}
+    notes = {"unit_id": "table", "notes": [note, note], "lesson": None}
+    question = SCENARIOS[0].lessons[0].exercises[0].model_dump()
+    quiz = {"id": "local-chengdu-transport", "title": "Getting around Chengdu", "summary": "Lines and fares.",
+            "icon": "TrainFront", "exercises": [question] * 6}
     for item in (
         ContentItem(pack_id=pack_id, kind="encounter", ref="local-chengdu-airport", payload=encounter),
         ContentItem(pack_id=pack_id, kind="encounter", ref="broken", payload={"id": "broken"}),
-        ContentItem(pack_id=pack_id, kind="unit_notes", ref="getting-around", payload={"unit_id": "getting-around"}),
-        ContentItem(pack_id=pack_id, kind="quiz", ref="local-chengdu-transport", payload={"id": "local-chengdu-transport"}),
+        ContentItem(pack_id=pack_id, kind="unit_notes", ref="table", payload=notes),
+        ContentItem(pack_id=pack_id, kind="unit_notes", ref="broken", payload={"unit_id": "not-a-unit"}),
+        ContentItem(pack_id=pack_id, kind="quiz", ref="local-chengdu-transport", payload=quiz),
     ):
         store.upsert_content(item)
 
@@ -316,7 +322,9 @@ def test_pack_content(api: Callable[[str], TestClient], store: InMemoryPackStore
     assert pack["id"] == pack_id and pack["city"] == "chengdu"
     assert [item["id"] for item in pack["encounters"]] == ["local-chengdu-airport"]  # the broken one is skipped
     assert "scene_details" not in pack["encounters"][0] and "voice_env" not in pack["encounters"][0]
-    assert pack["unit_notes"] == [{"unit_id": "getting-around"}] and len(pack["quizzes"]) == 1
+    assert [item["unit_id"] for item in pack["unit_notes"]] == ["table"]  # the broken one is skipped
+    assert [item["id"] for item in pack["quizzes"]] == ["local-chengdu-transport"]
+    assert len(pack["quizzes"][0]["exercises"]) == 6
     assert pack["sources"] == [
         {"url": "https://example.com/teahouses", "title": "Chengdu teahouses"},
         {"url": "https://example.com/manners", "title": "Manners"},

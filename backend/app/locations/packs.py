@@ -2,7 +2,7 @@
 
 The rules (issue #34):
 - One run per city at a time. Everyone who picks the city meanwhile shares it.
-- A run that's been going for 15 minutes is stuck (the worker times out at 10): it's marked failed.
+- A run that's been going for 20 minutes is stuck (the worker times out at 15): it's marked failed.
 - A ready pack is served even after it expires, while a refresh builds the next one in the background.
   A refresh that failed isn't retried for a day.
 - Each run costs about $4 of Claude credits, so new runs are capped per day: for all accounts together
@@ -16,11 +16,12 @@ import threading
 import time
 from collections import OrderedDict
 from datetime import UTC, datetime, timedelta
-from typing import Any, Literal
+from typing import Literal
 
 from pydantic import BaseModel, Field, ValidationError
 
 from app.config import get_settings
+from app.content.models import LocalQuiz, LocalUnitNotes
 from app.errors import ApiError
 from app.locations.cities import City
 from app.locations.models import Pack, PackStage
@@ -30,7 +31,7 @@ from app.scenarios import Scenario, ScenarioDefinition, Source
 
 logger = logging.getLogger("lingvoyage.locations")
 
-STUCK_AFTER = timedelta(minutes=15)
+STUCK_AFTER = timedelta(minutes=20)
 RETRY_FAILED_REFRESH_AFTER = timedelta(days=1)
 DAY = timedelta(days=1)
 STATUS_STEPS = 50
@@ -74,8 +75,8 @@ class LocalPack(BaseModel):
     city: str
     built_at: datetime
     encounters: list[Scenario] = Field(default_factory=list)  # issue #35
-    unit_notes: list[dict[str, Any]] = Field(default_factory=list)  # LocalUnitNotes, issue #36
-    quizzes: list[dict[str, Any]] = Field(default_factory=list)  # LocalQuiz, issue #36
+    unit_notes: list[LocalUnitNotes] = Field(default_factory=list)  # issue #36
+    quizzes: list[LocalQuiz] = Field(default_factory=list)  # issue #36
     sources: list[Source] = Field(default_factory=list)
 
 
@@ -237,18 +238,20 @@ def local_pack(store: PackStore, city: City) -> LocalPack:
             _pack_cache.move_to_end(live.id)
             return cached[1]
 
-    encounters, unit_notes, quizzes = [], [], []
+    encounters: list[Scenario] = []
+    unit_notes: list[LocalUnitNotes] = []
+    quizzes: list[LocalQuiz] = []
     for item in store.get_content(live.id):
-        if item.kind == "encounter":
-            try:
+        try:
+            if item.kind == "encounter":
                 # Only the public fields: scene details, outline and voice stay on the server.
                 encounters.append(ScenarioDefinition.model_validate(item.payload).public())
-            except ValidationError:
-                logger.warning("Skipping invalid encounter %s in pack %s", item.ref, live.id)
-        elif item.kind == "unit_notes":
-            unit_notes.append(item.payload)
-        elif item.kind == "quiz":
-            quizzes.append(item.payload)
+            elif item.kind == "unit_notes":
+                unit_notes.append(LocalUnitNotes.model_validate(item.payload))
+            elif item.kind == "quiz":
+                quizzes.append(LocalQuiz.model_validate(item.payload))
+        except ValidationError:
+            logger.warning("Skipping invalid %s %s in pack %s", item.kind, item.ref, live.id)
 
     titles: dict[str, str] = {}
     for fact in store.get_facts(live.id):

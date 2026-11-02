@@ -1,19 +1,11 @@
 """The content agent for encounters (issue #35): scenes at real places, from a city's facts.
 
-Each scene is written by an evaluator–optimizer loop:
-
-    plan (code) ──> Claude writes a draft (structured output) ──> checks (code)
-                        ^                                           │ problems
-                        └────── draft + problems, up to 3 tries ────┘
-                                                                    │ none
-                                                                    └──> ScenarioDefinition, saved
-
-The draft is a plain shape with no validators, so a draft with mistakes still comes back and its
-problems can be sent back to be fixed. It then becomes a ScenarioDefinition, the same model as the
-hand-written scenes, so the tutor, voices, captions and practice lessons play it unchanged.
+Code plans the scenes from the facts, then each one is written by the evaluator–optimizer loop in
+drafts.py: Claude writes a draft, code checks it, and the problems go back to be fixed (up to 3
+tries). A finished scene is a ScenarioDefinition, the same model as the hand-written scenes, so the
+tutor, voices, captions and practice lessons play it unchanged.
 """
 
-import logging
 import re
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
@@ -25,18 +17,21 @@ import pydantic
 from pydantic import BaseModel, Field
 
 from app.content import checks, prompts
+from app.content.drafts import (
+    DraftLesson,
+    DraftPhrase,
+    clean,
+    lesson_body,
+    validation_problems,
+    write_checked,
+)
 from app.locations.cities import City
 from app.locations.models import ContentItem, Fact
 from app.locations.store import PackStore
-from app.research.claude import FALLBACK_BETA
 from app.research.trace import Trace
 from app.scenarios import LocalRef, ScenarioDefinition, Source
-from app.tutor import asks_travelers_question, strip_emojis
+from app.tutor import asks_travelers_question
 
-logger = logging.getLogger("lingvoyage.content")
-
-MAX_ROUNDS = 3
-MAX_TOKENS = 16000
 MAX_SCENES = 6
 MAX_PARALLEL = 3
 MAX_LINE = 30  # Chinese characters in one stretch of the character's speech ("at most about 25")
@@ -52,12 +47,6 @@ Kind = Literal["airport", "getting_around", "restaurant", "hot_spot"]
 # ---------------------------------------------------------------------------
 
 
-class DraftPhrase(BaseModel):
-    hanzi: str
-    pinyin: str
-    english: str
-
-
 class DraftCharacter(BaseModel):
     name_hanzi: str
     name_pinyin: str
@@ -69,35 +58,6 @@ class DraftCharacter(BaseModel):
 class DraftGoal(BaseModel):
     id: str = Field(description="Unique snake_case.")
     label: str = Field(description="Something the traveler says or does.")
-
-
-class DraftTile(BaseModel):
-    hanzi: str
-    pinyin: str
-
-
-class DraftExercise(BaseModel):
-    kind: Literal["choice", "build"]
-    prompt: str
-    hanzi: str = Field(description='choice: the Chinese the question is about ("" if none, ＿＿ marks a gap). build: "".')
-    pinyin: str = Field(description='Pinyin for hanzi. build: "".')
-    options: list[DraftPhrase] = Field(description='choice: 2 to 4 options (Chinese, or "" hanzi/pinyin for English ones). build: [].')
-    answer: int = Field(description="choice: the index of the right option. build: 0.")
-    tiles: list[DraftTile] = Field(description="build: the answer's words in order. choice: [].")
-    extra_tiles: list[DraftTile] = Field(description="build: 1 or 2 tiles that don't belong. choice: [].")
-    hint: str
-    solution: DraftPhrase
-
-
-class DraftLesson(BaseModel):
-    id: str
-    title: str
-    summary: str
-    pattern: DraftPhrase | None
-    examples: list[DraftPhrase]
-    words: list[DraftPhrase]
-    tip: str
-    exercises: list[DraftExercise]
 
 
 class EncounterDraft(BaseModel):
@@ -188,33 +148,6 @@ def plan_encounters(city: City, facts: list[Fact], limit: int = MAX_SCENES) -> l
 # ---------------------------------------------------------------------------
 
 
-def _clean(value: Any) -> Any:
-    """No emojis anywhere (the prompt already forbids them)."""
-    if isinstance(value, str):
-        return strip_emojis(value)
-    if isinstance(value, list):
-        return [_clean(item) for item in value]
-    if isinstance(value, dict):
-        return {key: _clean(item) for key, item in value.items()}
-    return value
-
-
-def _exercise(draft: dict[str, Any]) -> dict[str, Any]:
-    if draft["kind"] == "choice":
-        keep = ("kind", "prompt", "hanzi", "pinyin", "options", "answer", "hint", "solution")
-    else:
-        keep = ("kind", "prompt", "tiles", "extra_tiles", "hint", "solution")
-    return {key: draft[key] for key in keep}
-
-
-def _validation_problems(error: pydantic.ValidationError) -> list[str]:
-    problems = []
-    for item in error.errors()[:10]:
-        where = ".".join(str(part) for part in item["loc"]) or "scene"
-        problems.append(f"{where}: {str(item['msg']).removeprefix('Value error, ')}")
-    return problems
-
-
 def _scene_texts(scenario: ScenarioDefinition) -> list[str]:
     """Everything a number or a character could hide in."""
     texts = [scenario.title, scenario.subtitle, scenario.setting, scenario.scene_details, *scenario.scene_outline]
@@ -270,23 +203,15 @@ def check_encounter(scenario: ScenarioDefinition, facts: list[Fact]) -> list[str
         if not 4 <= len(lesson.exercises) <= 6:
             problems.append(f'lesson "{lesson.title}" has {len(lesson.exercises)} questions; write 4 to 6')
 
-    texts = _scene_texts(scenario)
-    prices, lines = checks.fact_numbers(facts)
-    for value in sorted(set().union(*(checks.prices_in(text) for text in texts)) - prices):
-        problems.append(f"the price {value} yuan isn't in the facts; use only prices from the facts, with no totals")
-    for value in sorted(set().union(*(checks.lines_in(text) for text in texts)) - lines):
-        problems.append(f"metro line {value} isn't in the facts; use only lines from the facts")
+    problems += checks.number_problems(_scene_texts(scenario), facts)
 
     taught = checks.han_chars(" ".join(word.hanzi for lesson in scenario.lessons for word in lesson.words))
     allowed = checks.beginner_chars() | checks.name_chars(facts) | taught
     spoken = [*scenario.scene_outline, *(phrase.hanzi for phrase in phrases)]
     spoken += [exercise.solution.hanzi for lesson in scenario.lessons for exercise in lesson.exercises]
-    hard = checks.above_level(spoken, allowed)
-    if hard:
-        listed = ", ".join(f'{char} (in "{text}")' for char, text in list(hard.items())[:8])
-        problems.append(
-            f"above beginner level and not taught in the lessons' words: {listed}. Use simpler words, or teach them in a lesson's words"
-        )
+    problems += checks.level_problems(
+        spoken, allowed, "Not taught in the lessons' words: use simpler words, or teach them in a lesson's words."
+    )
     return problems
 
 
@@ -294,9 +219,8 @@ def build_encounter(
     draft: EncounterDraft, plan: EncounterPlan, city: City, id_prefix: str, pack_id: str
 ) -> tuple[ScenarioDefinition | None, list[str]]:
     """The draft as a ScenarioDefinition, and its problems ([] when it's ready)."""
-    body = _clean(draft.model_dump())
-    for lesson in body["lessons"]:
-        lesson["exercises"] = [_exercise(exercise) for exercise in lesson["exercises"]]
+    body = clean(draft.model_dump())
+    body["lessons"] = [lesson_body(lesson, lesson["id"]) for lesson in body["lessons"]]
     facts = list(plan.facts)
     sources: dict[str, str] = {}
     for fact in facts:
@@ -315,7 +239,7 @@ def build_encounter(
             }
         )
     except pydantic.ValidationError as error:
-        return None, _validation_problems(error)
+        return None, validation_problems(error, "scene")
     problems = check_encounter(scenario, facts)
     return (None, problems) if problems else (scenario, [])
 
@@ -323,20 +247,6 @@ def build_encounter(
 # ---------------------------------------------------------------------------
 # Writing: the loop
 # ---------------------------------------------------------------------------
-
-
-def _ask(client: anthropic.Anthropic, model: str, effort: str, message: str) -> Any:
-    return client.beta.messages.parse(
-        model=model,
-        max_tokens=MAX_TOKENS,
-        # The rules, word list and example scenes are the same for every scene: cache them.
-        system=[{"type": "text", "text": prompts.encounter_system(), "cache_control": {"type": "ephemeral"}}],
-        messages=[{"role": "user", "content": message}],
-        output_config={"effort": effort},  # type: ignore[typeddict-item]
-        output_format=EncounterDraft,
-        betas=[FALLBACK_BETA],
-        fallbacks="default",
-    )
 
 
 def write_encounter(
@@ -352,33 +262,20 @@ def write_encounter(
     stage: str = "generate",
 ) -> ScenarioDefinition | None:
     """One scene, with up to 3 tries. None if it couldn't be written (the reason is in the trace)."""
-    worker = f"scene:{plan.place_key}"
-    task = prompts.encounter_message(plan.kind, plan.template, plan.place, city, list(plan.facts))
-    message = task
-    trace.step(stage, "write", f"Writing a scene at {plan.place}", worker=worker)
-    for attempt in range(1, MAX_ROUNDS + 1):
-        try:
-            response = _ask(client, model, effort, message)
-        except (anthropic.APIError, pydantic.ValidationError) as error:
-            logger.warning("Scene %s: request failed (%s)", plan.place_key, type(error).__name__)
-            trace.step(stage, "error", f"Couldn't write the scene at {plan.place}", worker=worker)
-            return None
-        trace.add_usage(response.model, response.usage)
-        draft = response.parsed_output
-        if draft is None:
-            logger.warning("Scene %s: no draft (stop_reason=%s)", plan.place_key, response.stop_reason)
-            trace.step(stage, "error", f"The scene at {plan.place} came back incomplete", worker=worker)
-            return None
-        scenario, problems = build_encounter(draft, plan, city, id_prefix, pack_id)
-        if scenario is not None:
-            fixed = f", after fixing {attempt - 1} round{'s' if attempt > 2 else ''} of problems" if attempt > 1 else ""
-            trace.step(stage, "done", f"Scene ready: {scenario.title}{fixed}", worker=worker)
-            return scenario
-        logger.info("Scene %s, try %d: %d problems", plan.place_key, attempt, len(problems))
-        trace.step(stage, "check", f"Checked the draft: {len(problems)} problems to fix", worker=worker)
-        message = prompts.fix_message(task, draft.model_dump_json(), problems)
-    trace.step(stage, "error", f"Skipped the scene at {plan.place}: problems left after {MAX_ROUNDS} tries", worker=worker)
-    return None
+    return write_checked(
+        client,
+        model=model,
+        effort=effort,
+        system=prompts.encounter_system(),
+        task=prompts.encounter_message(plan.kind, plan.template, plan.place, city, list(plan.facts)),
+        output_format=EncounterDraft,
+        build=lambda draft: build_encounter(draft, plan, city, id_prefix, pack_id),
+        trace=trace,
+        stage=stage,
+        worker=f"scene:{plan.place_key}",
+        what=f"the scene at {plan.place}",
+        ready=lambda scenario: f"Scene ready: {scenario.title}",
+    )
 
 
 def generate_encounters(

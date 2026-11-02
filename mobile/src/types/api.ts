@@ -35,7 +35,7 @@ export type Scenario = {
   /** Practice before the encounter. Missing from servers older than the lessons feature. */
   lessons?: Lesson[];
   /** Local encounters (a city's pack): the pages their real details came from. Empty for built-in scenes. */
-  sources?: { url: string; title: string }[];
+  sources?: Source[];
   /** Local encounters: the day those details were checked (YYYY-MM-DD). */
   checked_at?: string | null;
 };
@@ -87,6 +87,49 @@ export type Lesson = {
   words: KeyPhrase[];
   tip: string;
   exercises: Exercise[];
+};
+
+/** A page that a local pack's facts came from. */
+export type Source = {
+  url: string;
+  title: string;
+};
+
+/** One short note in a unit's "In Chengdu" section. Mirrors LocalNote in backend/app/content/models.py. */
+export type LocalNote = {
+  title: string;
+  body: string;
+  /** 0 to 4 Chinese words from the note. */
+  terms: KeyPhrase[];
+  fact_ids: string[];
+};
+
+/** What a city's pack adds to one unit of the Lessons tab (issue #36). */
+export type LocalUnitNotes = {
+  /** A unit id from src/content/lessons/units.ts. */
+  unit_id: string;
+  /** 2 to 4. */
+  notes: LocalNote[];
+  /** "Local practice: Chengdu", id local-<city>-<unit_id>. Doesn't count toward finishing the unit. */
+  lesson: Lesson | null;
+  sources: Source[];
+  /** The day the facts were found (YYYY-MM-DD). */
+  checked_at: string | null;
+};
+
+/** A quiz in the Quiz tab's section for the city (issue #36). */
+export type LocalQuiz = {
+  /** local-<city>-transport, -food or -culture. */
+  id: string;
+  title: string;
+  summary: string;
+  /** A lucide icon name: TrainFront, UtensilsCrossed or Landmark. */
+  icon: string;
+  /** 6 to 10. */
+  exercises: Exercise[];
+  fact_ids: string[];
+  sources: Source[];
+  checked_at: string | null;
 };
 
 export type Phrase = {
