@@ -35,6 +35,74 @@ export const PINYIN: PinyinGuide = {
       example: { hanzi: '吗', pinyin: 'ma', english: 'question word: makes a yes/no question' },
     },
   ],
+  tonePairs: [
+    {
+      first: 1,
+      words: [
+        { hanzi: '飞机', pinyin: 'fēijī', english: 'airplane' },
+        { hanzi: '中国', pinyin: 'Zhōngguó', english: 'China' },
+        { hanzi: '机场', pinyin: 'jīchǎng', english: 'airport' },
+        { hanzi: '车站', pinyin: 'chēzhàn', english: 'station' },
+        { hanzi: '东西', pinyin: 'dōngxi', english: 'things, stuff' },
+      ],
+    },
+    {
+      first: 2,
+      words: [
+        { hanzi: '昨天', pinyin: 'zuótiān', english: 'yesterday' },
+        { hanzi: '银行', pinyin: 'yínháng', english: 'bank' },
+        { hanzi: '苹果', pinyin: 'píngguǒ', english: 'apple' },
+        { hanzi: '学校', pinyin: 'xuéxiào', english: 'school' },
+        { hanzi: '朋友', pinyin: 'péngyou', english: 'friend' },
+      ],
+    },
+    {
+      first: 3,
+      words: [
+        { hanzi: '北京', pinyin: 'Běijīng', english: 'Beijing' },
+        { hanzi: '旅游', pinyin: 'lǚyóu', english: 'to travel' },
+        { hanzi: '你好', pinyin: 'nǐ hǎo', english: 'hello (said ní hǎo)' },
+        { hanzi: '好看', pinyin: 'hǎokàn', english: 'good-looking' },
+        { hanzi: '姐姐', pinyin: 'jiějie', english: 'older sister' },
+      ],
+    },
+    {
+      first: 4,
+      words: [
+        { hanzi: '面包', pinyin: 'miànbāo', english: 'bread' },
+        { hanzi: '问题', pinyin: 'wèntí', english: 'question, problem' },
+        { hanzi: '饭馆', pinyin: 'fànguǎn', english: 'restaurant' },
+        { hanzi: '再见', pinyin: 'zàijiàn', english: 'goodbye' },
+        { hanzi: '谢谢', pinyin: 'xièxie', english: 'thank you' },
+      ],
+    },
+  ],
+  toneChanges: [
+    {
+      label: '3+3',
+      title: 'Two 3rd tones in a row',
+      rule: 'The first one rises like a 2nd tone. Pinyin still writes both as 3rd tones.',
+      example: { hanzi: '你好', pinyin: 'nǐ hǎo', english: 'hello', note: 'Said ní hǎo.' },
+    },
+    {
+      label: '3+',
+      title: 'A 3rd tone before any other tone',
+      rule: 'It stays low and doesn’t come back up. The full dip is for a 3rd tone on its own or at the end.',
+      example: { hanzi: '好吃', pinyin: 'hǎochī', english: 'delicious' },
+    },
+    {
+      label: '不',
+      title: '不 (bù) before a 4th tone',
+      rule: 'It becomes bú. This app writes it the way it’s said.',
+      example: { hanzi: '不要', pinyin: 'bú yào', english: 'don’t want' },
+    },
+    {
+      label: '一',
+      title: '一 (yī) next to other words',
+      rule: 'It becomes yí before a 4th tone and yì before the others. Counting, or at the end, it stays yī.',
+      example: { hanzi: '一个', pinyin: 'yí gè', english: 'one (of something)', note: 'And 一点 yìdiǎn, a little.' },
+    },
+  ],
   initials: [
     {
       sound: 'zh',

@@ -1,3 +1,5 @@
+import json
+
 import httpx
 import pytest
 
@@ -20,6 +22,21 @@ def test_tts_retries_once_after_a_reset_connection(monkeypatch: pytest.MonkeyPat
     _mock_elevenlabs(monkeypatch, handler)
     assert speech.synthesize("你好") == b"mp3-bytes"
     assert len(calls) == 2
+
+
+def test_tts_sets_the_language_for_chinese(monkeypatch: pytest.MonkeyPatch) -> None:
+    bodies: list[dict] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        bodies.append(json.loads(request.read()))
+        return httpx.Response(200, content=b"mp3-bytes")
+
+    _mock_elevenlabs(monkeypatch, handler)
+    speech.synthesize("马")
+    speech.synthesize("hello")
+    assert bodies[0]["text"] == "马"
+    assert bodies[0]["language_code"] == "zh"
+    assert "language_code" not in bodies[1]
 
 
 def test_stt_retry_resends_the_audio(monkeypatch: pytest.MonkeyPatch) -> None:

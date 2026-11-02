@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
-import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
+import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
@@ -14,11 +14,19 @@ import { colors, motion, spacing } from '@/theme/theme';
 /** How long an audio error stays up before it clears itself. */
 const AUDIO_ERROR_MS = 5000;
 
-const AudioErrorContext = createContext<(message: string) => void>(() => undefined);
+const AudioErrorContext = createContext<{ message: string | null; report: (message: string) => void }>({
+  message: null,
+  report: () => undefined,
+});
 
 /** For speaker buttons inside an Essentials page: shows the message at the top of the page. */
 export function useAudioError() {
-  return useContext(AudioErrorContext);
+  return useContext(AudioErrorContext).report;
+}
+
+/** The audio error showing right now, for an overlay that covers the page's own banner. */
+export function useAudioErrorMessage() {
+  return useContext(AudioErrorContext).message;
 }
 
 export function goBackToEssentials() {
@@ -32,15 +40,19 @@ export function EssentialsPage({
   title,
   subtitle,
   backLabel = 'Back',
+  overlay,
   children,
 }: {
   eyebrow?: string;
   title: string;
   subtitle?: string;
   backLabel?: string;
+  /** Drawn over the whole page, e.g. a bottom sheet. */
+  overlay?: ReactNode;
   children: ReactNode;
 }) {
   const [audioError, setAudioError] = useState<string | null>(null);
+  const audioErrorValue = useMemo(() => ({ message: audioError, report: setAudioError }), [audioError]);
 
   useEffect(() => () => stopPlayback(), []);
 
@@ -51,49 +63,53 @@ export function EssentialsPage({
   }, [audioError]);
 
   return (
-    <AudioErrorContext.Provider value={setAudioError}>
-      <Screen
-        scroll
-        edges={['top']}
-        header={
-          <View style={styles.header}>
-            <View style={styles.backRow}>
-              <IconButton
-                icon={ChevronLeft}
-                accessibilityLabel={backLabel}
-                onPress={goBackToEssentials}
-                variant="surface"
-                iconSize={22}
-              />
+    <AudioErrorContext.Provider value={audioErrorValue}>
+      <View style={styles.page}>
+        <Screen
+          scroll
+          edges={['top']}
+          header={
+            <View style={styles.header}>
+              <View style={styles.backRow}>
+                <IconButton
+                  icon={ChevronLeft}
+                  accessibilityLabel={backLabel}
+                  onPress={goBackToEssentials}
+                  variant="surface"
+                  iconSize={22}
+                />
+              </View>
+              {audioError ? <FormMessage message={audioError} /> : null}
             </View>
-            {audioError ? <FormMessage message={audioError} /> : null}
-          </View>
-        }
-        contentStyle={styles.content}>
-        <Animated.View entering={FadeInDown.duration(motion.base)} style={styles.titles}>
-          {eyebrow ? (
-            <Text variant="tiny" color={colors.inkMuted}>
-              {eyebrow.toUpperCase()}
+          }
+          contentStyle={styles.content}>
+          <Animated.View entering={FadeInDown.duration(motion.base)} style={styles.titles}>
+            {eyebrow ? (
+              <Text variant="tiny" color={colors.inkMuted}>
+                {eyebrow.toUpperCase()}
+              </Text>
+            ) : null}
+            <Text variant="title" accessibilityRole="header">
+              {title}
             </Text>
-          ) : null}
-          <Text variant="title" accessibilityRole="header">
-            {title}
-          </Text>
-          {subtitle ? (
-            <Text variant="body" color={colors.inkMuted}>
-              {subtitle}
-            </Text>
-          ) : null}
-        </Animated.View>
-        <Animated.View entering={FadeInDown.duration(motion.base).delay(motion.stagger)} style={styles.body}>
-          {children}
-        </Animated.View>
-      </Screen>
+            {subtitle ? (
+              <Text variant="body" color={colors.inkMuted}>
+                {subtitle}
+              </Text>
+            ) : null}
+          </Animated.View>
+          <Animated.View entering={FadeInDown.duration(motion.base).delay(motion.stagger)} style={styles.body}>
+            {children}
+          </Animated.View>
+        </Screen>
+        {overlay}
+      </View>
     </AudioErrorContext.Provider>
   );
 }
 
 const styles = StyleSheet.create({
+  page: { flex: 1 },
   header: { gap: spacing.sm, paddingBottom: spacing.sm },
   backRow: { paddingTop: spacing.sm, alignItems: 'flex-start' },
   content: { gap: spacing.xxl, paddingTop: spacing.sm },

@@ -110,6 +110,11 @@ def synthesize(text: str, voice_id: str | None = None) -> bytes:
     voice = voice_id or settings.elevenlabs_voice_id
     if not voice:
         raise missing_setting("ELEVENLABS_VOICE_ID")
+    body = {"text": text, "model_id": settings.elevenlabs_tts_model}
+    # One character on its own (the pinyin chart plays 妈, 麻, 马, 骂) can be read as Japanese unless
+    # the language is set. Models that can't take a language ignore it.
+    if has_chinese(text):
+        body["language_code"] = "zh"
 
     try:
         response = send_with_retry(
@@ -117,7 +122,7 @@ def synthesize(text: str, voice_id: str | None = None) -> bytes:
                 f"{ELEVENLABS_BASE_URL}/v1/text-to-speech/{voice}",
                 params={"output_format": TTS_OUTPUT_FORMAT},
                 headers={"xi-api-key": api_key},
-                json={"text": text, "model_id": settings.elevenlabs_tts_model},
+                json=body,
             ),
             "ElevenLabs Text to Speech",
         )
