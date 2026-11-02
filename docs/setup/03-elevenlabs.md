@@ -56,9 +56,20 @@ Default voices are multilingual and will speak Mandarin, though some sound sligh
 3. Preview, then **Add to my voices**.
 4. In **My Voices**, open it > **Copy voice ID**.
 
-Optional: pick three different voices, one per character (noodle-shop owner, station staff, hotel manager). The backend supports one default voice plus per-scenario overrides.
+Save the ID in your scratch note as `ELEVENLABS_VOICE_ID`.
 
-Save the ID(s) in your scratch note as `ELEVENLABS_VOICE_ID` (and optionally `ELEVENLABS_VOICE_ID_RESTAURANT`, `..._TRAIN`, `..._HOTEL`).
+### Voices that match the characters
+
+Every character has a gender and an age (young, or older for about 45 and up). The backend gives each character a voice from the matching group, and the app draws them the same way, so Auntie Wang sounds like an older woman. Each group is a comma-separated list of voice IDs:
+
+| Variable | Who | Voices we use |
+|---|---|---|
+| `ELEVENLABS_VOICES_FEMALE_YOUNG` | Xiao Lin, waitresses, shop assistants | Shan Shan, Julia, Anna |
+| `ELEVENLABS_VOICES_FEMALE_OLDER` | Auntie Wang, stall owners | Yating Lin, Jill |
+| `ELEVENLABS_VOICES_MALE_YOUNG` | Li Ming, drivers, station staff | Lan Chen |
+| `ELEVENLABS_VOICES_MALE_OLDER` | Manager Chen, shop bosses | Jason Chen |
+
+All of them are Voice Library voices: add each one with **Add to my voices** (Option B) before using its ID. A character keeps the same voice every time (it's picked by their name). If a group is empty, the character gets a voice of the same gender at the other age, then `ELEVENLABS_VOICE_ID`. `python scripts/check_keys.py` tests every voice in every group.
 
 ## 4. Hear it in the browser first
 

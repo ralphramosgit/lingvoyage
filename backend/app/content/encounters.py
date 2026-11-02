@@ -51,7 +51,6 @@ MIN_DISHES_OFFERED = 2  # a restaurant script names this many real dishes before
 OFFER_WITHIN_STEPS = 3
 
 Icon = Literal["PlaneLanding", "BedDouble", "UtensilsCrossed", "TrainFront", "ShoppingBag", "CarTaxiFront", "Landmark"]
-Voice = Literal["ELEVENLABS_VOICE_ID_RESTAURANT", "ELEVENLABS_VOICE_ID_TRAIN", "ELEVENLABS_VOICE_ID_HOTEL"]
 Kind = Literal["airport", "getting_around", "restaurant", "hot_spot"]
 
 # ---------------------------------------------------------------------------
@@ -65,6 +64,8 @@ class DraftCharacter(BaseModel):
     name_english: str
     role: str = Field(description='In English, e.g. "Waiter".')
     avatar_char: str = Field(description="One character from the name.")
+    gender: Literal["female", "male"] = Field(description="Picks the character's voice and how the app draws them.")
+    age: Literal["young", "older"] = Field(description='"older" is about 45 and up: an auntie (阿姨), an uncle, a shop owner.')
 
 
 class DraftGoal(BaseModel):
@@ -84,7 +85,6 @@ class EncounterDraft(BaseModel):
     scene_details: str
     scene_outline: list[str]
     lessons: list[DraftLesson]
-    voice_env: Voice | None
 
 
 # ---------------------------------------------------------------------------

@@ -1,7 +1,8 @@
-import { ArrowLeft, Award, Check, ChevronUp, MessagesSquare, RotateCcw } from 'lucide-react-native';
+import { ArrowLeft, Check, ChevronUp, MessagesSquare, RotateCcw } from 'lucide-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeOut, SlideInDown, ZoomIn } from 'react-native-reanimated';
 
+import { Seagull } from '@/components/art/Seagull';
 import { Button } from '@/components/Button';
 import { PressableScale } from '@/components/PressableScale';
 import { Text } from '@/components/Text';
@@ -42,7 +43,7 @@ export function CompletionSheet({
         <View style={[styles.sheet, { paddingBottom: Math.max(bottomInset, spacing.lg) + spacing.sm }]}>
           <View style={styles.handle} />
           <Animated.View entering={ZoomIn.delay(motion.base).duration(motion.slow)} style={styles.award}>
-            <Award size={40} color="#A16207" strokeWidth={2} />
+            <Seagull size={124} mood="cheer" />
           </Animated.View>
           <Text variant="title" align="center" accessibilityRole="header">
             Encounter complete
@@ -105,7 +106,7 @@ export function CompleteBar({
         accessibilityLabel={`Encounter complete, ${goalsDone} of ${goalsTotal} goals. Show summary`}
         style={styles.barSummary}>
         <View style={styles.barAward}>
-          <Award size={20} color="#A16207" strokeWidth={2.2} />
+          <Seagull size={44} mood="happy" />
         </View>
         <View style={styles.flex}>
           <Text variant="bodyStrong">Encounter complete</Text>
@@ -139,18 +140,8 @@ const styles = StyleSheet.create({
     ...shadows.raised,
   },
   handle: { alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: colors.line, marginBottom: spacing.sm },
-  award: {
-    alignSelf: 'center',
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.sun100,
-    borderWidth: 3,
-    borderColor: colors.sun300,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.sm,
-  },
+  // Pulled up so the cheering seagull pokes out over the top of the sheet.
+  award: { alignSelf: 'center', marginTop: -84 },
   goals: {
     marginTop: spacing.md,
     padding: spacing.lg,
@@ -182,14 +173,13 @@ const styles = StyleSheet.create({
   },
   barSummary: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 44 },
   barAward: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.sun100,
-    borderWidth: 2,
-    borderColor: colors.sun300,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.sky100,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   barActions: { flexDirection: 'row', gap: spacing.sm },
 });

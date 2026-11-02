@@ -6,6 +6,9 @@ export type Character = {
   name_english: string;
   role: string;
   avatar_char: string;
+  /** Picks the character's voice on the server and how the app draws them. Missing from servers before issue #56. */
+  gender?: 'female' | 'male';
+  age?: 'young' | 'older';
 };
 
 export type Goal = {

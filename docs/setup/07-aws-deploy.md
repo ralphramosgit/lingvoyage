@@ -110,7 +110,7 @@ When you create the URL with auth type NONE in the console, AWS automatically ad
 
 - `APP_ENV` = `production`
 
-That's 12 variables: `APP_ENV`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID`, `ELEVENLABS_VOICE_ID_RESTAURANT`, `ELEVENLABS_VOICE_ID_TRAIN`, `ELEVENLABS_VOICE_ID_HOTEL`, `ELEVENLABS_TTS_MODEL`, `ELEVENLABS_STT_MODEL`, `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`. The three per-character voice IDs are optional; skip any that are empty in your `.env`. No quotes, no spaces around values.
+That's 13 variables: `APP_ENV`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID`, `ELEVENLABS_VOICES_FEMALE_YOUNG`, `ELEVENLABS_VOICES_FEMALE_OLDER`, `ELEVENLABS_VOICES_MALE_YOUNG`, `ELEVENLABS_VOICES_MALE_OLDER`, `ELEVENLABS_TTS_MODEL`, `ELEVENLABS_STT_MODEL`, `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`. The four voice groups are lists like `id1,id2` (guide 03); skip any that are empty in your `.env`. No quotes, no spaces around values. The old `ELEVENLABS_VOICE_ID_RESTAURANT`, `_TRAIN` and `_HOTEL` aren't used anymore and can be deleted.
 
 **Save**. (Guide 05 explains why secrets live here and not in the app.)
 

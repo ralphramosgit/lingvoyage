@@ -63,10 +63,11 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxxxxxxxxxxxxxxx
 # ElevenLabs (SECRET)
 ELEVENLABS_API_KEY=sk_xxxxxxxxxxxxxxxxxxxxxxxx
 ELEVENLABS_VOICE_ID=xxxxxxxxxxxxxxxxxxxx
-# Optional: one voice per character (falls back to ELEVENLABS_VOICE_ID)
-ELEVENLABS_VOICE_ID_RESTAURANT=
-ELEVENLABS_VOICE_ID_TRAIN=
-ELEVENLABS_VOICE_ID_HOTEL=
+# Voices that match each character's gender and age, comma-separated (guide 03). Empty ones fall back.
+ELEVENLABS_VOICES_FEMALE_YOUNG=
+ELEVENLABS_VOICES_FEMALE_OLDER=
+ELEVENLABS_VOICES_MALE_YOUNG=
+ELEVENLABS_VOICES_MALE_OLDER=
 ELEVENLABS_TTS_MODEL=eleven_flash_v2_5
 ELEVENLABS_STT_MODEL=scribe_v2
 

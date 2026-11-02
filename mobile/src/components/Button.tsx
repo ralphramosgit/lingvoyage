@@ -22,12 +22,13 @@ export type ButtonProps = {
   testID?: string;
 };
 
-const VARIANTS: Record<Variant, { bg: string; fg: string; border: string }> = {
-  primary: { bg: colors.sky600, fg: '#FFFFFF', border: colors.sky600 },
-  secondary: { bg: colors.surface, fg: colors.sky700, border: colors.line },
-  ghost: { bg: 'transparent', fg: colors.sky700, border: 'transparent' },
-  sun: { bg: colors.sun400, fg: colors.ink, border: colors.sun400 },
-  danger: { bg: colors.surface, fg: colors.danger, border: '#F5C2C2' },
+// `edge` is the darker lip along the bottom that makes a button look pressable.
+const VARIANTS: Record<Variant, { bg: string; fg: string; border: string; edge: string }> = {
+  primary: { bg: colors.sky600, fg: '#FFFFFF', border: colors.sky600, edge: colors.sky700 },
+  secondary: { bg: colors.surface, fg: colors.sky700, border: colors.line, edge: '#C4D5E6' },
+  ghost: { bg: 'transparent', fg: colors.sky700, border: 'transparent', edge: 'transparent' },
+  sun: { bg: colors.sun400, fg: colors.ink, border: colors.sun400, edge: '#EAB308' },
+  danger: { bg: colors.surface, fg: colors.danger, border: '#F5C2C2', edge: '#EFB1B1' },
 };
 
 export function Button({
@@ -59,7 +60,8 @@ export function Button({
       style={[
         styles.base,
         size === 'lg' ? styles.lg : styles.md,
-        { backgroundColor: palette.bg, borderColor: palette.border },
+        { backgroundColor: palette.bg, borderColor: palette.border, borderBottomColor: palette.edge },
+        variant === 'ghost' ? null : size === 'lg' ? styles.edgeLg : styles.edgeMd,
         disabled && !loading ? styles.disabled : null,
         style,
       ]}>
@@ -89,6 +91,8 @@ const styles = StyleSheet.create({
   },
   lg: { height: 56 },
   md: { height: 46 },
+  edgeLg: { borderBottomWidth: 4 },
+  edgeMd: { borderBottomWidth: 3 },
   disabled: { opacity: 0.45 },
   content: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   label: { fontFamily: fonts.bold, fontSize: 16, lineHeight: 20 },

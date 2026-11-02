@@ -2,9 +2,9 @@ import pytest
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
-from app.config import get_settings
+from app.config import Settings, get_settings
 from app.lessons import BLANK, BuildExercise, ChoiceExercise
-from app.scenarios import SCENARIOS, get_scenario
+from app.scenarios import SCENARIOS, Character, get_scenario
 
 
 def test_scenarios_lists_public_fields_only(client: TestClient) -> None:
@@ -16,11 +16,10 @@ def test_scenarios_lists_public_fields_only(client: TestClient) -> None:
     for scenario in data:
         assert "scene_details" not in scenario
         assert "scene_outline" not in scenario
-        assert "voice_env" not in scenario
         assert scenario["language"] == "zh-CN"
         assert len(scenario["goals"]) == 4
         assert len(scenario["key_phrases"]) == 5
-        assert set(scenario["character"]) == {"name_hanzi", "name_pinyin", "name_english", "role", "avatar_char"}
+        assert set(scenario["character"]) == {"name_hanzi", "name_pinyin", "name_english", "role", "avatar_char", "gender", "age"}
 
 
 def test_scene_details_stay_on_the_server() -> None:
@@ -70,11 +69,47 @@ def test_bad_lesson_content_is_rejected() -> None:
         )
 
 
-def test_voice_falls_back_to_default() -> None:
+def test_voice_matches_the_character() -> None:
     settings = get_settings()
-    assert settings.voice_id_for("ELEVENLABS_VOICE_ID_TRAIN") == "train-voice"
-    assert settings.voice_id_for("ELEVENLABS_VOICE_ID_RESTAURANT") == "default-voice"
-    assert settings.voice_id_for(None) == "default-voice"
-    airport = get_scenario("airport")
-    assert airport is not None
-    assert settings.voice_id_for(airport.voice_env) == "default-voice"
+    assert settings.voice_pool("female", "young") == ["woman-1", "woman-2"]
+    assert settings.voice_id_for("female", "young", "小林") in {"woman-1", "woman-2"}
+    assert settings.voice_id_for("male", "older", "陈经理") == "older-man-1"
+    # The same character always gets the same voice.
+    assert {settings.voice_id_for("female", "young", "小美") for _ in range(5)} == {settings.voice_id_for("female", "young", "小美")}
+
+
+def test_voice_keeps_the_gender_when_a_pool_is_empty() -> None:
+    settings = get_settings()
+    # No older women: an older woman speaks with a young woman's voice, not a man's.
+    assert settings.voice_id_for("female", "older", "王阿姨") in {"woman-1", "woman-2"}
+    no_men = Settings(elevenlabs_voices_male_young="", elevenlabs_voices_male_older="")
+    assert no_men.voice_id_for("male", "young", "李明") == "default-voice"
+
+
+def test_built_in_characters_have_a_gender_and_age() -> None:
+    looks = {s.id: (s.character.gender, s.character.age) for s in SCENARIOS}
+    assert looks == {
+        "airport": ("female", "young"),
+        "restaurant": ("female", "older"),
+        "train": ("male", "young"),
+        "hotel": ("male", "older"),
+    }
+
+
+def test_older_characters_get_a_gender_and_age_from_their_name() -> None:
+    """City packs written before characters had a gender and age."""
+
+    def character(name_hanzi: str, name_english: str, role: str) -> Character:
+        return Character.model_validate(
+            {"name_hanzi": name_hanzi, "name_pinyin": "", "name_english": name_english, "role": role, "avatar_char": name_hanzi[0]}
+        )
+
+    auntie = character("孙大妈", "Auntie Sun", "Stall owner")
+    assert (auntie.gender, auntie.age) == ("female", "older")
+    driver = character("刘师傅", "Driver Liu", "Taxi driver")
+    assert (driver.gender, driver.age) == ("male", "young")
+    waitress = character("小美", "Xiao Mei", "Waitress")
+    assert (waitress.gender, waitress.age) == ("female", "young")
+    # Given ones are kept.
+    given = Character.model_validate({**auntie.model_dump(), "gender": "male", "age": "young"})
+    assert (given.gender, given.age) == ("male", "young")

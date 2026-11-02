@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, LinearTransition, ZoomIn } from 'react-native-reanimated';
 
+import { Seagull } from '@/components/art/Seagull';
 import { Button } from '@/components/Button';
 import { CityPicker } from '@/components/destination/CityPicker';
 import { FormMessage } from '@/components/FormMessage';
@@ -108,6 +109,7 @@ export default function SetupScreen() {
       {step === 'language' ? (
         <>
           <Animated.View entering={FadeInDown.duration(motion.base)} style={styles.header}>
+            <Seagull size={80} mood="happy" wave />
             <Text variant="title" accessibilityRole="header">
               Which language are you learning?
             </Text>
@@ -131,6 +133,7 @@ export default function SetupScreen() {
       ) : (
         <>
           <Animated.View key="destination" entering={FadeInDown.duration(motion.base)} style={styles.header}>
+            <Seagull size={80} pose="fly" />
             <Text variant="title" accessibilityRole="header">
               Where are you going?
             </Text>

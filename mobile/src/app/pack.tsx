@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
+import { Seagull } from '@/components/art/Seagull';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { IconButton } from '@/components/IconButton';
@@ -11,6 +12,7 @@ import { Pill } from '@/components/Pill';
 import { PressableScale } from '@/components/PressableScale';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
+import { VoyageLoader } from '@/components/VoyageLoader';
 import { cityName, useCities } from '@/hooks/useCities';
 import { canRetry, usePack } from '@/hooks/usePack';
 import { packSummary, shortDate, STAGES, StepIcon, stepAccessibilityLabel, workerLabel } from '@/lib/packVisuals';
@@ -67,7 +69,9 @@ export default function PackScreen() {
   if (status === null) {
     return (
       <Screen header={header}>
-        <ActivityIndicator color={colors.sky600} style={styles.loader} />
+        <View style={styles.loader}>
+          <VoyageLoader label={`Finding out about ${name}…`} />
+        </View>
       </Screen>
     );
   }
@@ -82,7 +86,10 @@ export default function PackScreen() {
     <Screen scroll header={header}>
       <Animated.View entering={FadeInDown.duration(motion.base)} style={styles.intro}>
         {building ? (
-          <Pill label="Live: the agent is working now" tone="sun" />
+          <View style={styles.live}>
+            <Seagull pose="fly" size={52} />
+            <Pill label="Live: the agent is working now" tone="sun" />
+          </View>
         ) : status.status === 'ready' && builtOn ? (
           <Pill label={`How this pack was built, ${shortDate(builtOn)}`} tone="neutral" />
         ) : null}
@@ -226,6 +233,7 @@ const styles = StyleSheet.create({
   topBar: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingTop: spacing.sm, paddingBottom: spacing.sm },
   empty: { flex: 1, justifyContent: 'center', gap: spacing.lg, paddingHorizontal: spacing.lg },
   loader: { marginTop: spacing.xxxl },
+  live: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   intro: { gap: spacing.md, marginTop: spacing.sm, marginBottom: spacing.lg, alignItems: 'flex-start' },
   stages: { gap: spacing.md },
   stageRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 24 },

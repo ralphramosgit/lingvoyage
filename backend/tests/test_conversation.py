@@ -82,7 +82,7 @@ def test_turn_rejects_blank_text(authed_client: TestClient) -> None:
     assert response.status_code == 422
 
 
-def test_start_returns_greeting_with_scenario_voice(authed_client: TestClient, fake_services: dict) -> None:
+def test_start_returns_greeting_in_the_characters_voice(authed_client: TestClient, fake_services: dict) -> None:
     response = authed_client.post("/conversation/start", json={"scenario_id": "train"})
     assert response.status_code == 200
     body = response.json()
@@ -90,7 +90,8 @@ def test_start_returns_greeting_with_scenario_voice(authed_client: TestClient, f
     assert body["reply"]["hanzi"] == "你好！几位？"
     assert base64.b64decode(body["audio_base64"]) == FAKE_MP3
     assert body["audio_mime"] == "audio/mpeg"
-    assert fake_services["tts"] == [("你好！几位？", "train-voice")]
+    # Li Ming, the train scene's character, is a young man.
+    assert fake_services["tts"] == [("你好！几位？", "man-1")]
     assert fake_services["tutor"][0][3] is None
 
 

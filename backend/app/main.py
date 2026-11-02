@@ -191,7 +191,8 @@ def _speak(text: str, scenario: ScenarioDefinition) -> str | None:
     if not text:
         return None
     try:
-        voice_id = get_settings().voice_id_for(scenario.voice_env)
+        character = scenario.character
+        voice_id = get_settings().voice_id_for(character.gender, character.age, character.name_hanzi)
         return base64.b64encode(speech.synthesize(text, voice_id)).decode("ascii")
     except ApiError as error:
         logger.warning("TTS failed for scenario %s: %s (%s)", scenario.id, error.code, error.message)
