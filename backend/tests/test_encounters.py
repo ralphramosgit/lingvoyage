@@ -69,12 +69,34 @@ def noodle_facts() -> list[Fact]:
     return [restaurant, *dishes]
 
 
+def dumplings() -> Fact:
+    return fact(
+        "m-dumplings",
+        category="menu_item",
+        place_key="wang-noodles",
+        title="Dumplings",
+        body="On the menu.",
+        data={"dish": "Dumplings", "dish_hanzi": "饺子", "dish_pinyin": "jiǎozi", "price_cny": 20},
+        source_url="https://example.com/wang/menu",
+    )
+
+
 def noodle_plan() -> EncounterPlan:
-    return EncounterPlan("wang-noodles", "restaurant", "restaurant", "Auntie Wang's noodles (王阿姨面馆)", tuple(noodle_facts()))
+    facts = (*noodle_facts(), dumplings())
+    return EncounterPlan("wang-noodles", "restaurant", "restaurant", "Auntie Wang's noodles (王阿姨面馆)", facts)
 
 
 def good_draft() -> EncounterDraft:
-    return encounters.draft_from(NOODLES)
+    """The hand-written noodle scene, with goals of its own (a copy of the template's goals isn't accepted)."""
+    draft = encounters.draft_from(NOODLES)
+    labels = [
+        ("party_size", "Say how many people"),  # the one generic step allowed
+        ("order_noodles", "Order the house beef noodles"),
+        ("dumpling_price", "Ask how much the dumplings are"),
+        ("free_tea", "Ask if the tea is free"),
+    ]
+    draft.goals = [encounters.DraftGoal(id=goal_id, label=label) for goal_id, label in labels]
+    return draft
 
 
 def new_trace() -> Trace:
@@ -173,7 +195,7 @@ def test_a_good_draft_becomes_a_local_scenario() -> None:
         "local-chengdu-wang-noodles", "zh-CN", "Beginner", "Chengdu"
     )
     assert scenario.local is not None and scenario.local.pack_id == "pack-1"
-    assert scenario.local.fact_ids == [item.id for item in noodle_facts()]
+    assert scenario.local.fact_ids == [item.id for item in noodle_plan().facts]
     assert [source.url for source in scenario.sources] == ["https://example.com/wang", "https://example.com/wang/menu"]
     assert scenario.checked_at == "2026-10-31"
     public = scenario.public().model_dump()
@@ -231,6 +253,27 @@ def _no_opening(draft: EncounterDraft) -> None:
     draft.scene_outline[0] = "Hello: 你好！"
 
 
+def _no_greeting(draft: EncounterDraft) -> None:
+    draft.scene_outline[0] = "You open: 现在人很多。"
+
+
+def _no_menu_offered(draft: EncounterDraft) -> None:
+    draft.scene_outline[1] = "The traveler says how many people. You: 请坐！你要吃什么？"
+
+
+def _no_paying(draft: EncounterDraft) -> None:
+    draft.scene_outline = draft.scene_outline[:4]
+
+
+def _copied_goals(draft: EncounterDraft) -> None:
+    draft.goals = encounters.draft_from(NOODLES).goals  # the template's own four
+
+
+def _generic_goals(draft: EncounterDraft) -> None:
+    draft.goals[1].label = "Ask for the bill"
+    draft.goals[2].label = "Say thank you"
+
+
 @pytest.mark.parametrize(
     ("breaks", "problem"),
     [
@@ -244,6 +287,11 @@ def _no_opening(draft: EncounterDraft) -> None:
         (_hard_word, "above beginner level"),
         (_no_tones, "tone marks"),
         (_no_opening, '"You open:"'),
+        (_copied_goals, "steps any scene has, or copy the example scene"),
+        (_no_greeting, "must greet the traveler"),
+        (_no_menu_offered, "offer at least 2 real dishes"),
+        (_no_paying, "must end with paying"),
+        (_generic_goals, "Keep at most one"),
     ],
 )
 def test_checks_catch_problems(breaks: Callable[[EncounterDraft], None], problem: str) -> None:
@@ -401,3 +449,20 @@ def test_every_example_scene_is_in_the_prompt() -> None:
     for scene in prompts.EXAMPLE_SCENES:
         assert f'<scene example="{scene}">' in system
     assert all(scenario.id in {"airport", "restaurant", "train", "hotel"} for scenario in SCENARIOS)
+
+
+def test_generic_goals() -> None:
+    restaurant = get_scenario("restaurant")
+    scenario, _ = encounters.build_encounter(good_draft(), noodle_plan(), CHENGDU, "local-chengdu", "pack-1")
+    assert scenario is not None
+    assert encounters.generic_goals(scenario, restaurant) == ["Say how many people"]  # one is fine
+    copied = scenario.model_copy(update={"goals": restaurant.goals})
+    assert len(encounters.generic_goals(copied, restaurant)) == 4  # all four are the template's
+
+
+def test_the_prompt_asks_for_goals_from_the_place() -> None:
+    message = prompts.encounter_message("restaurant", "restaurant", "Shu Jiu Xiang (蜀九香)", CHENGDU, [])
+    assert "Don't copy its goals" in message and "only for the style" in message
+    assert "choosing the broth" in prompts.KIND_BRIEFS["restaurant"]
+    assert "At most one goal may be a generic step" in prompts.encounter_system()
+

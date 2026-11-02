@@ -185,6 +185,8 @@ def test_system_prompt_follows_the_script_and_keeps_roles_apart() -> None:
     assert "Then ask: 你要去哪里？" in prompt
     assert "巴士在五号门外面。" in prompt
     assert "end every reply with one short, easy question for the traveler" in prompt
+    assert "Never jump ahead: don't ask about spice, drinks or a second dish before they've ordered" in prompt
+    assert "offer two or three real options by name from the scene details" in prompt
     assert "never just 在那里 on its own" in prompt
     assert "- [place] + 在哪里？ (Where is [place]?)" in prompt
     assert "don't use them to ask the traveler anything" in prompt
