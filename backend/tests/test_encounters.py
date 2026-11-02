@@ -360,7 +360,7 @@ def test_conversation_plays_a_local_encounter(
 ) -> None:
     played: list[str] = []
 
-    def fake_reply(scenario: Any, history: Any, client_completed_ids: Any, learner_text: Any) -> TutorReply:
+    def fake_reply(scenario: Any, history: Any, client_completed_ids: Any, learner_text: Any, local_facts: str = "") -> TutorReply:
         played.append(scenario.id)
         return TutorReply(
             learner_hanzi="", learner_pinyin="", learner_english="", hanzi="你好！几位？", pinyin="Nǐ hǎo! Jǐ wèi?",

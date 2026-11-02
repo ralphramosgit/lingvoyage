@@ -22,6 +22,7 @@ from app.auth import AuthUser, require_user
 from app.config import get_settings
 from app.content import lookup
 from app.errors import ApiError, error_body
+from app.locations import retrieve
 from app.locations.routes import router as locations_router
 from app.locations.store import StoreError
 from app.scenarios import SCENARIOS, Scenario, ScenarioDefinition, get_scenario
@@ -257,11 +258,14 @@ def conversation_turn(body: TurnRequest, _user: AuthUser = Depends(require_user)
     else:
         learner_text = (body.user_text or "").strip()
 
+    # Local scenes: the city's facts that match what the learner said (issue #37). "" for built-in scenes.
+    local_facts = retrieve.facts_for_turn(scenario, learner_text, [line.text for line in body.history])
     reply = tutor.generate_reply(
         scenario,
         history=body.history,
         client_completed_ids=body.completed_goal_ids,
         learner_text=learner_text,
+        local_facts=local_facts,
     )
     return TurnResponse(transcript=transcript, reply=reply, audio_base64=_speak(reply.hanzi, scenario))
 
