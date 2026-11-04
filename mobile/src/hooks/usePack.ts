@@ -16,8 +16,8 @@ import type { LocalPack, PackStatus } from '@/types/api';
 
 export const POLL_MS = 3000;
 
-/** Errors where trying again won't help: the daily limits, new packs paused, an unknown city. */
-const FINAL_ERRORS = new Set(['pack_limit', 'packs_busy', 'packs_paused', 'city_not_found']);
+/** Errors where trying again won't help: the daily limits, new packs paused, an unknown or coming-soon city. */
+const FINAL_ERRORS = new Set(['pack_limit', 'packs_busy', 'packs_paused', 'city_not_found', 'city_coming_soon']);
 
 export type PackError = { code: string; message: string };
 

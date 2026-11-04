@@ -8,7 +8,7 @@ from pydantic import ValidationError
 
 from app.config import get_settings
 from app.errors import ApiError
-from app.locations.cities import CITIES, find_city
+from app.locations.cities import CITIES, available_names, find_city
 from app.locations.models import ContentItem, FactDraft
 from app.locations.store import (
     InMemoryPackStore,
@@ -52,6 +52,14 @@ def test_find_city() -> None:
     chengdu = find_city("chengdu")
     assert chengdu is not None and chengdu.hanzi == "成都"
     assert find_city("tokyo") is None
+
+
+def test_only_some_cities_are_open() -> None:
+    assert [city.slug for city in CITIES if city.available] == ["beijing", "shanghai", "chengdu", "chongqing"]
+    assert available_names() == "Beijing, Shanghai, Chengdu or Chongqing"
+    chongqing = find_city("chongqing")
+    assert chongqing is not None and chongqing.must_see is not None and chongqing.must_see.hanzi == "洪崖洞"
+    assert "must_see" not in chongqing.model_dump()  # the research's, not the app's
 
 
 # ---------------------------------------------------------------------------

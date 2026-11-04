@@ -55,13 +55,20 @@ def _transport(city: City) -> Brief:
 
 
 def _hot_spots(city: City) -> Brief:
+    must_see = ""
+    if city.must_see:
+        place = city.must_see
+        must_see = (
+            f" One of them must be {place.name} ({place.hanzi}), {place.why}: find its hours (and when it's lit "
+            "up, if that's what it's known for), how to get there and the best place to see it from."
+        )
     return Brief(
         worker="hot_spots",
         topic="hot_spots",
         goal=(
             f"6 to 10 places visitors actually go in {city.name}: sights, old streets, parks, temples, museums. "
             "For each: its Chinese name, the area it's in, the ticket price (0 if free), opening hours and one "
-            "useful tip."
+            f"useful tip.{must_see}"
         ),
         target="6 to 10 places",
         tools=("record_hot_spot", "finish"),

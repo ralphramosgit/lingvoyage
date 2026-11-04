@@ -16,6 +16,7 @@ import { env } from './env';
 import { supabase } from './supabase';
 
 const TIMEOUT_MS = 30_000;
+const OPEN_BEFORE_THE_SERVER_SAYS = ['beijing', 'shanghai', 'chengdu', 'chongqing'];
 
 export class ApiError extends Error {
   readonly code: string;
@@ -111,7 +112,13 @@ export const api = {
     request<TurnResponse>('POST', '/conversation/start', { body: { scenario_id: scenarioId }, auth: true, signal }),
   sendTurn: (body: TurnRequest, signal?: AbortSignal) =>
     request<TurnResponse>('POST', '/conversation/turn', { body, auth: true, signal }),
-  getCities: () => request<City[]>('GET', '/cities'),
+  // A server from before issue #66 doesn't say which cities are open. Until it's redeployed, open the
+  // same ones it will (backend/app/locations/cities.py).
+  getCities: async () =>
+    (await request<(Omit<City, 'available'> & { available?: boolean })[]>('GET', '/cities')).map((city) => ({
+      ...city,
+      available: city.available ?? OPEN_BEFORE_THE_SERVER_SAYS.includes(city.slug),
+    })),
   /** The city's pack status. Starts building it if there's no pack yet (or it has expired). */
   ensurePack: (city: string) => request<PackStatus>('POST', `/packs/${encodeURIComponent(city)}`, { auth: true }),
   /** For polling while a pack builds: never starts anything. */

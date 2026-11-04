@@ -183,6 +183,19 @@ def test_plan_encounters() -> None:
     assert len(encounters.plan_encounters(CHENGDU, [airport, *metro], limit=1)) == 1
 
 
+def test_sightseeing_scene_is_at_the_must_see() -> None:
+    chongqing = find_city("chongqing")
+    assert chongqing is not None and chongqing.must_see is not None
+    ticketed = fact("h1", category="hot_spot", place_key="three-gorges-museum", title="Three Gorges Museum", body="History.",
+                    data={"name": "Three Gorges Museum", "name_hanzi": "三峡博物馆", "ticket_cny": 30})
+    lights = fact("h2", category="hot_spot", place_key="hongyadong", title="Hongyadong", body="Lit up at night.",
+                  data={"name": "Hongyadong", "name_hanzi": "洪崖洞", "opening_hours": "Lit 19:00-23:00"})
+    sights = [plan for plan in encounters.plan_encounters(chongqing, [ticketed, lights]) if plan.kind == "hot_spot"]
+    assert [plan.place_key for plan in sights] == ["hongyadong"]
+    # Without a must-see, a sight with a ticket price comes first.
+    assert [plan.place_key for plan in encounters.plan_encounters(CHENGDU, [lights, ticketed])] == ["three-gorges-museum"]
+
+
 # ---------------------------------------------------------------------------
 # Building and checking a draft
 # ---------------------------------------------------------------------------

@@ -153,7 +153,15 @@ def plan_encounters(city: City, facts: list[Fact], limit: int = MAX_SCENES) -> l
         if fact.category == "hot_spot" and fact.place_key
         and (fact.data.get("ticket_cny") is not None or fact.data.get("opening_hours"))
     ]
-    sights.sort(key=lambda fact: (bool(fact.data.get("name_hanzi")), fact.data.get("ticket_cny") is not None), reverse=True)
+    must_see = city.must_see.hanzi if city.must_see else None
+    sights.sort(
+        key=lambda fact: (
+            bool(must_see) and must_see in (fact.data.get("name_hanzi") or fact.hanzi),
+            bool(fact.data.get("name_hanzi")),
+            fact.data.get("ticket_cny") is not None,
+        ),
+        reverse=True,
+    )
     if sights:
         plans.append(EncounterPlan(sights[0].place_key or "", "hot_spot", "train", _name(sights[0]), (sights[0],)))
     return plans[:limit]

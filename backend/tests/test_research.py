@@ -166,6 +166,14 @@ def test_briefs() -> None:
     assert all(name in tools.SPECS for item in plan_briefs(CHENGDU) for name in item.tools)
 
 
+def test_hot_spots_brief_names_the_must_see() -> None:
+    chongqing = find_city("chongqing")
+    assert chongqing is not None
+    [hot_spots] = plan_briefs(chongqing, ["hot_spots"])
+    assert "Hongyadong (洪崖洞)" in hot_spots.goal and "lit up" in hot_spots.goal
+    assert "must be" not in plan_briefs(CHENGDU, ["hot_spots"])[0].goal
+
+
 def test_tool_schemas_are_strict() -> None:
     for name in tools.SPECS:
         definition = tools.tool_definition(name)

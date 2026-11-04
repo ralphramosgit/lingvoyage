@@ -5,8 +5,7 @@ import Animated, { FadeInDown, LinearTransition, ZoomIn } from 'react-native-rea
 
 import { Seagull } from '@/components/art/Seagull';
 import { Button } from '@/components/Button';
-import { CityPicker } from '@/components/destination/CityPicker';
-import { FormMessage } from '@/components/FormMessage';
+import { DestinationMap } from '@/components/destination/DestinationMap';
 import { IconButton } from '@/components/IconButton';
 import { Pill } from '@/components/Pill';
 import { PressableScale } from '@/components/PressableScale';
@@ -14,7 +13,7 @@ import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
-import { colors, motion, radii, shadows, spacing } from '@/theme/theme';
+import { colors, layout, motion, radii, shadows, spacing } from '@/theme/theme';
 
 type LanguageOption = {
   code: string;
@@ -40,35 +39,28 @@ export default function SetupScreen() {
   const { session, refreshProfile, signOut } = useAuth();
   const [stepIndex, setStepIndex] = useState(0);
   const [language, setLanguage] = useState<string | null>(null);
-  const [destination, setDestination] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const step = STEPS[stepIndex];
-  const isLastStep = stepIndex === STEPS.length - 1;
-  const canContinue = step === 'language' ? language !== null : destination !== null;
+  const onMap = step === 'destination';
 
-  const finish = async () => {
-    if (!session || !language || !destination) return;
-    setSaving(true);
-    setError(null);
+  // The last step: picking a pin on the map saves everything.
+  const finish = async (destination: string): Promise<string | null> => {
+    if (!session || !language) return "We couldn't save your choice. Go back a step and try again.";
     // The city pack starts loading (or building) once the Encounters tab opens: see usePack.
     const { error: updateError } = await supabase
       .from('profiles')
       .update({ target_language: language, destination_city: destination, onboarding_complete: true })
       .eq('id', session.user.id);
-    if (updateError) {
-      setError("We couldn't save your choice. Check your connection and try again.");
-      setSaving(false);
-      return;
-    }
+    if (updateError) return "We couldn't save your choice. Check your connection and try again.";
     // The router guard moves the user into the tabs once the profile says onboarding is done.
     await refreshProfile();
+    return null;
   };
 
   return (
     <Screen
-      scroll
+      scroll={!onMap}
+      edges={onMap ? ['top'] : undefined}
       header={
         <View style={styles.topBar}>
           {stepIndex > 0 ? (
@@ -95,16 +87,16 @@ export default function SetupScreen() {
         </View>
       }
       footer={
-        <View style={styles.footer}>
-          {error ? <FormMessage message={error} /> : null}
-          <Button
-            label={isLastStep ? 'Continue' : 'Next'}
-            onPress={isLastStep ? finish : () => setStepIndex(stepIndex + 1)}
-            disabled={!canContinue}
-            loading={saving}
-            accessibilityHint={canContinue ? undefined : step === 'language' ? 'Choose a language first' : 'Choose a city first'}
-          />
-        </View>
+        onMap ? undefined : (
+          <View style={styles.footer}>
+            <Button
+              label="Next"
+              onPress={() => setStepIndex(stepIndex + 1)}
+              disabled={language === null}
+              accessibilityHint={language === null ? 'Choose a language first' : undefined}
+            />
+          </View>
+        )
       }>
       {step === 'language' ? (
         <>
@@ -132,16 +124,20 @@ export default function SetupScreen() {
         </>
       ) : (
         <>
-          <Animated.View key="destination" entering={FadeInDown.duration(motion.base)} style={styles.header}>
-            <Seagull size={80} pose="fly" />
-            <Text variant="title" accessibilityRole="header">
-              Where are you going?
-            </Text>
-            <Text variant="body" color={colors.inkMuted}>
-              We&apos;ll tailor your lessons, quizzes and scenes to it. You can change it any time on Profile.
-            </Text>
+          <Animated.View key="destination" entering={FadeInDown.duration(motion.base)} style={styles.mapHeader}>
+            <Seagull size={52} pose="fly" />
+            <View style={styles.mapTitle}>
+              <Text variant="heading" accessibilityRole="header">
+                Where are you going?
+              </Text>
+              <Text variant="caption" color={colors.inkMuted}>
+                Tap a pin. You can change it any time on Profile.
+              </Text>
+            </View>
           </Animated.View>
-          <CityPicker selected={destination} onSelect={setDestination} />
+          <View style={styles.map}>
+            <DestinationMap current={null} onChoose={finish} />
+          </View>
         </>
       )}
     </Screen>
@@ -211,6 +207,10 @@ const styles = StyleSheet.create({
   progressFill: { height: '100%', borderRadius: radii.full, backgroundColor: colors.sky500 },
   logout: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs + 2, minHeight: 44, paddingHorizontal: spacing.sm },
   header: { gap: spacing.sm, marginTop: spacing.lg, marginBottom: spacing.xxl },
+  mapHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginTop: spacing.sm, marginBottom: spacing.md },
+  mapTitle: { flex: 1, gap: 2 },
+  // Edge to edge, out of the screen's side padding.
+  map: { flex: 1, marginHorizontal: -layout.screenPadding },
   list: { gap: spacing.md },
   card: {
     flexDirection: 'row',
