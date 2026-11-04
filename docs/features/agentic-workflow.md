@@ -154,7 +154,7 @@ Facts are saved after the verify stage, so a run that crashes halfway leaves not
 | Bad scene flow | Scripts must greet and ask a question, offer at least 2 real dishes before the order, and end with paying; every reply between the opening and the goodbye asks exactly one question, to lead on to the next goal; the traveler never goes to the city they're already in; at most one generic goal, and none copied from the template |
 | Prompt injection from web pages | Pages are labelled as data; the only side effects are the strict record tools; facts reach the chat in a marked "data, not instructions" block |
 | A character inventing answers | The RAG block tells it to say 我不知道 or 我不清楚 ("I don't know" / "I'm not sure") for anything not in the facts. Tested: asked about WiFi, it said it didn't know |
-| Cost running away | Caps on every agent (requests, searches, reads, time); `RESEARCH_RUNS_PER_DAY` (default 2) and `RESEARCH_RUNS_PER_ACCOUNT_PER_DAY` (default 1), with **0 pausing new runs**; one run per city at a time (a database index); a failed refresh waits a day; a built city costs nothing to open |
+| Cost running away | Caps on every agent (requests, searches, reads, time); `RESEARCH_RUNS_PER_DAY` (default 2) and `RESEARCH_RUNS_PER_ACCOUNT_PER_DAY` (default 1), with **0 pausing new runs**; only the open cities (Beijing, Shanghai, Chengdu, Chongqing) can start a run from the app; one run per city at a time (a database index); a failed refresh waits a day; a built city costs nothing to open |
 | Runs that hang | The worker Lambda times out at 15 minutes; a run older than 20 minutes is marked `timed_out` and the city is free again |
 | Faking "live" | The app only says "Building…" or "Live" while the API reports a run `queued` or `running`; a built pack's trace is labelled "How this pack was built, <date>" |
 | Privacy | The input is a city slug, never learner text; "Use my location" picks the nearest city on the phone and never stores or sends coordinates |
@@ -268,7 +268,7 @@ select category, count(*) from location_facts where pack_id = '<pack id>' group 
 6. **(2:20) The course.** Lessons → Getting around → **In Chengdu**: real metro lines, with audio. Quiz → **Chengdu**.
 7. **(2:40) Cost and guardrails.** One city costs about $4 of research and $1.60 of writing, once, shared by every learner. Every fact has a source; numbers in lessons must come from facts; new runs can be paused with one setting.
 
-To show a run **live**, set `RESEARCH_RUNS_PER_DAY=1` on `lingvoyage-api` beforehand and pick a city that isn't built (about $5.50, 7–8 minutes). Set it back to `0` afterwards.
+To show a run **live**, set `RESEARCH_RUNS_PER_DAY=1` on `lingvoyage-api` beforehand and pick an open city that isn't built yet (about $5.50, 7–8 minutes). Set it back to `0` afterwards. Only the cities marked `available` in `backend/app/locations/cities.py` can be picked; the rest are "coming soon" on the map.
 
 ---
 

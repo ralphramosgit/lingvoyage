@@ -13,6 +13,7 @@ from app.config import Settings, get_settings
 from app.errors import ApiError
 from app.locations import packs
 from app.locations import store as store_module
+from app.locations.cities import CITIES
 from app.locations.models import ContentItem, FactDraft
 from app.locations.routes import pack_store
 from app.locations.store import InMemoryPackStore, StoreError
@@ -90,6 +91,13 @@ def error_code(response: Any) -> str:
     return response.json()["error"]["code"]
 
 
+@pytest.fixture
+def every_city_open(monkeypatch: pytest.MonkeyPatch) -> None:
+    """For the tests about limits, which need more cities than are open."""
+    for city in CITIES:
+        monkeypatch.setattr(city, "available", True)
+
+
 # ---------------------------------------------------------------------------
 # Cities and access
 # ---------------------------------------------------------------------------
@@ -100,6 +108,8 @@ def test_cities_need_no_login(client: TestClient) -> None:
     assert response.status_code == 200
     cities = response.json()
     assert len(cities) == 12 and cities[0]["slug"] == "beijing" and cities[2]["hanzi"] == "成都"
+    assert [city["slug"] for city in cities if city["available"]] == ["beijing", "shanghai", "chengdu", "chongqing"]
+    assert all("must_see" not in city for city in cities)
 
 
 def test_packs_need_login(client: TestClient) -> None:
@@ -116,6 +126,14 @@ def test_unknown_city(api: Callable[[str], TestClient]) -> None:
 # ---------------------------------------------------------------------------
 # POST /packs/{city}
 # ---------------------------------------------------------------------------
+
+
+def test_coming_soon_city_starts_nothing(api: Callable[[str], TestClient], started: list[str]) -> None:
+    response = api("user-1").post("/packs/xian")
+    assert response.status_code == 403 and error_code(response) == "city_coming_soon"
+    assert response.json()["error"]["message"] == "Xi'an is coming soon. For now, pick Beijing, Shanghai, Chengdu or Chongqing."
+    assert started == []
+    assert api("user-1").get("/packs/xian/status").json()["status"] == "none"
 
 
 def test_first_request_starts_one_shared_run(
@@ -175,6 +193,7 @@ def test_stuck_run_times_out(
     assert len(started) == 2
 
 
+@pytest.mark.usefixtures("every_city_open")
 def test_account_limit(api: Callable[[str], TestClient], store: InMemoryPackStore, started: list[str]) -> None:
     ready_pack(store, "chengdu")
     for city in ("beijing", "shanghai", "xian"):
@@ -201,6 +220,7 @@ def test_default_limits_are_small() -> None:
     assert (fields["research_runs_per_day"].default, fields["research_runs_per_account_per_day"].default) == (2, 1)
 
 
+@pytest.mark.usefixtures("every_city_open")
 def test_daily_limit_for_everyone(
     api: Callable[[str], TestClient], started: list[str], limits: Callable[[int, int], None]
 ) -> None:

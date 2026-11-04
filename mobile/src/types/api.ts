@@ -221,9 +221,11 @@ export type City = {
   pinyin: string;
   /** "" for the municipalities (Beijing, Shanghai, Chongqing). */
   province: string;
-  /** The city center, for "Use my location". */
+  /** The city center, for the map and "Use my location". */
   lat: number;
   lng: number;
+  /** Learners can pick it; the rest show on the map as "coming soon". */
+  available: boolean;
 };
 
 export type PackStage = 'plan' | 'research' | 'deep_dive' | 'verify' | 'generate' | 'publish';

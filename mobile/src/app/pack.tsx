@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { ChevronLeft, Circle, CircleCheck, ExternalLink, RotateCcw, TriangleAlert } from 'lucide-react-native';
+import { ChevronLeft, Circle, CircleCheck, ExternalLink, MapPin, RotateCcw, TriangleAlert } from 'lucide-react-native';
 import { useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -60,7 +60,11 @@ export default function PackScreen() {
             {error ? error.message : 'Set where you\'re going on Profile, and an agent researches your city for you.'}
           </Text>
           {error && canRetry(error) ? <Button label="Try again" icon={RotateCcw} variant="secondary" onPress={retry} /> : null}
-          <Button label="Go to Profile" variant="ghost" onPress={() => router.navigate('/profile')} />
+          {error?.code === 'city_coming_soon' ? (
+            <Button label="Pick another city" icon={MapPin} variant="secondary" onPress={() => router.push('/destination')} />
+          ) : (
+            <Button label="Go to Profile" variant="ghost" onPress={() => router.navigate('/profile')} />
+          )}
         </View>
       </Screen>
     );

@@ -9,6 +9,8 @@ The rules (issue #34):
   (RESEARCH_RUNS_PER_DAY, default 2) and per account (RESEARCH_RUNS_PER_ACCOUNT_PER_DAY, default 1).
   0 pauses new runs. A city that's already built costs nothing, and refreshes don't count against the
   account (only against the daily total).
+- Only the cities marked available can be picked (issue #66). The rest are "coming soon": no run starts
+  for them from the app, but the research CLI can still build one before it's opened up.
 """
 
 import logging
@@ -23,7 +25,7 @@ from pydantic import BaseModel, Field, ValidationError
 from app.config import get_settings
 from app.content.models import LocalQuiz, LocalUnitNotes
 from app.errors import ApiError
-from app.locations.cities import City
+from app.locations.cities import City, available_names
 from app.locations.models import Pack, PackStage
 from app.locations.store import PackStore, RunAlreadyActive
 from app.research import jobs
@@ -201,6 +203,8 @@ def _may_refresh(store: PackStore, city: City, now: datetime) -> bool:
 def ensure_pack(store: PackStore, city: City, user_id: str) -> PackStatus:
     """The app calls this when the learner picks a city, and again whenever it opens: returns the pack if
     it's ready, otherwise starts building one (or joins the run that's already going)."""
+    if not city.available:
+        raise ApiError(403, "city_coming_soon", f"{city.name} is coming soon. For now, pick {available_names()}.")
     now = _now()
     live = store.get_live_pack(city.slug)
     run = _current_run(store, city, now)
