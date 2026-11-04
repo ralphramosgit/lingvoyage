@@ -5,6 +5,7 @@ import Animated, { FadeIn, FadeOut, SlideInDown } from 'react-native-reanimated'
 import { IconButton } from '@/components/IconButton';
 import { PressableScale } from '@/components/PressableScale';
 import { Text } from '@/components/Text';
+import { useSheetSound } from '@/lib/sounds';
 import { openSource } from '@/lib/sources';
 import { colors, layout, motion, radii, spacing } from '@/theme/theme';
 import type { Source } from '@/types/api';
@@ -25,6 +26,8 @@ export function SourcesSheet({
   onClose: () => void;
   bottomInset: number;
 }) {
+  useSheetSound();
+
   return (
     <Animated.View exiting={FadeOut.duration(motion.fast)} style={StyleSheet.absoluteFill} accessibilityViewIsModal>
       <Animated.View entering={FadeIn.duration(motion.base)} style={styles.backdrop}>
@@ -37,7 +40,7 @@ export function SourcesSheet({
             <Text variant="heading" accessibilityRole="header" style={styles.flex}>
               Sources
             </Text>
-            <IconButton icon={X} accessibilityLabel="Close sources" onPress={onClose} />
+            <IconButton icon={X} accessibilityLabel="Close sources" onPress={onClose} sound={null} />
           </View>
           <Text variant="caption" color={colors.inkMuted}>
             An AI agent found {what} on these pages{checkedOn ? ` on ${checkedOn}` : ''}. Prices and hours may have

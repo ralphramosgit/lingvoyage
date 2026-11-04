@@ -29,5 +29,6 @@ npx expo-doctor
 - `src/app/` routes (Expo Router): `(auth)` welcome, sign up, sign in; `setup`; `(tabs)` Encounters and Profile; `encounter/[id]` prep, `encounter/[id]/lesson/[lessonId]` practice lesson and `encounter/[id]/talk` conversation.
 - `src/components/` shared UI (Button, TextField, Card, Pill, IconButton, Screen, CharacterAvatar, SkeletonCard, ...).
 - `src/components/art/` the illustrations, all SVG animated with Reanimated (no image files): the seagull pal, the chibi characters (their looks come from `src/lib/characterLooks.ts`), the scene backgrounds, the sailboat and waves.
-- `src/lib/` env, Supabase client, API client, audio helpers.
+- `src/lib/` env, Supabase client, API client, audio helpers, sound effects (`sounds.ts`).
+- `assets/sounds/` the sound effects (taps, tiles, right and wrong, the hull, a harp flourish for finishing, the seagull...), synthesized by `scripts/make-sounds.mjs` (no sample packs). To change one, edit its recipe there and run `npm run sounds`. Learners can turn them off on Profile (Sound effects).
 - `src/hooks/`, `src/theme/`, `src/types/`.

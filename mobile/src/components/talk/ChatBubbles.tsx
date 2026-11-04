@@ -105,6 +105,7 @@ export function NpcBubble({
             icon={Volume2}
             accessibilityLabel="Replay"
             onPress={() => replay(false)}
+            sound={null}
             disabled={!audioUri}
             size={36}
             iconSize={18}
@@ -115,6 +116,7 @@ export function NpcBubble({
             icon={Turtle}
             accessibilityLabel="Replay slowly"
             onPress={() => replay(true)}
+            sound={null}
             disabled={!audioUri}
             size={36}
             iconSize={18}

@@ -14,6 +14,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Circle, Ellipse, Path } from 'react-native-svg';
 
+import { playSound } from '@/lib/sounds';
+
 import { art } from './palette';
 
 /** The app's pal: a chibi seagull in a sailor's neckerchief. */
@@ -225,6 +227,7 @@ export function Seagull({ size = 96, mood = 'idle', pose = 'stand', wave = false
     if (!reduceMotion) {
       hop.set(withSequence(withTiming(-size * 0.16, { duration: 140, easing: Easing.out(Easing.quad) }), withSpring(0, { damping: 9 })));
     }
+    playSound('chirp');
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onPress?.();
   };

@@ -7,6 +7,7 @@ import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSequence, w
 import { PressableScale } from '@/components/PressableScale';
 import { Text } from '@/components/Text';
 import { shuffled } from '@/lib/lessons';
+import { playSound } from '@/lib/sounds';
 import { colors, motion, radii, spacing } from '@/theme/theme';
 import type { KeyPhrase } from '@/types/api';
 
@@ -64,9 +65,12 @@ export function MatchAnswer({
       setSelected(null);
       void Haptics.selectionAsync();
       AccessibilityInfo.announceForAccessibility(`Matched: ${pairs[zh].hanzi}, ${pairs[zh].english}`);
+      // The last pair gets the question's right-answer sound instead.
       if (next.length === pairs.length) onComplete();
+      else playSound('match');
       return;
     }
+    playSound('wrong');
     setWrong({ zh, en });
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     AccessibilityInfo.announceForAccessibility('Not a pair. Try again.');
@@ -82,6 +86,7 @@ export function MatchAnswer({
     if (!selected || selected.side === side) {
       const unselect = selected?.side === side && selected.index === index;
       setSelected(unselect ? null : { side, index });
+      playSound(unselect ? 'tap' : 'select');
       if (side === 'zh' && !unselect) onSay(pairs[index].hanzi);
       return;
     }
@@ -169,6 +174,8 @@ function MatchItem({
     <Animated.View entering={FadeInDown.duration(motion.base).delay(delay)} style={shake}>
       <PressableScale
         onPress={onPress}
+        // pick() plays the sound: a select, or how the pair went.
+        sound={null}
         disabled={done}
         accessibilityRole="button"
         accessibilityLabel={label}

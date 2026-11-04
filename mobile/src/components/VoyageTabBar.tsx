@@ -13,6 +13,7 @@ import Animated, {
 import Svg, { Path } from 'react-native-svg';
 
 import { Sailboat } from '@/components/art/Sailboat';
+import { playSound } from '@/lib/sounds';
 import { colors, fonts, motion } from '@/theme/theme';
 
 import { Text } from './Text';
@@ -84,6 +85,7 @@ export function VoyageTabBar({ state, descriptors, emitter, navigateToTab, inset
           const onPress = () => {
             const event = emitter.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
             if (!focused && !event.defaultPrevented) {
+              playSound('swish');
               void Haptics.selectionAsync();
               navigateToTab(route.key);
             }

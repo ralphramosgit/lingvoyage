@@ -7,6 +7,7 @@ import { PressableScale } from '@/components/PressableScale';
 import { Text } from '@/components/Text';
 import type { Part, Unit } from '@/content/lessons/types';
 import { isUnitDone, lessonsDone } from '@/lib/course';
+import { useSheetSound } from '@/lib/sounds';
 import type { UnitProgress } from '@/lib/unitProgress';
 import { PART_TINTS, UnitIcon } from '@/lib/unitVisuals';
 import { colors, layout, motion, radii, shadows, spacing, tints } from '@/theme/theme';
@@ -33,6 +34,8 @@ export function UnitMenu({
   onPick: (unit: Unit) => void;
   onClose: () => void;
 }) {
+  useSheetSound();
+
   // Android's back button closes the list rather than leaving the tab.
   useEffect(() => {
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {

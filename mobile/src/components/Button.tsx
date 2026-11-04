@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react-native';
 import { ActivityIndicator, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
+import type { SoundName } from '@/lib/sounds';
 import { colors, fonts, layout, radii, spacing } from '@/theme/theme';
 
 import { PressableScale } from './PressableScale';
@@ -20,6 +21,8 @@ export type ButtonProps = {
   style?: StyleProp<ViewStyle>;
   accessibilityHint?: string;
   testID?: string;
+  /** Played on press. Default 'tap'; null when the press makes its own sound. */
+  sound?: SoundName | null;
 };
 
 // `edge` is the darker lip along the bottom that makes a button look pressable.
@@ -43,6 +46,7 @@ export function Button({
   style,
   accessibilityHint,
   testID,
+  sound,
 }: ButtonProps) {
   const palette = VARIANTS[variant];
   const inactive = disabled || loading;
@@ -51,6 +55,7 @@ export function Button({
   return (
     <PressableScale
       onPress={onPress}
+      sound={sound}
       disabled={inactive}
       accessibilityRole="button"
       accessibilityLabel={label}

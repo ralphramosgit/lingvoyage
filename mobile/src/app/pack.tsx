@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { ChevronLeft, Circle, CircleCheck, ExternalLink, MapPin, RotateCcw, TriangleAlert } from 'lucide-react-native';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
@@ -16,6 +16,7 @@ import { VoyageLoader } from '@/components/VoyageLoader';
 import { cityName, useCities } from '@/hooks/useCities';
 import { canRetry, usePack } from '@/hooks/usePack';
 import { packSummary, shortDate, STAGES, StepIcon, stepAccessibilityLabel, workerLabel } from '@/lib/packVisuals';
+import { playSound } from '@/lib/sounds';
 import { openSource } from '@/lib/sources';
 import type { PackStatus, PackStep } from '@/types/api';
 import { colors, motion, radii, spacing } from '@/theme/theme';
@@ -42,6 +43,15 @@ export default function PackScreen() {
   const { city, status, pack, error, loading, building, retry } = usePack();
   const [allSources, setAllSources] = useState(false);
   const name = city ? cityName(cities, city) : '';
+
+  // The harp flourish if the pack finishes while you watch it being built, and a low note if it fails.
+  const packState = status?.status;
+  const working = useRef(false);
+  useEffect(() => {
+    if (working.current && packState === 'ready') playSound('complete');
+    else if (working.current && packState === 'failed') playSound('wrong');
+    working.current = packState === 'queued' || packState === 'running';
+  }, [packState]);
 
   const header = (
     <View style={styles.topBar}>

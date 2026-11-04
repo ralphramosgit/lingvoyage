@@ -12,6 +12,7 @@ import { Text } from '@/components/Text';
 import type { UnitExercise } from '@/content/lessons/types';
 import { stopPlayback } from '@/lib/audio';
 import { useSettings } from '@/lib/settings';
+import { playSound } from '@/lib/sounds';
 import { hit, HULL, HullLeftContext, NEW_VOYAGE, retryOrder, sailOn } from '@/lib/voyage';
 import { colors, layout, radii, spacing } from '@/theme/theme';
 import type { KeyPhrase } from '@/types/api';
@@ -97,7 +98,10 @@ export function LessonPlayer({
     setFirstTry(score);
     if (challenge) {
       const next = sailOn(voyage, rightFirstTime);
-      if (next.patches > voyage.patches) announce(`Leak patched! Hull ${next.hull} of ${HULL}.`);
+      if (next.patches > voyage.patches) {
+        playSound('patch');
+        announce(`Leak patched! Hull ${next.hull} of ${HULL}.`);
+      }
       setVoyage(next);
     }
     if (index + 1 < total) {
@@ -105,6 +109,7 @@ export function LessonPlayer({
       return;
     }
     onFinished(score, total);
+    playSound('complete');
     setPhase('done');
   };
 
@@ -115,10 +120,12 @@ export function LessonPlayer({
     // This question had already cost its most.
     if (next.hits === voyage.hits) return;
     if (next.hull > 0) {
+      playSound('hullHit');
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
       announce(`The boat took a hit. Hull ${next.hull} of ${HULL}.`);
       return;
     }
+    playSound('sink');
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     announce("The boat sank! Have a look at what sank it, then retry when you're ready.");
     setPhase('sunk');

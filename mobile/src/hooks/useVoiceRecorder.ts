@@ -13,7 +13,7 @@ import * as Haptics from 'expo-haptics';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSharedValue, withTiming } from 'react-native-reanimated';
 
-import { invalidatePlaybackMode, restorePlaybackMode, stopPlayback, waitForAudioSessionToSettle } from '@/lib/audio';
+import { invalidatePlaybackMode, markMicOpening, restorePlaybackMode, stopPlayback, waitForAudioSessionToSettle } from '@/lib/audio';
 import { bytesToBase64, PCM_SAMPLE_RATE, pcmDurationMs, pcmLevel, pcmToWav } from '@/lib/pcm';
 
 // Recordings normally come from the mic *stream* (16 kHz PCM), which lets the app show live
@@ -127,8 +127,9 @@ export function useVoiceRecorder(options: { onPcm?: (pcm: Uint8Array) => void } 
       setPermission('granted');
       setStatus('starting');
 
+      markMicOpening();
       stopPlayback();
-      // Let expo-audio's delayed session shutdown (after playback) pass before we record.
+      // Let expo-audio's delayed session shutdown (after playback, or a sound effect) pass before we record.
       await waitForAudioSessionToSettle();
       await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
       invalidatePlaybackMode();

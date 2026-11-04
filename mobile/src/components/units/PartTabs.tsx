@@ -4,6 +4,7 @@ import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTimin
 
 import { Text } from '@/components/Text';
 import type { Part, PartId } from '@/content/lessons/types';
+import { playSound } from '@/lib/sounds';
 import { colors, motion, radii, spacing } from '@/theme/theme';
 
 /** The Lessons tab's tabs, one per part of the course, with a highlight that slides to the selected one. */
@@ -48,7 +49,10 @@ export function PartTabs({
           return (
             <Pressable
               key={part.id}
-              onPress={() => onSelect(part.id)}
+              onPress={() => {
+                if (!active) playSound('segment');
+                onSelect(part.id);
+              }}
               accessibilityRole="tab"
               accessibilityLabel={`${part.title}. ${status(part.id)}`}
               accessibilityState={{ selected: active }}

@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/Text';
+import { playSound } from '@/lib/sounds';
 import { colors, radii, spacing } from '@/theme/theme';
 
 export type SceneView = 'city' | 'default';
@@ -21,7 +22,10 @@ export function SceneToggle({ city, value, onChange }: { city: string; value: Sc
         return (
           <Pressable
             key={option.id}
-            onPress={() => onChange(option.id)}
+            onPress={() => {
+              if (!active) playSound('segment');
+              onChange(option.id);
+            }}
             accessibilityRole="tab"
             accessibilityLabel={option.label}
             accessibilityHint={option.hint}

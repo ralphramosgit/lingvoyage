@@ -13,6 +13,7 @@ import { VoyageLoader } from '@/components/VoyageLoader';
 import { useCities } from '@/hooks/useCities';
 import { findNearestCity, NEAR_CITY_KM } from '@/lib/location';
 import type { ChinaMapHandle } from '@/lib/mapPins';
+import { playSound } from '@/lib/sounds';
 import type { City } from '@/types/api';
 import { colors, motion, radii, shadows, spacing } from '@/theme/theme';
 
@@ -77,6 +78,7 @@ export function DestinationMap({
     const problem = await onChoose(sheet.city.slug);
     setSaving(false);
     if (problem) setSaveError(problem);
+    else playSound('goal');
   };
 
   const useMyLocation = async () => {

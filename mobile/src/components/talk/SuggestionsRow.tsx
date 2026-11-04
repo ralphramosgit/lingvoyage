@@ -38,6 +38,7 @@ function SuggestionChip({
       <PressableScale
         onPress={() => play(false)}
         onLongPress={() => play(true)}
+        sound={null}
         accessibilityRole="button"
         accessibilityLabel={`${phrase.english}. ${phrase.pinyin}`}
         accessibilityHint="Plays the phrase. The turtle button plays it slowly."
@@ -66,6 +67,7 @@ function SuggestionChip({
           icon={Turtle}
           accessibilityLabel={`Play slowly: ${phrase.english}`}
           onPress={() => play(true)}
+          sound={null}
           loading={loadingKey === slowKey}
           size={32}
           iconSize={16}

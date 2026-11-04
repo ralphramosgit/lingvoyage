@@ -12,7 +12,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { ProfileErrorOverlay } from '@/components/ProfileErrorOverlay';
 import { AuthProvider, useAuth } from '@/lib/auth';
-import { SettingsProvider } from '@/lib/settings';
+import { SettingsProvider, useSettings } from '@/lib/settings';
+import { setSoundsEnabled } from '@/lib/sounds';
 import { colors } from '@/theme/theme';
 
 // Keep the splash screen up until fonts and the first session/profile check are done.
@@ -30,6 +31,7 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <SettingsProvider>
+        <SoundEffectsSetting />
         <AuthProvider>
           <StatusBar style="dark" />
           {/* If fonts fail to load, carry on with the system font rather than hang on the splash. */}
@@ -38,6 +40,18 @@ export default function RootLayout() {
       </SettingsProvider>
     </SafeAreaProvider>
   );
+}
+
+/** Turns sound effects on or off with their setting, once the saved settings have loaded. */
+function SoundEffectsSetting() {
+  const { settings, loaded } = useSettings();
+  const on = settings.soundEffects;
+
+  useEffect(() => {
+    if (loaded) setSoundsEnabled(on);
+  }, [loaded, on]);
+
+  return null;
 }
 
 function RootNavigator({ fontsReady }: { fontsReady: boolean }) {

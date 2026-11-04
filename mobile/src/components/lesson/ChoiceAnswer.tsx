@@ -54,6 +54,7 @@ export function ChoiceAnswer({
           <Animated.View key={optionIndex} entering={FadeInDown.duration(motion.base).delay(position * motion.stagger)}>
             <PressableScale
               onPress={() => onSelect(optionIndex)}
+              sound="select"
               disabled={disabled}
               accessibilityRole="radio"
               accessibilityLabel={optionLabel(option)}

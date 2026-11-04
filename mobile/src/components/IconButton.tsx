@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react-native';
 import { ActivityIndicator, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 
+import type { SoundName } from '@/lib/sounds';
 import { colors, layout, radii } from '@/theme/theme';
 
 import { PressableScale } from './PressableScale';
@@ -22,6 +23,8 @@ export type IconButtonProps = {
   active?: boolean;
   accessibilityHint?: string;
   style?: StyleProp<ViewStyle>;
+  /** Played on press. Default 'tap'; null when the press makes its own sound or plays the Chinese. */
+  sound?: SoundName | null;
 };
 
 const VARIANTS: Record<Variant, { bg: string; fg: string; border: string }> = {
@@ -46,6 +49,7 @@ export function IconButton({
   active,
   accessibilityHint,
   style,
+  sound,
 }: IconButtonProps) {
   const palette = VARIANTS[variant];
   const fg = color ?? palette.fg;
@@ -56,6 +60,7 @@ export function IconButton({
     <PressableScale
       onPress={onPress}
       onLongPress={onLongPress}
+      sound={sound}
       disabled={disabled || loading}
       hitSlop={hitSlop}
       accessibilityRole="button"

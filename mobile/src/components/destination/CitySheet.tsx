@@ -11,6 +11,7 @@ import { IconButton } from '@/components/IconButton';
 import { Pill } from '@/components/Pill';
 import { Text } from '@/components/Text';
 import { cityLook } from '@/lib/cityVisuals';
+import { useSheetSound } from '@/lib/sounds';
 import type { City } from '@/types/api';
 import { colors, layout, motion, radii, spacing } from '@/theme/theme';
 
@@ -47,6 +48,7 @@ export function CitySheet({
 }) {
   const insets = useSafeAreaInsets();
   const close = saving ? () => undefined : onClose;
+  useSheetSound(visible);
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={close} statusBarTranslucent>
@@ -58,7 +60,7 @@ export function CitySheet({
             accessibilityViewIsModal>
             <View style={styles.handle} />
             <View style={styles.closeRow}>
-              <IconButton icon={X} accessibilityLabel="Close" onPress={close} disabled={saving} />
+              <IconButton icon={X} accessibilityLabel="Close" onPress={close} disabled={saving} sound={null} />
             </View>
 
             <View style={styles.hero}>

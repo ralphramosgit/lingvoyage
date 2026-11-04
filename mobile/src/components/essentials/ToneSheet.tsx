@@ -9,6 +9,7 @@ import { SpeakerButton } from '@/components/SpeakerButton';
 import { Text } from '@/components/Text';
 import type { ToneChar, ToneSlots } from '@/content/essentials/types';
 import { withToneMark } from '@/lib/pinyin';
+import { useSheetSound } from '@/lib/sounds';
 import { colors, layout, motion, radii, spacing } from '@/theme/theme';
 
 import { EntrySpeakers } from './EntryRow';
@@ -32,6 +33,7 @@ export function ToneSheet({
   const onError = useAudioError();
   const audioError = useAudioErrorMessage();
   const used = tones.filter((slot): slot is ToneChar => slot !== null);
+  useSheetSound();
 
   // Android's back button closes the sheet rather than leaving the chart.
   useEffect(() => {
@@ -69,7 +71,7 @@ export function ToneSheet({
                 onError={onError}
               />
             ) : null}
-            <IconButton icon={X} accessibilityLabel="Close the tones" onPress={onClose} />
+            <IconButton icon={X} accessibilityLabel="Close the tones" onPress={onClose} sound={null} />
           </View>
           {audioError ? <FormMessage message={audioError} /> : null}
           <ScrollView style={styles.list} contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>

@@ -43,13 +43,25 @@ export function usePlayback(): PlaybackState {
 let player: AudioPlayer | null = null;
 let statusSubscription: { remove: () => void } | null = null;
 let playbackModeReady = false;
+// From when the mic starts opening until playback mode is back. Sound effects stay quiet then: they'd
+// be heard in the recording, and switching to playback mode for one would end it.
+let micOpen = false;
+
+/** Called by the recorder as it starts opening the mic. */
+export function markMicOpening() {
+  micOpen = true;
+}
+
+export function isMicOpen() {
+  return micOpen;
+}
 
 /** The recorder flips the audio session into recording mode; this flips it back before playing. */
 export function invalidatePlaybackMode() {
   playbackModeReady = false;
 }
 
-async function ensurePlaybackMode() {
+export async function ensurePlaybackMode() {
   if (playbackModeReady) return;
   // The mic stream leaves iOS in 'measurement' mode, which plays everything much quieter: every reply
   // after the learner speaks. expo-audio only resets the mode when it sets a category without options,
@@ -65,7 +77,11 @@ async function ensurePlaybackMode() {
 /** Back to playback right away, e.g. when a recording ends, so the next reply doesn't start mid-switch. */
 export async function restorePlaybackMode() {
   playbackModeReady = false;
-  await ensurePlaybackMode();
+  try {
+    await ensurePlaybackMode();
+  } finally {
+    micOpen = false;
+  }
 }
 
 // On iOS, expo-audio deactivates the audio session about 100 ms after a player pauses or
@@ -75,8 +91,9 @@ export async function restorePlaybackMode() {
 const SESSION_SETTLE_MS = 300;
 let lastSessionReleaseAt = 0;
 
-function markSessionRelease() {
-  lastSessionReleaseAt = Date.now();
+/** `at` can be in the future: a sound effect notes when it will finish as it starts. */
+export function markSessionRelease(at = Date.now()) {
+  lastSessionReleaseAt = Math.max(lastSessionReleaseAt, at);
 }
 
 /** Resolves once any pending audio-session deactivation from playback has happened. */
