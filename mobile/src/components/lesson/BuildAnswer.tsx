@@ -3,6 +3,7 @@ import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 
 import { PressableScale } from '@/components/PressableScale';
 import { Text } from '@/components/Text';
+import type { SoundName } from '@/lib/sounds';
 import { colors, motion, radii, spacing } from '@/theme/theme';
 import type { Tile } from '@/types/api';
 
@@ -51,6 +52,7 @@ export function BuildAnswer({
               disabled={locked}
               colors={line}
               accessibilityHint="Takes this word back out"
+              sound="tileRemove"
               onPress={() => onUnpick(bankIndex)}
             />
           </Animated.View>
@@ -76,6 +78,7 @@ export function BuildAnswer({
                   disabled={locked}
                   colors={LINE_TILE.building}
                   accessibilityHint="Adds this word to your sentence"
+                  sound="tilePlace"
                   onPress={() => onPick(bankIndex)}
                 />
               )}
@@ -93,6 +96,7 @@ function TileButton({
   disabled,
   colors: palette,
   accessibilityHint,
+  sound,
   onPress,
 }: {
   tile: Tile;
@@ -100,11 +104,13 @@ function TileButton({
   disabled: boolean;
   colors: { bg: string; border: string };
   accessibilityHint: string;
+  sound: SoundName;
   onPress: () => void;
 }) {
   return (
     <PressableScale
       onPress={onPress}
+      sound={sound}
       disabled={disabled}
       accessibilityRole="button"
       accessibilityLabel={tile.hanzi === tile.pinyin ? tile.hanzi : `${tile.hanzi}, ${tile.pinyin}`}

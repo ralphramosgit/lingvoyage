@@ -4,6 +4,7 @@ import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTimin
 
 import { Text } from '@/components/Text';
 import type { QuizSection, QuizSectionId } from '@/content/quizzes/types';
+import { playSound } from '@/lib/sounds';
 import { colors, motion, radii, spacing } from '@/theme/theme';
 
 /** The Quiz tab's sections (Units, Mixed, Skills, and the learner's city), with a highlight that slides to the selected one, like PartTabs. */
@@ -45,7 +46,10 @@ export function SectionTabs({
           return (
             <Pressable
               key={section.id}
-              onPress={() => onSelect(section.id)}
+              onPress={() => {
+                if (!active) playSound('segment');
+                onSelect(section.id);
+              }}
               accessibilityRole="tab"
               accessibilityLabel={`${section.title}. ${section.summary}`}
               accessibilityState={{ selected: active }}

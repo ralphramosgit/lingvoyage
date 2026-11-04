@@ -97,6 +97,8 @@ function MicButton({
       <Animated.View pointerEvents="none" style={[styles.micRing, levelStyle]} />
       <PressableScale
         onPress={onPress}
+        // Starting is felt (a haptic), stopping and sending have their own sounds.
+        sound={null}
         disabled={disabled}
         scaleTo={0.94}
         accessibilityRole="button"
@@ -311,6 +313,7 @@ export function InputBar({
             onPress={onSend}
             variant="primary"
             disabled={disabled || draft.trim() === ''}
+            sound={null}
           />
         </View>
       )}

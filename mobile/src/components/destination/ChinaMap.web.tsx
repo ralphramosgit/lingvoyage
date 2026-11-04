@@ -22,6 +22,7 @@ export function ChinaMap({ cities, selected, onPick, ref }: ChinaMapProps) {
           <PressableScale
             key={city.slug}
             onPress={() => onPick(city, [])}
+            sound="select"
             accessibilityRole="button"
             accessibilityLabel={city.available ? city.name : `${city.name}, coming soon`}>
             <CityPin city={city} selected={city.slug === selected} />

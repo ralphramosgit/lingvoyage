@@ -51,6 +51,7 @@ export default function PinyinChartScreen() {
               <PressableScale
                 key={item.id || 'none'}
                 onPress={() => setInitialId(item.id)}
+                sound={active ? 'tap' : 'segment'}
                 accessibilityRole="tab"
                 accessibilityLabel={item.id ? `Starts with ${item.label}` : 'No initial'}
                 accessibilityState={{ selected: active }}

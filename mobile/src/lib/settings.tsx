@@ -9,6 +9,8 @@ export type Settings = {
   tapToHear: boolean;
   /** Lessons and quizzes: sail with a hull that each miss damages, and start over if the boat sinks (issue #61). */
   challengeMode: boolean;
+  /** Taps, answers, tabs and the voyage make little sounds (issue #76). */
+  soundEffects: boolean;
 };
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -17,6 +19,7 @@ export const DEFAULT_SETTINGS: Settings = {
   autoPlay: true,
   tapToHear: true,
   challengeMode: false,
+  soundEffects: true,
 };
 
 const STORAGE_KEY = 'lingvoyage.settings.v1';

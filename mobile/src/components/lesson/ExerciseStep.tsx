@@ -1,6 +1,6 @@
 import * as Haptics from 'expo-haptics';
 import { ArrowRight, BookOpen, CircleCheck, Lightbulb, RotateCcw } from 'lucide-react-native';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 
@@ -11,6 +11,7 @@ import type { UnitExercise } from '@/content/lessons/types';
 import { errorMessage } from '@/lib/api';
 import { playPhrase } from '@/lib/audio';
 import { hasBlank, isBuildRight, MISSES_BEFORE_REVEAL, pickOne, RIGHT_MESSAGES, shuffled, WRONG_MESSAGES } from '@/lib/lessons';
+import { playSound, soundsEnabled } from '@/lib/sounds';
 import { colors, layout, motion, radii, spacing } from '@/theme/theme';
 import type { KeyPhrase } from '@/types/api';
 
@@ -19,6 +20,9 @@ import { ChoiceAnswer } from './ChoiceAnswer';
 import { MatchAnswer } from './MatchAnswer';
 
 type Status = 'answering' | 'missed' | 'right' | 'revealed';
+
+/** Long enough for the right/wrong sound's first notes to ring before the answer is spoken. */
+const ANSWER_AFTER_SOUND_MS = 350;
 
 const PANELS = {
   right: { bg: '#F0FDF4', border: '#BBF7D0', fg: '#166534', icon: CircleCheck },
@@ -77,9 +81,20 @@ export function ExerciseStep({
     playPhrase(text).catch((error: unknown) => onAudioError(errorMessage(error, "Couldn't play that phrase.")));
   };
 
+  // The answer is heard just after the right/wrong sound, not on top of it.
+  const answerTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (answerTimer.current) clearTimeout(answerTimer.current);
+    },
+    [],
+  );
+
   // Question types with English options get their Chinese here, once it's answered.
   const sayAnswer = () => {
-    if (exercise.kind !== 'match') say(exercise.solution.hanzi);
+    if (exercise.kind === 'match') return;
+    const { hanzi } = exercise.solution;
+    answerTimer.current = setTimeout(() => say(hanzi), soundsEnabled() ? ANSWER_AFTER_SOUND_MS : 0);
   };
 
   // Listening options stay silent: hearing each one would give the answer away.
@@ -98,6 +113,7 @@ export function ExerciseStep({
     setMessage(message);
     setStatus('right');
     sayAnswer();
+    playSound('correct');
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     AccessibilityInfo.announceForAccessibility(message);
   };
@@ -122,6 +138,7 @@ export function ExerciseStep({
     setMisses(nextMisses);
     setHintShown(true);
     if (exercise.kind !== 'build' && selected !== null) setMissedOptions((current) => [...current, selected]);
+    playSound('wrong');
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (nextMisses >= MISSES_BEFORE_REVEAL) {
       setMessage("Here's the answer");
@@ -253,6 +270,7 @@ export function ExerciseStep({
                 icon={Lightbulb}
                 variant="secondary"
                 size="md"
+                sound="hint"
                 onPress={() => setHintShown(true)}
                 accessibilityHint="Shows a clue for this question"
               />
@@ -266,11 +284,13 @@ export function ExerciseStep({
                   icon={Lightbulb}
                   variant="secondary"
                   size="md"
+                  sound="hint"
                   onPress={() => setHintShown(true)}
                   accessibilityHint="Shows a clue for this question"
                 />
               )}
-              <Button label="Check" size="md" disabled={!ready} onPress={check} style={styles.flex} />
+              {/* No tap: the answer's own sound follows straight away. */}
+              <Button label="Check" size="md" disabled={!ready} onPress={check} sound={null} style={styles.flex} />
             </View>
           ) : null}
           {status !== 'answering' ? (
@@ -359,6 +379,8 @@ function FeedbackPanel({
           icon={ArrowRight}
           iconPosition="right"
           size="md"
+          // Finishing has its own sound, the harp flourish.
+          sound={isLast ? null : 'tap'}
           onPress={onContinue}
         />
       )}

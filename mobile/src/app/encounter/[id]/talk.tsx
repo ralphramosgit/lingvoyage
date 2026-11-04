@@ -40,6 +40,7 @@ import { clearConversationAudio, releasePlayer, usePlayback } from '@/lib/audio'
 import { recordEncounter } from '@/lib/progress';
 import { sceneKind } from '@/lib/scenarioVisuals';
 import { useSettings } from '@/lib/settings';
+import { playSound } from '@/lib/sounds';
 import { colors, layout, spacing } from '@/theme/theme';
 
 const HINT_MS = 2500;
@@ -75,6 +76,8 @@ export default function TalkScreen() {
   const progressSaved = useRef(false);
   const stopping = useRef(false);
   const previousGoalCount = useRef(0);
+  const previousLineCount = useRef(0);
+  const celebrated = useRef(false);
 
   const { start, send, retry, reset, completedGoalIds, complete, thinking, messages, suggestions } = conversation;
 
@@ -102,13 +105,27 @@ export default function TalkScreen() {
     [],
   );
 
-  // Haptic cheer for every newly completed goal.
+  // A chime and a haptic cheer for every newly completed goal, or else a soft pop for each new line
+  // from the character.
+  const lineCount = messages.filter((message) => message.kind === 'npc').length;
   useEffect(() => {
     if (completedGoalIds.length > previousGoalCount.current) {
+      playSound('goal');
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } else if (lineCount > previousLineCount.current) {
+      playSound('receive');
     }
     previousGoalCount.current = completedGoalIds.length;
-  }, [completedGoalIds.length]);
+    previousLineCount.current = lineCount;
+  }, [completedGoalIds.length, lineCount]);
+
+  // The harp flourish for finishing, with the summary, once the goodbye line has been heard.
+  const lineSpeaking = playingKey?.startsWith('line') ?? false;
+  useEffect(() => {
+    if (!sheetVisible || lineSpeaking || celebrated.current) return;
+    celebrated.current = true;
+    playSound('complete');
+  }, [sheetVisible, lineSpeaking]);
 
   // Finished: save progress once, then show the sheet after the goodbye line lands.
   useEffect(() => {
@@ -181,6 +198,7 @@ export default function TalkScreen() {
     try {
       const preview = live.end();
       const result = await recorder.finish('keep');
+      if (result.status !== 'cancelled') playSound('micOff');
       if (result.status === 'too_short') setHint('Hold on a little longer');
       else if (result.status === 'error') setHint(result.message);
       else if (result.status === 'ok') voice.check({ base64: result.base64, mime: result.mime }, preview);
@@ -224,13 +242,14 @@ export default function TalkScreen() {
 
   const onCancelRecording = () => {
     live.end();
-    void recorder.finish('cancel');
+    void recorder.finish('cancel').then(() => playSound('micOff'));
   };
 
   const onSendVoice = async () => {
     if (voice.draft?.status !== 'ready' || thinking || complete) return;
     const { text, translation } = voice.draft;
     voice.clear();
+    playSound('send');
     await send({ type: 'voice', text, gloss: translation?.status === 'done' ? translation.gloss : undefined });
   };
 
@@ -238,6 +257,7 @@ export default function TalkScreen() {
     const text = draft.trim();
     if (!text || thinking || complete) return;
     setDraft('');
+    playSound('send');
     await send({ type: 'text', text });
   };
 
@@ -257,6 +277,7 @@ export default function TalkScreen() {
     setDraftEnglishPref(null);
     progressSaved.current = false;
     previousGoalCount.current = 0;
+    celebrated.current = false;
     reset();
     void start();
   };

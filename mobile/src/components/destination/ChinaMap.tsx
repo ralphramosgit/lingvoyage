@@ -4,6 +4,7 @@ import MapView, { type LatLng, type MapStyleElement, Marker, type Region } from 
 
 import { cityLook } from '@/lib/cityVisuals';
 import { type ChinaMapProps, groupPins, type PinGroup, pinBox } from '@/lib/mapPins';
+import { playSound } from '@/lib/sounds';
 import type { City } from '@/types/api';
 
 import { CityPin } from './CityPin';
@@ -96,11 +97,11 @@ export function ChinaMap({ cities, selected, onPick, overlay = { top: 0, bottom:
             group={group}
             selected={group.city.slug === selected}
             // An open city's pin opens its sheet; a coming-soon pin with others under it zooms in to them.
-            onPress={() =>
-              group.city.available || group.hidden.length === 0
-                ? onPick(group.city, group.hidden)
-                : fit([group.city, ...group.hidden])
-            }
+            onPress={() => {
+              playSound('select');
+              if (group.city.available || group.hidden.length === 0) onPick(group.city, group.hidden);
+              else fit([group.city, ...group.hidden]);
+            }}
           />
         ))}
       </MapView>

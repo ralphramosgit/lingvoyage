@@ -4,6 +4,7 @@ import { Sailboat } from '@/components/art/Sailboat';
 import { Card } from '@/components/Card';
 import { Text } from '@/components/Text';
 import { useSettings } from '@/lib/settings';
+import { playSound } from '@/lib/sounds';
 import { HULL, REPAIR_STREAK } from '@/lib/voyage';
 import { colors, radii, spacing } from '@/theme/theme';
 
@@ -27,7 +28,10 @@ export function ChallengeModeCard() {
       </View>
       <Switch
         value={on}
-        onValueChange={(value) => updateSetting('challengeMode', value)}
+        onValueChange={(value) => {
+          playSound(value ? 'toggleOn' : 'toggleOff');
+          updateSetting('challengeMode', value);
+        }}
         trackColor={{ true: colors.sky500, false: colors.line }}
         ios_backgroundColor={colors.line}
         accessibilityLabel="Challenge mode"

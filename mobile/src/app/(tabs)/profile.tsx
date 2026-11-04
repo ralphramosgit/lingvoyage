@@ -10,6 +10,7 @@ import {
   type LucideIcon,
   Map as MapIcon,
   MapPin,
+  Music,
   Sailboat,
   Volume2,
 } from 'lucide-react-native';
@@ -27,6 +28,7 @@ import { usePack } from '@/hooks/usePack';
 import { useScenarios } from '@/hooks/useScenarios';
 import { useAuth } from '@/lib/auth';
 import { type Settings, useSettings } from '@/lib/settings';
+import { playSound, setSoundsEnabled } from '@/lib/sounds';
 import { colors, fonts, motion, radii, spacing, tints } from '@/theme/theme';
 
 function initialsOf(name: string | null | undefined, email: string | undefined): string {
@@ -42,6 +44,7 @@ const SETTING_ROWS: { key: keyof Settings; label: string; description: string; i
   { key: 'autoPlay', label: 'Auto-play voice', description: 'Hear each reply as it arrives', icon: Volume2 },
   { key: 'tapToHear', label: 'Hear words as you tap', description: 'Answers, tiles and pairs in lessons and quizzes', icon: Ear },
   { key: 'challengeMode', label: 'Challenge mode', description: 'Lessons and quizzes: misses can sink the boat', icon: Sailboat },
+  { key: 'soundEffects', label: 'Sound effects', description: 'Taps, right answers, tabs and the voyage', icon: Music },
 ];
 
 export default function ProfileScreen() {
@@ -193,7 +196,12 @@ export default function ProfileScreen() {
                 </View>
                 <Switch
                   value={settings[row.key]}
-                  onValueChange={(value) => updateSetting(row.key, value)}
+                  onValueChange={(value) => {
+                    // Straight away, so turning them on is heard.
+                    if (row.key === 'soundEffects') setSoundsEnabled(value);
+                    playSound(value ? 'toggleOn' : 'toggleOff');
+                    updateSetting(row.key, value);
+                  }}
                   trackColor={{ true: colors.sky500, false: colors.line }}
                   ios_backgroundColor={colors.line}
                   accessibilityLabel={row.label}

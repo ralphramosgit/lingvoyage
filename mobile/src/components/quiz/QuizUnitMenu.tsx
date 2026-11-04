@@ -7,6 +7,7 @@ import { PressableScale } from '@/components/PressableScale';
 import { Text } from '@/components/Text';
 import type { Part, Unit } from '@/content/lessons/types';
 import { readyQuizzes } from '@/content/quizzes/quizzes';
+import { useSheetSound } from '@/lib/sounds';
 import { PART_TINTS, UnitIcon } from '@/lib/unitVisuals';
 import { colors, layout, motion, radii, shadows, spacing, tints } from '@/theme/theme';
 
@@ -33,6 +34,8 @@ export function QuizUnitMenu({
 }) {
   const scrollRef = useRef<ScrollViewInstance>(null);
   const scrolled = useRef(false);
+
+  useSheetSound();
 
   // Android's back button closes the list rather than leaving the tab.
   useEffect(() => {

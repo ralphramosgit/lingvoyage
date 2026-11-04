@@ -42,6 +42,7 @@ export function SpeakerButton({
       iconSize={size >= 40 ? 20 : 18}
       color={playing ? '#FFFFFF' : colors.sky700}
       active={playing}
+      sound={null}
     />
   );
 }
