@@ -1,14 +1,21 @@
 import { ArrowLeft, ArrowRight, Mic } from 'lucide-react-native';
-import type { ReactNode } from 'react';
+import { type ReactNode, use } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, ZoomIn } from 'react-native-reanimated';
 
+import { Sailboat } from '@/components/art/Sailboat';
 import { Seagull } from '@/components/art/Seagull';
 import { Button } from '@/components/Button';
 import { Text } from '@/components/Text';
 import { lessonSummary } from '@/lib/lessons';
+import { HULL, HullLeftContext } from '@/lib/voyage';
 import { colors, layout, motion, radii, spacing } from '@/theme/theme';
 import type { Lesson } from '@/types/api';
+
+function voyageSummary(hullLeft: number) {
+  if (hullLeft === HULL) return 'Flawless voyage: not a scratch on the hull!';
+  return `Made it to port with ${hullLeft} of ${HULL} hull left.`;
+}
 
 /** The cheer at the end of a lesson or checkpoint, with the screen's own buttons below it. */
 export function LessonCompleteView({
@@ -27,6 +34,9 @@ export function LessonCompleteView({
   /** The buttons. */
   children: ReactNode;
 }) {
+  // Set by the lesson player in challenge mode.
+  const hullLeft = use(HullLeftContext);
+
   return (
     <ScrollView
       style={styles.flex}
@@ -56,6 +66,14 @@ export function LessonCompleteView({
             {firstTry * 2 >= total ? 'right on the first try' : 'questions practiced'}
           </Text>
         </Animated.View>
+        {hullLeft === null ? null : (
+          <Animated.View entering={FadeInDown.duration(motion.base).delay(motion.stagger * 2)} style={styles.voyage}>
+            <Sailboat size={30} />
+            <Text variant="label" color={colors.sky700} style={styles.flexShrink}>
+              {voyageSummary(hullLeft)}
+            </Text>
+          </Animated.View>
+        )}
       </View>
 
       <Animated.View entering={FadeInDown.duration(motion.base).delay(motion.stagger * 3)} style={styles.actions}>
@@ -140,6 +158,19 @@ const styles = StyleSheet.create({
     borderRadius: radii.card,
     backgroundColor: '#F0FDF4',
   },
+  voyage: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingLeft: spacing.sm,
+    paddingRight: spacing.lg,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.full,
+    backgroundColor: colors.sky50,
+    borderWidth: 1,
+    borderColor: colors.sky100,
+  },
+  flexShrink: { flexShrink: 1 },
   actions: { gap: spacing.sm },
   upNext: { alignItems: 'center', gap: 2, marginBottom: spacing.xs },
 });

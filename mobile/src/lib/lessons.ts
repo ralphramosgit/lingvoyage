@@ -3,6 +3,9 @@ import type { BuildExercise, Lesson } from '@/types/api';
 /** Marks the gap in a fill-in-the-blank question (BLANK in backend app/lessons.py). */
 export const BLANK = '＿＿';
 
+/** After this many misses a question's answer is shown, so nobody gets stuck. */
+export const MISSES_BEFORE_REVEAL = 2;
+
 export function hasBlank(hanzi: string) {
   return hanzi.includes(BLANK);
 }

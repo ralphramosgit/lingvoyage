@@ -10,6 +10,7 @@ import {
   type LucideIcon,
   Map as MapIcon,
   MapPin,
+  Sailboat,
   Volume2,
 } from 'lucide-react-native';
 import { useState } from 'react';
@@ -40,6 +41,7 @@ const SETTING_ROWS: { key: keyof Settings; label: string; description: string; i
   { key: 'autoEnglish', label: 'Show English automatically', description: 'Otherwise tap to reveal', icon: Eye },
   { key: 'autoPlay', label: 'Auto-play voice', description: 'Hear each reply as it arrives', icon: Volume2 },
   { key: 'tapToHear', label: 'Hear words as you tap', description: 'Answers, tiles and pairs in lessons and quizzes', icon: Ear },
+  { key: 'challengeMode', label: 'Challenge mode', description: 'Lessons and quizzes: misses can sink the boat', icon: Sailboat },
 ];
 
 export default function ProfileScreen() {
@@ -176,7 +178,7 @@ export default function ProfileScreen() {
       </Animated.View>
 
       <Animated.View entering={FadeInDown.duration(motion.base).delay(180)} style={styles.section}>
-        <Text variant="heading">Conversation settings</Text>
+        <Text variant="heading">Settings</Text>
         <Card padded={false}>
           {SETTING_ROWS.map((row, index) => {
             const Icon = row.icon;

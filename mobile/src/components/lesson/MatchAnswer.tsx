@@ -39,7 +39,8 @@ export function MatchAnswer({
   showPinyin: boolean;
   /** Plays a Chinese item: each one tapped, and each pair once it's matched. */
   onSay: (hanzi: string) => void;
-  onMiss: () => void;
+  /** A wrong pair, with the Chinese item that was paired wrong. */
+  onMiss: (pair: KeyPhrase) => void;
   onComplete: () => void;
 }) {
   const [left] = useState(() => shuffled(pairs.map((_, index) => index)));
@@ -67,9 +68,9 @@ export function MatchAnswer({
       return;
     }
     setWrong({ zh, en });
-    onMiss();
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     AccessibilityInfo.announceForAccessibility('Not a pair. Try again.');
+    onMiss(pairs[zh]);
     timer.current = setTimeout(() => {
       setWrong(null);
       setSelected(null);

@@ -7,6 +7,8 @@ export type Settings = {
   autoPlay: boolean;
   /** Lessons and quizzes: play the Chinese of each option, tile or pair as it's tapped, and the answer once it's found. */
   tapToHear: boolean;
+  /** Lessons and quizzes: sail with a hull that each miss damages, and start over if the boat sinks (issue #61). */
+  challengeMode: boolean;
 };
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -14,6 +16,7 @@ export const DEFAULT_SETTINGS: Settings = {
   autoEnglish: false,
   autoPlay: true,
   tapToHear: true,
+  challengeMode: false,
 };
 
 const STORAGE_KEY = 'lingvoyage.settings.v1';
