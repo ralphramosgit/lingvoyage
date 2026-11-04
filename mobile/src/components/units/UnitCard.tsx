@@ -1,4 +1,4 @@
-import { ChevronRight, CircleCheck, Mic } from 'lucide-react-native';
+import { ChevronRight, CircleCheck, MapPin, Mic } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 
 import { Card } from '@/components/Card';
@@ -15,11 +15,14 @@ export function UnitCard({
   unit,
   number,
   progress,
+  destination = false,
   onPress,
 }: {
   unit: Unit;
   number: number;
   progress: UnitProgress;
+  /** A city unit for the learner's destination. */
+  destination?: boolean;
   onPress: () => void;
 }) {
   const palette = tints[PART_TINTS[unit.part]];
@@ -34,7 +37,7 @@ export function UnitCard({
   return (
     <Card
       onPress={onPress}
-      accessibilityLabel={`Unit ${number}: ${unit.title}. ${unit.summary} ${status}.${unit.encounterId ? ' Ends with an encounter.' : ''}`}
+      accessibilityLabel={`Unit ${number}: ${unit.title}. ${unit.summary} ${status}.${destination ? ' Your destination.' : ''}${unit.encounterId ? ' Ends with an encounter.' : ''}`}
       accessibilityHint="Opens the unit"
       style={styles.card}>
       <View style={styles.top}>
@@ -49,6 +52,7 @@ export function UnitCard({
           <Text variant="caption" color={colors.inkMuted}>
             {unit.summary}
           </Text>
+          {destination ? <Pill label="Your trip" icon={MapPin} tone="sun" style={styles.destination} /> : null}
         </View>
         <ChevronRight size={20} color={colors.inkMuted} />
       </View>
@@ -75,6 +79,7 @@ const styles = StyleSheet.create({
   top: { flexDirection: 'row', alignItems: 'center', gap: spacing.lg },
   tile: { width: 52, height: 52, borderRadius: radii.card, alignItems: 'center', justifyContent: 'center' },
   titles: { flex: 1, gap: 2 },
+  destination: { alignSelf: 'flex-start', marginTop: spacing.xs },
   bottom: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   track: { flex: 1, height: 6, borderRadius: 3, backgroundColor: colors.line, overflow: 'hidden' },
   fill: { height: '100%', borderRadius: 3, backgroundColor: colors.success },

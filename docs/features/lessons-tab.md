@@ -8,7 +8,7 @@ The full plan for the Lessons tab: what it teaches, how its screens work, how pr
 
 ## 1. What the Lessons tab is
 
-**A short course in beginner Mandarin for travelers.** It starts with the basics of the language (tones, greetings, first sentences, numbers, money, time), then works through a trip in order: the airport, the hotel, food, directions, getting around, shopping and emergencies. It ends with culture and etiquette: manners, table manners, luck and festivals.
+**A short course in beginner Mandarin for travelers.** It starts with the basics of the language (tones, greetings, first sentences, quick answers, numbers, money, time), then works through a trip in order: the airport, the hotel, food, directions, getting around, shopping and emergencies. Then come culture and etiquette (manners, table manners, luck and festivals), and finally one unit for each city you can visit: Beijing, Shanghai, Chengdu and Chongqing.
 
 | Tab | What it's for |
 |---|---|
@@ -19,9 +19,9 @@ The full plan for the Lessons tab: what it teaches, how its screens work, how pr
 
 **Who it's for:** an English speaker who has never studied Chinese and has a trip coming up. They study in short sessions on their phone: a few minutes on the bus, a lesson before bed.
 
-**What they can do by the end:** get through the common moments of a trip in simple Mandarin, and handle the moments they can't (by asking someone to slow down, or saying they don't understand).
+**What they can do by the end:** get through the common moments of a trip in simple Mandarin, and handle the moments they can't (by asking someone to slow down, saying they don't understand, or that they don't speak Chinese).
 
-**Size:** 17 units and 63 lessons of 3 to 5 minutes each (390 questions). That's about 4 to 5 hours in total, which someone can realistically finish in the few weeks before a trip.
+**Size:** 22 units and 79 lessons of 3 to 5 minutes each (502 questions). That's about 5 to 6 hours in total, which someone can realistically finish in the few weeks before a trip, or less if they only take their own city's unit.
 
 ### What learners should be able to do
 
@@ -36,12 +36,14 @@ The full plan for the Lessons tab: what it teaches, how its screens work, how pr
 
 ```
 Course
-├── Part 1: Start here: the basics     (units 1–7)
+├── Part 1: Start here: the basics     (units 1–8)
 │     └── Unit ── Lesson, Lesson, Lesson ... ── Checkpoint
-├── Part 2: On your trip               (units 8–14)
+├── Part 2: On your trip               (units 9–15)
 │     └── Unit ── Lesson, Lesson, Lesson ... ── Checkpoint ── Encounter
-└── Part 3: Culture and etiquette      (units 15–17)
-      └── Unit ── Lesson, Lesson, Lesson ... ── Checkpoint
+├── Part 3: Culture and etiquette      (units 16–18)
+│     └── Unit ── Lesson, Lesson, Lesson ... ── Checkpoint
+└── Part 4: City by city               (units 19–22)
+      └── Unit ── Lesson, Lesson, Lesson ── Checkpoint ── Encounter (where one is set in that city)
 ```
 
 - **Unit:** one topic (Numbers, Ordering food). 3 to 5 lessons, then a checkpoint.
@@ -101,7 +103,20 @@ You'll be able to: ask what something is, ask yes-or-no questions, say what you 
 | 3 | I want, I don't want | `我(不)要[thing]。` | 要 yào, 不要 bú yào, 这个 zhège, 水 shuǐ, 茶 chá |
 | 4 | Do you have…? | `有[thing]吗？` | 有 yǒu, 没有 méiyǒu · 有英文菜单吗？Yǒu Yīngwén càidān ma? |
 
-#### Unit 4. About you
+#### Unit 4. Quick answers
+
+Added in #71. Builds on: Hello and thank you, Your first sentences · Essentials: the Quick answers cheat sheet
+
+You'll be able to: answer yes or no to any question, say you're not sure or don't know, say OK or no thanks, and tell people you're a visitor who speaks English.
+
+| # | Lesson | Pattern | Key words and phrases |
+|---|---|---|---|
+| 1 | Yes and no | `[verb]。/ 不[verb]。` Answer with the verb from the question | 要 yào / 不要 bú yào, 会 huì / 不会 bú huì, 有 yǒu / 没有 méiyǒu, 不对 bú duì |
+| 2 | Maybe, not sure, I don't know | | 我不知道。Wǒ bù zhīdào. · 我不确定。Wǒ bú quèdìng. · 可能吧。Kěnéng ba. · 等一下 děng yíxià, 我想想 wǒ xiǎngxiang |
+| 3 | OK, no problem, no thanks | | 好的 hǎo de, 行 xíng, 没问题 méi wèntí, 可以 kěyǐ, 不用了 bú yòng le, 算了 suàn le |
+| 4 | I don't speak Chinese | `我不会说[language]。` | 我只会说一点中文。· 我的母语是英语。Wǒ de mǔyǔ shì Yīngyǔ. · 我是外国人。· 我是游客。· 老外 lǎowài |
+
+#### Unit 5. About you
 
 You'll be able to: say your name, where you're from and why you're in China.
 
@@ -111,7 +126,7 @@ You'll be able to: say your name, where you're from and why you're in China.
 | 2 | Where you're from | `我是[country]人。` · 你是哪国人？Nǐ shì nǎ guó rén? | 美国 Měiguó, 英国 Yīngguó, 加拿大 Jiānádà, 澳大利亚 Àodàlìyà, 中国 Zhōngguó |
 | 3 | Why you're here | 我来中国旅游。Wǒ lái Zhōngguó lǚyóu. | 来 lái, 旅游 lǚyóu, 第一次 dì yī cì, 会 huì, 一点 yìdiǎn · 我会说一点中文。Wǒ huì shuō yìdiǎn Zhōngwén. |
 
-#### Unit 5. Numbers
+#### Unit 6. Numbers
 
 You'll be able to: count to 99, say how many, and give a room or phone number.
 
@@ -124,7 +139,7 @@ You'll be able to: count to 99, say how many, and give a room or phone number.
 
 Uses the sample lesson from #12 as lesson 1.
 
-#### Unit 6. Money
+#### Unit 7. Money
 
 You'll be able to: ask prices, understand the answer, ask for a lower price and say how you'll pay.
 
@@ -137,7 +152,7 @@ You'll be able to: ask prices, understand the answer, ask for a lower price and 
 
 Uses the sample lesson from #12 as lesson 1. Tip for lesson 4: most places in China expect you to pay by scanning a QR code with WeChat Pay or Alipay, so set one up before you go. Tipping isn't expected.
 
-#### Unit 7. Time and dates
+#### Unit 8. Time and dates
 
 You'll be able to: ask and tell the time, and talk about days and dates for bookings.
 
@@ -150,7 +165,7 @@ You'll be able to: ask and tell the time, and talk about days and dates for book
 
 ### Part 2: On your trip
 
-#### Unit 8. Arriving at the airport
+#### Unit 9. Arriving at the airport
 
 Encounter: `airport` · Builds on: Your first sentences, About you, Numbers
 
@@ -163,7 +178,7 @@ You'll be able to: get through passport control, find your bags and the exit, an
 | 3 | Cash and a SIM card | `哪里可以[do something]？` Where can I …? | 换钱 huàn qián, 电话卡 diànhuàkǎ, 可以 kěyǐ |
 | 4 | A ride to the hotel | `我要去[place]。` | 出租车 chūzūchē, 滴滴 Dīdī, 地铁 dìtiě, 巴士 bāshì |
 
-#### Unit 9. Checking in at the hotel
+#### Unit 10. Checking in at the hotel
 
 Encounter: `hotel` · Builds on: About you, Numbers, Time and dates
 
@@ -176,7 +191,7 @@ You'll be able to: check in, find your room, ask about breakfast and wifi, repor
 | 3 | Breakfast and wifi | 早餐几点？Zǎocān jǐ diǎn? · wifi密码是什么？ | 早餐 zǎocān, 密码 mìmǎ |
 | 4 | Problems and checking out | `[thing]坏了。` · 几点退房？Jǐ diǎn tuì fáng? | 空调 kōngtiáo, 坏了 huài le, 热水 rè shuǐ, 退房 tuì fáng |
 
-#### Unit 10. Ordering food
+#### Unit 11. Ordering food
 
 Encounter: `restaurant` · Builds on: Your first sentences, Numbers, Money
 
@@ -190,7 +205,7 @@ You'll be able to: get a table, order, ask for no spice, order drinks, and pay.
 | 4 | Drinks | `我要[drink]。` | 水 shuǐ, 茶 chá, 啤酒 píjiǔ, 冰的 bīng de, 热的 rè de |
 | 5 | The bill and take-away | 买单！Mǎidān! · 可以打包吗？Kěyǐ dǎbāo ma? | 买单 mǎidān, 打包 dǎbāo |
 
-#### Unit 11. Asking directions
+#### Unit 12. Asking directions
 
 Encounter: `train` · Builds on: Your first sentences, Numbers
 
@@ -203,7 +218,7 @@ You'll be able to: ask the way, understand left, right and straight on, and find
 | 3 | Near or far? | 远吗？Yuǎn ma? · `走路[number]分钟。` | 远 yuǎn, 近 jìn, 走路 zǒu lù, 分钟 fēnzhōng |
 | 4 | Floors, exits and platforms | `[number]楼` · `[letter]口` · `[number]号站台` | 楼 lóu, 出口 chūkǒu, 站台 zhàntái, 检票口 jiǎnpiàokǒu |
 
-#### Unit 12. Getting around
+#### Unit 13. Getting around
 
 Encounter: Taking a taxi (`taxi`) · Builds on: Numbers, Money, Asking directions
 
@@ -213,7 +228,7 @@ Encounter: Taking a taxi (`taxi`) · Builds on: Numbers, Money, Asking direction
 | 2 | The metro | `坐[number]号线。` Take line [number]. | 坐 zuò, 号线 hào xiàn, 换乘 huànchéng |
 | 3 | Train tickets | `我要一张去[city]的票。` | 张 zhāng, 票 piào, 高铁 gāotiě, 出发 chūfā |
 
-#### Unit 13. Shopping
+#### Unit 14. Shopping
 
 Encounter: Shopping at a market (`shopping`) · Builds on: Your first sentences, Money
 
@@ -223,7 +238,7 @@ Encounter: Shopping at a market (`shopping`) · Builds on: Your first sentences,
 | 2 | Colors and sizes | `[color]的` | 颜色 yánsè, 红色 hóngsè, 黑色 hēisè, 白色 báisè |
 | 3 | Just looking, or I'll take it | 我看看。Wǒ kànkan. · 我要这个。· 不要了，谢谢。 | 看看 kànkan · 可以试试吗？Kěyǐ shìshi ma? |
 
-#### Unit 14. Help and emergencies
+#### Unit 15. Help and emergencies
 
 Encounter: none · Builds on: Your first sentences, Numbers
 
@@ -239,7 +254,7 @@ Tip for lesson 3: in mainland China, 110 is the police and 120 is an ambulance.
 
 The unwritten rules. Every question still ends on a Chinese phrase with audio, so these units teach language too.
 
-#### Unit 15. Manners and etiquette
+#### Unit 16. Manners and etiquette
 
 Builds on: Hello and thank you, About you
 
@@ -250,7 +265,7 @@ Builds on: Hello and thank you, About you
 | 3 | Giving and receiving | Two hands, refusing once or twice, not opening gifts in front of the giver | 一点小意思 yìdiǎn xiǎo yìsi, 不用了 bú yòng le, 礼物 lǐwù |
 | 4 | Out and about | Signs, lining up, asking before a photo | 可以拍照吗？kěyǐ pāizhào ma?, 禁止吸烟 jìnzhǐ xīyān, 请勿 qǐng wù, 排队 páiduì |
 
-#### Unit 16. At the table
+#### Unit 17. At the table
 
 Builds on: Ordering food
 
@@ -261,7 +276,7 @@ Builds on: Ordering food
 | 3 | Who pays? | The friendly fight over the bill | 我请客 wǒ qǐngkè, 我来 wǒ lái, 下次我请 xià cì wǒ qǐng, AA |
 | 4 | Sharing dishes | The host serves you, serving chopsticks, leaving a little on the plate | 尝尝 chángchang, 吃饱了 chī bǎo le, 公筷 gōngkuài, 慢慢吃 mànmàn chī |
 
-#### Unit 17. Luck, gifts and festivals
+#### Unit 18. Luck, gifts and festivals
 
 Builds on: Numbers, Manners and etiquette
 
@@ -271,6 +286,50 @@ Builds on: Numbers, Manners and etiquette
 | 2 | Colors and gifts | Red for luck, red envelopes, gifts to avoid (clocks, umbrellas, green hats) | 红包 hóngbāo, 送钟 sòng zhōng, 伞 sǎn |
 | 3 | Festivals | Spring Festival, Mid-Autumn, National Day week | 新年快乐 xīnnián kuàilè, 恭喜发财 gōngxǐ fācái, 月饼 yuèbing |
 
+### Part 4: City by city
+
+Added in #71. One unit for each city learners can pick as a destination (`available` in `backend/app/locations/cities.py`): what to see, what to eat, and how locals live, with each city's own words. Each unit has `city` set to the city's slug, so the Lessons tab marks the learner's destination with a "Your trip" pill. The unit links to an encounter only where one is set in that city. These units are written by hand and are the same for everyone; a city pack's "In Chengdu" notes still add to the course units as before. When a new city opens, it gets a unit here too.
+
+#### Unit 19. Beijing
+
+Encounter: Ordering at a noodle shop (`restaurant`) · Builds on: Ordering food, Asking directions
+
+| # | Lesson | Pattern | Key words and phrases |
+|---|---|---|---|
+| 1 | The big sights | `我想去[place]。` I'd like to go to [place] | 故宫 Gùgōng, 长城 Chángchéng, 天坛 Tiāntán, 颐和园 Yíhéyuán, 门票 ménpiào |
+| 2 | Peking duck and more | `我想尝尝[dish]。` | 烤鸭 kǎoyā, 半只 bàn zhī, 炸酱面 zhájiàngmiàn, 饺子 jiǎozi, 糖葫芦 tánghúlu |
+| 3 | Hutongs and the Beijing “r” | `[place]在哪儿？` | 胡同 hútòng, 四合院 sìhéyuàn, 哪儿 nǎr, 这儿 zhèr, 一点儿 yìdiǎnr, 走走 zǒuzou |
+
+#### Unit 20. Shanghai
+
+Encounter: Taking a taxi (`taxi`, to the Bund) · Builds on: Asking directions, Ordering food
+
+| # | Lesson | Pattern | Key words and phrases |
+|---|---|---|---|
+| 1 | The Bund and the skyline | `[place]怎么走？` How do I get to [place]? | 外滩 Wàitān, 东方明珠 Dōngfāng Míngzhū, 江 jiāng, 对面 duìmiàn, 夜景 yèjǐng |
+| 2 | Soup dumplings and sweet sauces | `有点[describing word]。` A bit too … | 小笼包 xiǎolóngbāo, 生煎 shēngjiān, 红烧肉 hóngshāo ròu, 烫 tàng, 甜 tián |
+| 3 | Old lanes and gardens | `我们去[place]逛逛吧。` | 豫园 Yùyuán, 南京路 Nánjīng Lù, 弄堂 lòngtáng, 周末 zhōumò, 人很多 rén hěn duō |
+
+#### Unit 21. Chengdu
+
+Encounter: none · Builds on: Ordering food, At the table
+
+| # | Lesson | Pattern | Key words and phrases |
+|---|---|---|---|
+| 1 | Pandas | `[thing]真可爱！` · `在[verb]` doing it now | 熊猫 xióngmāo, 基地 jīdì, 可爱 kě'ài, 睡觉 shuìjiào, 竹子 zhúzi |
+| 2 | Hotpot and Sichuan spice | `我(不太)能吃辣。` | 火锅 huǒguō, 麻辣 málà, 鸳鸯锅 yuānyāng guō, 微辣 wēi là, 花椒 huājiāo |
+| 3 | Teahouses and the slow life | `我们去[place]喝茶吧。` | 茶馆 cháguǎn, 茉莉花茶 mòlìhuā chá, 安逸 ānyì, 慢慢来 mànmàn lái, 麻将 májiàng |
+
+#### Unit 22. Chongqing
+
+Encounter: none (the city pack's Hongyadong encounter is on Encounters) · Builds on: Getting around, Ordering food
+
+| # | Lesson | Pattern | Key words and phrases |
+|---|---|---|---|
+| 1 | Hongyadong and the night views | `[place]晚上很好看。` | 洪崖洞 Hóngyádòng, 解放碑 Jiěfàngbēi, 好看 hǎokàn, 开灯 kāi dēng, 拍照 pāizhào |
+| 2 | Noodles and hotpot | `来一碗[food]。` The local way to order | 老板 lǎobǎn, 小面 xiǎomiàn, 酸辣粉 suānlàfěn, 毛肚 máodǔ, 七上八下 qī shàng bā xià |
+| 3 | The mountain city | `坐[ride]去[place]。` | 山城 shānchéng, 轻轨 qīngguǐ, 索道 suǒdào, 楼梯 lóutī, 爬 pá |
+
 ---
 
 ## 4. Screens
@@ -278,18 +337,18 @@ Builds on: Numbers, Manners and etiquette
 ### 4.1 The Lessons tab (course home)
 
 ```
-Lessons                        12 of 63 done
+Lessons                        12 of 79 done
 ┌──────────────────────────┐ ┌─────────┐
 │ 🔍 Search lessons        │ │ Units ▾ │
 └──────────────────────────┘ └─────────┘
-(   Basics   |    Trip    |   Culture   )
+(  Basics  |  Trip  |  Culture  |  Cities  )
 ──────────────────────────────────────────  ← stays put; everything below scrolls
 ┌─ CONTINUE ───────────────────────────┐
 │ Numbers · Lesson 2 of 4              │
 │ Numbers 11–99              [Start →] │
 └──────────────────────────────────────┘
 
-PART 1 · 2 OF 7 UNITS DONE
+PART 1 · 2 OF 8 UNITS DONE
 Start here: the basics
 [icon] How Chinese works          ✓ Done
 [icon] Hello and thank you        1 of 3 done ›
@@ -299,11 +358,11 @@ Start here: the basics
 ```
 
 - **Navigation bar** at the top, which stays put while the rest scrolls: the title and overall progress, a search field, a **Units** dropdown, and the part tabs.
-- **Part tabs:** Basics, Trip and Culture. Each tab shows only that part's units, with the part's title, summary and how many of its units are done, rather than every unit in one long column. The tab opens on the part the Continue card points at (Part 1 on a first open), until the learner picks one.
+- **Part tabs:** Basics, Trip, Culture and Cities. Each tab shows only that part's units, with the part's title, summary and how many of its units are done, rather than every unit in one long column. The tab opens on the part the Continue card points at (Part 1 on a first open), until the learner picks one.
 - **Search** finds units (title, summary, can-do lines) and lessons (title, summary, and every word, pattern and example). It takes English (`taxi`), pinyin with or without tone marks (`duoshao` finds `duōshao`) and characters (`多少`). While there's a query, the results replace the tabs: a unit opens its unit screen, and a lesson opens straight into the lesson player, showing the word that matched.
 - **Units dropdown:** every unit grouped by part, with its progress and an "Up next" marker on the Continue card's unit. Tapping one opens it. A tap outside, the button again or Android's back button closes it.
 - **Continue card** at the top of every tab: the next lesson to do (rules in [section 6](#6-progress)). Tapping it opens that lesson's player directly. On first open it says "Start here" and points at Unit 1, lesson 1. Hidden once everything is done, replaced by a "Course complete" card that links to Encounters.
-- **One card per unit:** icon, title, one-line summary, progress ("1 of 3", or a tick when done), and an "Encounter" pill when the unit has an encounter.
+- **One card per unit:** icon, title, one-line summary, progress ("1 of 3", or a tick when done), and an "Encounter" pill when the unit has an encounter. The city unit for the learner's destination also shows a "Your trip" pill.
 - **Units with no lessons yet** show as locked "Coming soon" cards, like `LockedScenarioCard` on Encounters. They can't be opened.
 - Opens instantly: the content is in the app, so there's no loading spinner and no network call.
 
@@ -388,7 +447,7 @@ Reuse the player from the encounter practice lessons, as #12 describes: **Learn 
 | **Match pairs** | New | Matches 4 or 5 Chinese items to their English | Word review, checkpoints |
 | Speak | Later | Says the phrase out loud and the app checks it | Needs the backend (speech-to-text costs money per try) |
 
-Listening matters most for Unit 1 (tones) and Units 5 to 7 (numbers, prices, times), where hearing the answer is the actual skill. The audio still plays only on a tap, never automatically (see [Non-functional](#10-non-functional-requirements)).
+Listening matters most for Unit 1 (tones) and Units 6 to 8 (numbers, prices, times), where hearing the answer is the actual skill. The audio still plays only on a tap, never automatically (see [Non-functional](#10-non-functional-requirements)).
 
 Adding Listen and Match pairs changes `ExerciseStep`, which the encounter practice lessons also use. That ticket needs Ralph's review, and the encounter lessons must keep working exactly as before.
 
@@ -441,7 +500,7 @@ Progress is saved by `unitId/lessonId`. **Once a unit ships, its ids are permane
 
 | From | To | When |
 |---|---|---|
-| Unit screen and lesson Done screen | The matching encounter | Unit has an `encounterId` (`airport`, `hotel`, `restaurant`, `train` today) |
+| Unit screen and lesson Done screen | The matching encounter | Unit has an `encounterId` (`airport`, `hotel`, `restaurant`, `train`, `taxi` and `shopping` today, including the Beijing and Shanghai units) |
 | Unit screen | An Essentials page (for example the numbers table, the tones chart) | Unit has an `essentials` link and that page exists |
 | Encounter screen (later) | The matching unit ("Want more practice? Ordering food") | Optional follow-up. It touches the encounter screen, so it needs Ralph's review |
 
@@ -483,7 +542,7 @@ Content lives in `mobile/src/content/lessons/`, one file per unit, as #12 sugges
 export type UnitExercise = Exercise | ListenExercise | MatchExercise;
 export type UnitLesson = Omit<Lesson, 'exercises'> & { exercises: UnitExercise[]; culture?: CultureNote };
 
-export type PartId = 'basics' | 'trip' | 'culture';
+export type PartId = 'basics' | 'trip' | 'culture' | 'cities';
 
 export type Unit = {
   id: string;                // 'numbers', 'money', 'airport', ... Permanent once shipped
@@ -495,6 +554,7 @@ export type Unit = {
   canDo: string[];           // "You'll be able to" lines, 2 to 4
   buildsOn?: string[];       // unit ids, shown as links
   encounterId?: string;      // the matching encounter, e.g. 'airport'
+  city?: string;             // city units: the city's slug, to mark the learner's destination
   essentials?: { label: string; href: Href }; // an Essentials page, once #11 has them
   lessons: UnitLesson[];     // [] = coming soon
 };
@@ -521,7 +581,7 @@ export type Unit = {
 
 ## 11. Build order
 
-**Status:** phases 1 to 5 are built: the Lessons tab, all 17 units' content (Part 3 included), checkpoints, and the Listen and Match pairs question types. Phase 6 is still to do.
+**Status:** phases 1 to 5 are built: the Lessons tab, all 17 units' content (Part 3 included), checkpoints, and the Listen and Match pairs question types. #71 then added Quick answers (now Unit 4) and Part 4, City by city (Units 19 to 22). Phase 6 is still to do. Unit numbers in the table below are from before #71.
 
 Feature tickets and content tickets can run at the same time, since content is just data files.
 

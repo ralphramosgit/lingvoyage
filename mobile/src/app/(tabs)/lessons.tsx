@@ -15,6 +15,7 @@ import { UnitCard } from '@/components/units/UnitCard';
 import { UnitMenu } from '@/components/units/UnitMenu';
 import type { PartId, Unit, UnitLesson } from '@/content/lessons/types';
 import { PARTS, UNITS } from '@/content/lessons/units';
+import { useAuth } from '@/lib/auth';
 import { continueTarget, isUnitDone, lessonsDone } from '@/lib/course';
 import { isSearchable, searchCourse } from '@/lib/courseSearch';
 import { useUnitProgress } from '@/lib/unitProgress';
@@ -23,6 +24,7 @@ import { colors, layout, motion, spacing } from '@/theme/theme';
 
 export default function LessonsScreen() {
   const progress = useUnitProgress();
+  const { profile } = useAuth();
   const target = continueTarget(UNITS, progress);
   const totalLessons = UNITS.reduce((sum, unit) => sum + unit.lessons.length, 0);
   // Counted from the content, so progress saved for a lesson that's since been removed doesn't count.
@@ -144,6 +146,7 @@ export default function LessonsScreen() {
                         unit={unit}
                         number={UNITS.indexOf(unit) + 1}
                         progress={progress}
+                        destination={unit.city !== undefined && unit.city === profile?.destination_city}
                         onPress={() => openUnit(unit)}
                       />
                     ) : (
