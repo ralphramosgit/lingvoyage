@@ -8,19 +8,22 @@ from app import tutor
 from app.scenarios import get_scenario
 from app.tutor import (
     OPENING_MESSAGE,
+    CharacterReply,
     ChatLine,
     Phrase,
-    TutorReply,
     asks_travelers_question,
     build_messages,
     build_system_prompt,
     drop_asked_questions,
+    ending_problems,
     finalize_reply,
     generate_reply,
+    is_closing,
     line_problems,
     merge_goal_ids,
     question_count,
     strip_emojis,
+    yes_no_questions,
 )
 
 
@@ -30,11 +33,12 @@ def _scenario(scenario_id: str = "restaurant"):
     return scenario
 
 
-def _reply(**overrides: object) -> TutorReply:
+def _reply(**overrides: object) -> CharacterReply:
     values: dict[str, object] = {
         "learner_hanzi": "",
         "learner_pinyin": "",
         "learner_english": "",
+        "goals_done": [],
         "hanzi": "好的。",
         "pinyin": "Hǎo de.",
         "english": "Okay.",
@@ -42,11 +46,10 @@ def _reply(**overrides: object) -> TutorReply:
         "corrected_hanzi": "",
         "corrected_pinyin": "",
         "suggestions": [Phrase(hanzi=f"句子{i}", pinyin="jùzi", english="sentence") for i in range(5)],
-        "completed_goal_ids": [],
         "scenario_complete": False,
     }
     values.update(overrides)
-    return TutorReply.model_validate(values)
+    return CharacterReply.model_validate(values)
 
 
 # --- emoji stripping -------------------------------------------------------
@@ -135,13 +138,13 @@ def test_build_messages_keeps_only_last_30_lines() -> None:
 
 def test_goal_ids_are_filtered_and_unioned_in_scenario_order() -> None:
     scenario = _scenario()
-    reply = _reply(completed_goal_ids=["order_dish", "made_up_goal", "party_size"])
+    reply = _reply(goals_done=["order_dish", "made_up_goal", "party_size"])
     result = finalize_reply(reply, scenario, client_completed_ids=["pay", "also_fake"])
     assert result.completed_goal_ids == ["party_size", "order_dish", "pay"]
 
 
 def test_client_goals_are_kept_even_if_model_forgets_them() -> None:
-    result = finalize_reply(_reply(completed_goal_ids=[]), _scenario(), ["party_size"])
+    result = finalize_reply(_reply(goals_done=[]), _scenario(), ["party_size"])
     assert result.completed_goal_ids == ["party_size"]
 
 
@@ -151,15 +154,23 @@ def test_merge_goal_ids_ignores_other_scenarios_goals() -> None:
 
 def test_scenario_complete_requires_every_goal() -> None:
     scenario = _scenario()
-    premature = finalize_reply(_reply(completed_goal_ids=["party_size"], scenario_complete=True), scenario, [])
+    premature = finalize_reply(_reply(goals_done=["party_size"], scenario_complete=True), scenario, [])
     assert premature.scenario_complete is False
 
     done = finalize_reply(
-        _reply(completed_goal_ids=["order_dish", "special_request", "pay"], scenario_complete=True),
+        _reply(goals_done=["order_dish", "special_request", "pay"], scenario_complete=True),
         scenario,
         ["party_size"],
     )
     assert done.scenario_complete is True
+
+
+def test_the_scene_ends_on_a_goodbye_not_a_question() -> None:
+    every_goal = ["party_size", "order_dish", "special_request", "pay"]
+    closing = finalize_reply(_reply(hanzi="好！还需要什么？", scenario_complete=True), _scenario(), every_goal)
+    assert closing.scenario_complete is False
+    goodbye = finalize_reply(_reply(hanzi="不客气！再见！", scenario_complete=False), _scenario(), every_goal)
+    assert goodbye.scenario_complete is True
 
 
 def test_suggestions_trimmed_to_three() -> None:
@@ -182,21 +193,47 @@ def test_system_prompt_includes_scene_goals_and_progress() -> None:
     assert '"learner_hanzi"' in prompt and '"learner_english"' in prompt
 
 
-def test_system_prompt_lists_the_goals_still_to_do_in_order() -> None:
-    prompt = build_system_prompt(_scenario("restaurant"), ["party_size", "special_request"])
-    assert "Goals still to do, in order: [order_dish] Order a dish; then [pay] Ask for the bill\n" in prompt
-    assert "sets up the first goal still to do, so that answering it does that goal" in prompt
+def test_system_prompt_names_the_next_goal_and_the_ones_after_it() -> None:
+    prompt = build_system_prompt(_scenario("restaurant"), ["party_size"])
+    assert "Next goal, the one to lead to now: [order_dish] Order a dish\n" in prompt
+    assert "After it, in order: [special_request] Ask for no spice or order a drink; then [pay] Ask for the bill\n" in prompt
+    assert "Ask the question whose answer does the next goal" in prompt
+
+    last = build_system_prompt(_scenario("restaurant"), ["party_size", "order_dish", "special_request"])
+    assert "Next goal, the one to lead to now: [pay] Ask for the bill\nIt's the last one.\n" in last
 
     done = build_system_prompt(_scenario("restaurant"), ["party_size", "order_dish", "special_request", "pay"])
-    assert "Goals still to do, in order: none, so say a natural goodbye\n" in done
+    assert "Next goal: none, every goal is done. Close the scene (rule 5).\n" in done
 
 
-def test_system_prompt_asks_one_question_and_suggestions_that_fit_it() -> None:
+def test_system_prompt_asks_one_open_question_and_suggestions_that_fit_it() -> None:
     prompt = build_system_prompt(_scenario("restaurant"), [])
-    assert "end every reply with exactly one short, easy question for the traveler" in prompt
-    assert "never two (not 好！要辣吗？喝什么？)" in prompt
+    assert "end every reply with exactly one short, easy question, and ask nothing else" in prompt
+    assert "never two (not 好！你要哪个？喝什么？)" in prompt
+    assert "never a yes/no question (…吗？, …吧？, 要不要, 有没有, 好吗)" in prompt
+    assert "invite their question without answering it: 你找什么？ 你还想知道什么？" in prompt
+    assert "never tell them something a goal still to do has them ask you" in prompt
     assert "Every one must make sense said right now: an answer to your question" in prompt
-    assert "Never suggest a goal they've already done" in prompt
+    assert "Never suggest just yes or no, a goal they've already done" in prompt
+
+
+def test_system_prompt_flags_yes_no_questions_in_older_scripts() -> None:
+    old = _scenario("airport").model_copy(
+        update={"scene_outline": ["You open: 你好！你要去哪儿？", "The traveler asks where the subway is. You: 地铁在前面。 Then ask: 你要买票吗？"]}
+    )
+    prompt = build_system_prompt(old, [])
+    assert "1. You open: 你好！你要去哪儿？\n" in prompt
+    step = "2. The traveler asks where the subway is. You: 地铁在前面。 Then ask: [an open or choice question that leads to the next goal]"
+    assert step in prompt and "你要买票吗" not in prompt
+    # The hand-written scripts ask open questions, so they're given as written.
+    airport = _scenario("airport")
+    assert all(step in build_system_prompt(airport, []) for step in airport.scene_outline)
+
+
+def test_system_prompt_closes_the_scene_only_after_the_goals() -> None:
+    prompt = build_system_prompt(_scenario("airport"), [])
+    assert "Never say goodbye while a goal is still to do" in prompt
+    assert "When the traveler's last message did the last goal, answer it, then ask one closing question (还需要什么？)" in prompt
 
 
 def test_system_prompt_follows_the_script_and_keeps_roles_apart() -> None:
@@ -204,7 +241,7 @@ def test_system_prompt_follows_the_script_and_keeps_roles_apart() -> None:
     assert "1. You open: 你好！欢迎来成都！你找什么？" in prompt
     assert "Then ask: 你要去哪里？" in prompt
     assert "巴士在五号门外面。" in prompt
-    assert "Never jump ahead: don't ask about spice, drinks or a second dish before they've ordered" in prompt
+    assert "Never jump ahead (don't ask about spice, drinks or a second dish before they've ordered" in prompt
     assert "offer two or three real options by name from the scene details" in prompt
     assert "never just 在那里 on its own" in prompt
     assert "- [place] + 在哪里？ (Where is [place]?)" in prompt
@@ -284,16 +321,57 @@ def test_line_problems_finds_a_role_swap_and_a_second_question() -> None:
 
 def test_line_problems_finds_coaching() -> None:
     train = _scenario("train")
-    for line in ("好的。你要问几点出发吗？", "门票多少钱，你想问吗？", "你可以说：我有票。"):
+    for line in ("你可以说：我有票。", "你可以问几点出发。", "好，你想问多少钱，还是多长时间？"):
         assert len(line_problems(train, line)) == 1, line
-    for line in ("你想问什么？", "你要去哪里？", "你要找检票口吗？"):
+    # Asked as yes/no questions, these are coaching and yes/no both.
+    for line in ("好的。你要问几点出发吗？", "门票多少钱，你想问吗？", "好！你想知道多少钱吗？"):
+        assert len(line_problems(train, line)) == 2, line
+    for line in ("你想问什么？", "你要去哪里？", "你还想知道什么？"):
         assert line_problems(train, line) == [], line
+
+
+def test_yes_no_questions() -> None:
+    for line in ("你要找检票口吗？", "地铁在前面。你要买票吗？", "要不要辣？", "是十号线吧？", "有没有行李？", "好吗?"):
+        assert yes_no_questions(line), line
+    for line in ("你要去哪里？", "你坐巴士还是滴滴？", "要辣的还是不辣的？", "几位？", "你的护照呢？", "你找什么？", "不客气！再见！"):
+        assert yes_no_questions(line) == [], line
+    assert yes_no_questions("好！要辣吗？喝什么？") == ["要辣吗？"]
+
+
+def test_line_problems_finds_a_yes_no_question_except_when_closing() -> None:
+    airport = _scenario("airport")
+    problems = line_problems(airport, "地铁在前面。你要买票吗？")
+    assert len(problems) == 1 and '"你要买票吗？" can be answered with just yes or no' in problems[0]
+    assert line_problems(airport, "不客气。还需要什么吗？", closing=True) == []
+
+
+def test_the_scene_is_closing_once_only_a_thank_you_is_left() -> None:
+    airport = _scenario("airport")
+    assert is_closing(airport, ["find_luggage", "destination", "find_ride"])  # left: "Say thank you"
+    assert not is_closing(airport, ["find_luggage", "destination"])
+    assert is_closing(_scenario("hotel"), ["reservation", "name_passport", "breakfast", "wifi"])
+    assert not is_closing(_scenario("hotel"), ["reservation", "name_passport", "breakfast"])
+
+
+def test_ending_problems() -> None:
+    airport = _scenario("airport")
+    every_goal = airport.goal_ids
+    # Goodbye with goals still to do.
+    early = ending_problems(airport, "不客气！再见！", ["find_luggage"], ["find_luggage", "thanks"], "谢谢")
+    assert len(early) == 1 and 'next: "Say where you want to go"' in early[0]
+    # Goodbye straight after the last goal, before the traveler could thank the character.
+    abrupt = ending_problems(airport, "巴士在五号门外面。再见！", every_goal[:3], every_goal, "巴士在哪里？")
+    assert len(abrupt) == 1 and "还需要什么？" in abrupt[0]
+    # Fine: they thanked, or every goal was already done, or it isn't a goodbye.
+    assert ending_problems(airport, "不客气！再见！", every_goal[:3], every_goal, "xièxie!") == []
+    assert ending_problems(airport, "好的，再见！", every_goal, every_goal, "没有了") == []
+    assert ending_problems(airport, "巴士在五号门外面。还需要什么？", every_goal[:2], every_goal[:3], "巴士在哪里？") == []
 
 
 class _FakeClient:
     """Stands in for anthropic.Anthropic: hands out queued replies (or errors) and records the calls."""
 
-    def __init__(self, *results: TutorReply | Exception) -> None:
+    def __init__(self, *results: CharacterReply | Exception) -> None:
         self.results = list(results)
         self.systems: list[str] = []
         self.messages = SimpleNamespace(parse=self._parse)
@@ -342,25 +420,53 @@ def test_first_reply_is_kept_if_the_second_swaps_too(monkeypatch: pytest.MonkeyP
 
 
 def test_two_questions_are_asked_again(monkeypatch: pytest.MonkeyPatch) -> None:
-    client = _FakeClient(_reply(hanzi="好！要辣吗？喝什么？"), _reply(hanzi="好！要辣吗？"))
+    client = _FakeClient(_reply(hanzi="好！要辣的还是不辣的？喝什么？"), _reply(hanzi="好！要辣的还是不辣的？"))
     _use_client(monkeypatch, client)
     reply = generate_reply(_scenario("restaurant"), [], ["party_size"], "我要一碗牛肉面。")
-    assert reply.hanzi == "好！要辣吗？"
+    assert reply.hanzi == "好！要辣的还是不辣的？"
     assert len(client.systems) == 2
-    assert '"好！要辣吗？喝什么？"' in client.systems[1]
+    assert '"好！要辣的还是不辣的？喝什么？"' in client.systems[1]
     assert "It asks 2 questions; ask only one." in client.systems[1]
 
 
 def test_first_reply_is_kept_if_the_second_is_no_better(monkeypatch: pytest.MonkeyPatch) -> None:
-    client = _FakeClient(_reply(hanzi="好！要辣吗？喝什么？"), _reply(hanzi="几位？要辣吗？"))
+    client = _FakeClient(_reply(hanzi="好！你要哪个？喝什么？"), _reply(hanzi="几位？你要哪个？"))
     _use_client(monkeypatch, client)
-    assert generate_reply(_scenario("restaurant"), [], [], "你好").hanzi == "好！要辣吗？喝什么？"
+    assert generate_reply(_scenario("restaurant"), [], [], "你好").hanzi == "好！你要哪个？喝什么？"
+
+
+def test_a_yes_no_question_is_asked_again(monkeypatch: pytest.MonkeyPatch) -> None:
+    client = _FakeClient(_reply(hanzi="地铁在前面。你要买票吗？"), _reply(hanzi="地铁在前面。你还想知道什么？"))
+    _use_client(monkeypatch, client)
+    reply = generate_reply(_scenario("airport"), [], ["find_luggage"], "我要去酒店。")
+    assert reply.hanzi == "地铁在前面。你还想知道什么？"
+    assert "can be answered with just yes or no" in client.systems[1]
+
+
+def test_an_early_goodbye_is_asked_again(monkeypatch: pytest.MonkeyPatch) -> None:
+    client = _FakeClient(
+        _reply(hanzi="不客气！再见！", goals_done=["thanks"], scenario_complete=True),
+        _reply(hanzi="不客气！你要去哪里？", goals_done=["thanks"]),
+    )
+    _use_client(monkeypatch, client)
+    reply = generate_reply(_scenario("airport"), [], ["find_luggage"], "谢谢！")
+    assert reply.hanzi == "不客气！你要去哪里？"
+    assert reply.completed_goal_ids == ["find_luggage", "thanks"] and reply.scenario_complete is False
+    assert "That says goodbye, but the traveler hasn't done every goal yet" in client.systems[1]
+
+
+def test_goals_are_judged_on_the_last_message_and_added_to_the_earlier_ones(monkeypatch: pytest.MonkeyPatch) -> None:
+    client = _FakeClient(_reply(hanzi="好！哪个酒店？", goals_done=["destination"]))
+    _use_client(monkeypatch, client)
+    reply = generate_reply(_scenario("airport"), [], ["find_luggage"], "我要去酒店。")
+    assert reply.completed_goal_ids == ["find_luggage", "destination"]
+    assert "Next goal, the one to lead to now: [destination] Say where you want to go" in client.systems[0]
 
 
 def test_system_prompt_knows_the_traveler_is_already_in_the_city() -> None:
     prompt = build_system_prompt(_scenario("airport"), [])
     assert "The traveler is already in Chengdu: never ask if they want to go to Chengdu" in prompt
-    assert "A bare yes or no, a greeting or a word about something else doesn't do a goal either." in prompt
+    assert "said just yes or no (要, 对, 好), greeted you, or picked an option" in prompt
 
 
 def test_system_prompt_with_no_progress_says_none() -> None:
