@@ -108,6 +108,17 @@ class TranscribeResponse(BaseModel):
     transcript: str
 
 
+class TranslateRequest(BaseModel):
+    scenario_id: str
+    text: str = Field(min_length=1, max_length=500)
+
+
+class TranslateResponse(BaseModel):
+    hanzi: str
+    pinyin: str
+    english: str
+
+
 class StartRequest(BaseModel):
     scenario_id: str
 
@@ -238,6 +249,17 @@ def speech_transcribe(body: TranscribeRequest, _user: AuthUser = Depends(require
     """What the learner said, for them to check before sending it to /conversation/turn as text."""
     scenario = _scenario_or_404(body.scenario_id)
     return TranscribeResponse(transcript=_transcribe(body.audio_base64, body.audio_mime, scenario))
+
+
+@app.post("/speech/translate", response_model=TranslateResponse)
+def speech_translate(body: TranslateRequest, _user: AuthUser = Depends(require_user)) -> TranslateResponse:
+    """What the learner's transcript says, in pinyin and English, when they ask to see it before sending."""
+    text = body.text.strip()
+    if not text:
+        raise ApiError(422, "invalid_request", "text: must not be blank.")
+    scenario = _scenario_or_404(body.scenario_id)
+    gloss = tutor.gloss_learner_line(scenario, text)
+    return TranslateResponse(hanzi=gloss.hanzi, pinyin=gloss.pinyin, english=gloss.english)
 
 
 @app.post("/conversation/start", response_model=TurnResponse)

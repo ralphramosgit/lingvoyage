@@ -191,6 +191,15 @@ export type TranscribeResponse = {
   transcript: string;
 };
 
+/** The learner's checked transcript, to spell out before they send it. */
+export type TranslateRequest = {
+  scenario_id: string;
+  text: string;
+};
+
+/** Their words as said, the pinyin and what it means in English. */
+export type TranslateResponse = Phrase;
+
 type TurnBase = {
   scenario_id: string;
   history: ChatLine[];

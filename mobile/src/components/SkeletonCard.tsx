@@ -42,7 +42,7 @@ export function SkeletonCard() {
 }
 
 const styles = StyleSheet.create({
-  card: { overflow: 'hidden', borderWidth: 0 },
+  card: { overflow: 'hidden', borderWidth: 1.5, borderColor: colors.lineStrong },
   art: { height: 128, backgroundColor: colors.sky100 },
   lines: { gap: spacing.sm + 2, padding: spacing.lg },
   bone: { backgroundColor: '#E6EEF6' },

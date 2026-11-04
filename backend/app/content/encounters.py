@@ -60,7 +60,9 @@ OFFER_WITHIN_STEPS = 3
 _SIDE_STEP_RE = re.compile(r"^\s*if\b", re.IGNORECASE)
 _GOING_WORDS = r"(?:go|goes|going|get|gets|getting|head|heads|heading|travel|travels|ride)\s+(?:in)?to"
 
-Icon = Literal["PlaneLanding", "BedDouble", "UtensilsCrossed", "TrainFront", "ShoppingBag", "CarTaxiFront", "Landmark"]
+Icon = Literal[
+    "PlaneLanding", "BedDouble", "UtensilsCrossed", "TrainFront", "ShoppingBag", "Store", "CarTaxiFront", "Landmark"
+]
 Kind = Literal["airport", "getting_around", "restaurant", "hot_spot"]
 
 # ---------------------------------------------------------------------------

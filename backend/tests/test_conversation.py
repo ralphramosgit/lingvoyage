@@ -178,6 +178,27 @@ def test_mixed_chinese_and_english_speech_is_kept(
     assert response.json()["transcript"] == "WiFi 密码是多少？"
 
 
+def test_translate_spells_out_the_transcript(authed_client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    seen: list[tuple[str, str]] = []
+
+    def fake_gloss(scenario: ScenarioDefinition, text: str) -> Phrase:
+        seen.append((scenario.id, text))
+        return Phrase(hanzi=text, pinyin="Tài guì le!", english="That's too expensive!")
+
+    monkeypatch.setattr(tutor, "gloss_learner_line", fake_gloss)
+    response = authed_client.post("/speech/translate", json={"scenario_id": "shopping", "text": " 太贵了！ "})
+    assert response.status_code == 200
+    assert response.json() == {"hanzi": "太贵了！", "pinyin": "Tài guì le!", "english": "That's too expensive!"}
+    assert seen == [("shopping", "太贵了！")]
+
+
+def test_translate_needs_a_login_and_some_text(client: TestClient, authed_client: TestClient) -> None:
+    assert authed_client.post("/speech/translate", json={"scenario_id": "taxi", "text": "  "}).status_code == 422
+    assert authed_client.post("/speech/translate", json={"scenario_id": "moon", "text": "你好"}).status_code == 404
+    authed_client.app.dependency_overrides.clear()
+    assert client.post("/speech/translate", json={"scenario_id": "taxi", "text": "你好"}).status_code == 401
+
+
 def test_transcribe_unknown_scenario_is_404(authed_client: TestClient, fake_services: dict) -> None:
     audio = base64.b64encode(b"fake-wav").decode()
     response = authed_client.post("/speech/transcribe", json={"scenario_id": "moon", "audio_base64": audio})

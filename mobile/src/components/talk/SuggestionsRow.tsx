@@ -1,4 +1,4 @@
-import { ArrowDownLeft, Lightbulb } from 'lucide-react-native';
+import { ArrowDownLeft, Lightbulb, Turtle } from 'lucide-react-native';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
 
@@ -22,8 +22,10 @@ function SuggestionChip({
   const { loadingKey, playingKey } = usePlayback();
   const key = phraseKey(phrase.hanzi.trim());
   const slowKey = phraseKey(phrase.hanzi.trim(), SLOW_RATE);
-  const loading = loadingKey === key || loadingKey === slowKey;
+  // The slow button shows its own spinner.
+  const loading = loadingKey === key;
   const playing = playingKey === key || playingKey === slowKey;
+  const playingSlow = playingKey === slowKey;
 
   const play = (slow: boolean) => {
     playPhrase(phrase.hanzi, { rate: slow ? SLOW_RATE : 1 }).catch((error: unknown) =>
@@ -38,7 +40,7 @@ function SuggestionChip({
         onLongPress={() => play(true)}
         accessibilityRole="button"
         accessibilityLabel={`${phrase.english}. ${phrase.pinyin}`}
-        accessibilityHint="Plays the phrase. Long-press to hear it slowly."
+        accessibilityHint="Plays the phrase. The turtle button plays it slowly."
         style={styles.chipBody}>
         <View style={styles.hanziRow}>
           <Text variant="hanziSmall">{phrase.hanzi}</Text>
@@ -51,14 +53,26 @@ function SuggestionChip({
           {phrase.english}
         </Text>
       </PressableScale>
-      <IconButton
-        icon={ArrowDownLeft}
-        accessibilityLabel={`Use "${phrase.english}" in the text box`}
-        onPress={onUse}
-        size={32}
-        iconSize={16}
-        variant="tinted"
-      />
+      <View style={styles.chipActions}>
+        <IconButton
+          icon={ArrowDownLeft}
+          accessibilityLabel={`Use "${phrase.english}" in the text box`}
+          onPress={onUse}
+          size={32}
+          iconSize={16}
+          variant="tinted"
+        />
+        <IconButton
+          icon={Turtle}
+          accessibilityLabel={`Play slowly: ${phrase.english}`}
+          onPress={() => play(true)}
+          loading={loadingKey === slowKey}
+          size={32}
+          iconSize={16}
+          variant={playingSlow ? 'primary' : 'tinted'}
+          active={playingSlow}
+        />
+      </View>
     </View>
   );
 }
@@ -113,5 +127,6 @@ const styles = StyleSheet.create({
   },
   chipPlaying: { borderColor: colors.sky500, backgroundColor: colors.sky50 },
   chipBody: { flexShrink: 1, gap: 1, minHeight: 44, justifyContent: 'center' },
+  chipActions: { gap: spacing.xs + 2 },
   hanziRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
 });

@@ -38,6 +38,8 @@ class Settings(BaseSettings):
 
     anthropic_api_key: str = ""
     anthropic_model: str = "claude-sonnet-5-5"  # the characters (app/tutor.py)
+    # Spells out what the learner said into the mic (pinyin and English) before they send it (app/tutor.py).
+    anthropic_gloss_model: str = "claude-haiku-5-5"
     # Local packs (app/research): the research workers, and the cheap model that checks their facts.
     anthropic_research_model: str = "claude-opus-5-5"
     anthropic_research_effort: str = "medium"

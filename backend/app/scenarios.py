@@ -6,7 +6,15 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field, model_validator
 
-from app.lessons import AIRPORT_LESSONS, HOTEL_LESSONS, RESTAURANT_LESSONS, TRAIN_LESSONS, Lesson
+from app.lessons import (
+    AIRPORT_LESSONS,
+    HOTEL_LESSONS,
+    RESTAURANT_LESSONS,
+    SHOPPING_LESSONS,
+    TAXI_LESSONS,
+    TRAIN_LESSONS,
+    Lesson,
+)
 
 Gender = Literal["female", "male"]
 Age = Literal["young", "older"]
@@ -327,6 +335,115 @@ SCENARIOS: list[ScenarioDefinition] = [
             "The traveler says thank you. You: 不客气！再见！",
         ],
         lessons=HOTEL_LESSONS,
+    ),
+    ScenarioDefinition(
+        id="taxi",
+        language="zh-CN",
+        title="Taking a taxi",
+        subtitle="Tell the driver where to go, then pay",
+        city="Shanghai",
+        setting="the taxi stand outside a hotel in Jing'an (静安)",
+        icon="CarTaxiFront",
+        difficulty="Beginner",
+        minutes=3,
+        character=Character(
+            name_hanzi="张师傅",
+            name_pinyin="Zhāng shīfu",
+            name_english="Master Zhang",
+            role="Taxi driver",
+            avatar_char="张",
+            gender="male",
+            age="older",
+        ),
+        goals=[
+            Goal(id="destination", label="Say where you want to go"),
+            Goal(id="how_long", label="Ask how long it takes"),
+            Goal(id="stop_here", label="Ask the driver to stop"),
+            Goal(id="fare", label="Ask how much the fare is"),
+        ],
+        key_phrases=[
+            KeyPhrase(hanzi="师傅，我要去外滩。", pinyin="Shīfu, wǒ yào qù Wàitān.", english="Driver, I'd like to go to the Bund."),
+            KeyPhrase(hanzi="要多长时间？", pinyin="Yào duō cháng shíjiān?", english="How long does it take?"),
+            KeyPhrase(hanzi="请在这里停。", pinyin="Qǐng zài zhèlǐ tíng.", english="Please stop here."),
+            KeyPhrase(hanzi="多少钱？", pinyin="Duōshao qián?", english="How much is it?"),
+            KeyPhrase(hanzi="可以用微信吗？", pinyin="Kěyǐ yòng Wēixìn ma?", english="Can I pay with WeChat?"),
+        ],
+        scene_details=(
+            "The traveler has just got into the back seat of your taxi outside their hotel in Jing'an (静安). "
+            "They want to go to the Bund (外滩), Shanghai's riverside walk; if they name another place, go along with it. "
+            "The roads are busy (路上车很多), so the ride takes about 20 minutes (大概二十分钟). "
+            "When you arrive, the meter (计价器) shows 30 yuan (三十块). "
+            "Passengers pay by scanning the QR code (二维码) on the back of the front seat with WeChat (微信) or Alipay "
+            "(支付宝), or with cash (现金). Passengers call you 师傅. Say 哪里 for “where”, not 哪儿."
+        ),
+        scene_outline=[
+            "You open: 你好！去哪里？",
+            "The traveler says where they want to go. You: 好的，去外滩！路上车很多。 Then invite their question: 还有什么问题？",
+            "The traveler asks how long it takes. You: 大概二十分钟。 Then the ride goes by and you arrive: "
+            "外滩到了！你要在哪里停？",
+            "The traveler asks you to stop here or up ahead. You: 好，就在这里。 Then invite their question: 你还想知道什么？",
+            "If the traveler asks where the QR code is, you: 二维码在前面的座位后面。",
+            "The traveler asks how much it is. You: 三十块。 (what the meter shows) Then ask: 微信还是现金？",
+            "The traveler says how they'll pay. You: 好，扫这个二维码。谢谢！ Then ask: 还需要什么？",
+            "The traveler says thank you or goodbye. You: 不客气！再见！",
+        ],
+        lessons=TAXI_LESSONS,
+    ),
+    ScenarioDefinition(
+        id="shopping",
+        language="zh-CN",
+        title="Shopping at a market",
+        subtitle="Pick a color, ask the price and bargain",
+        city="Beijing",
+        setting="a T-shirt and silk scarf stall in the Silk Market (秀水街)",
+        icon="Store",
+        difficulty="Beginner",
+        minutes=3,
+        character=Character(
+            name_hanzi="小周",
+            name_pinyin="Xiǎo Zhōu",
+            name_english="Xiao Zhou",
+            role="Market stall seller",
+            avatar_char="周",
+            gender="female",
+            age="young",
+        ),
+        goals=[
+            Goal(id="pick_color", label="Pick a color"),
+            Goal(id="ask_price", label="Ask how much it is"),
+            Goal(id="bargain", label="Ask for a lower price"),
+            Goal(id="pay", label="Say how you'll pay"),
+        ],
+        key_phrases=[
+            KeyPhrase(hanzi="我要红色的。", pinyin="Wǒ yào hóngsè de.", english="I'd like the red one."),
+            KeyPhrase(hanzi="这个多少钱？", pinyin="Zhège duōshao qián?", english="How much is this?"),
+            KeyPhrase(hanzi="太贵了！", pinyin="Tài guì le!", english="That's too expensive!"),
+            KeyPhrase(hanzi="便宜一点吧。", pinyin="Piányi yìdiǎn ba.", english="A little cheaper, please."),
+            KeyPhrase(hanzi="我用微信。", pinyin="Wǒ yòng Wēixìn.", english="I'll pay with WeChat."),
+        ],
+        scene_details=(
+            "The Silk Market is a building full of small stalls, and every price is made to be bargained. "
+            "You sell panda T-shirts (熊猫T恤) in white (白色) and red (红色), and silk scarves (丝巾) in blue (蓝色) and red. "
+            "Your first price: a T-shirt is 150 yuan (一百五十块), a scarf is 120 yuan (一百二十块). "
+            "When the traveler asks for a lower price, come down once: 100 yuan (一百块) for a T-shirt, 80 yuan (八十块) "
+            "for a scarf. If they push again, take their price if it's at least 80 for a T-shirt or 60 for a scarf, and "
+            "meet them halfway if it's lower. You hand them your calculator (计算器) to type a price. "
+            "You take WeChat (微信), Alipay (支付宝) and cash (现金); the QR code (二维码) is on your counter."
+        ),
+        scene_outline=[
+            "You open: 你好！看看吧！我们有熊猫T恤和丝巾。你要看哪个？",
+            "The traveler says which one they'd like to see. You name its two colors: 好！熊猫T恤有白色的和红色的。 "
+            "(a scarf: 丝巾有蓝色的和红色的。) Then ask: 你要什么颜色？",
+            "The traveler picks a color. You: 好，红色的，给你！ (with the color they picked) Then invite their "
+            "question: 你还想知道什么？",
+            "The traveler asks how much it is. You: 一百五十块。 (a scarf: 一百二十块。) Then hand them your calculator "
+            "and ask: 你说多少？",
+            "The traveler says it's too expensive, asks for a lower price or names one. You come down once: "
+            "好吧，一百块。 (a scarf: 八十块。) If they ask again, follow the scene details. Then ask: 微信还是现金？",
+            "The traveler says how they'll pay. You: 好，扫这里。谢谢！ Then ask: 还需要什么？",
+            "The traveler says thank you, or that they need nothing else. You: 不客气！慢走！",
+        ],
+        lessons=SHOPPING_LESSONS,
     ),
 ]
 

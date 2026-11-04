@@ -5,6 +5,7 @@ import {
   Landmark,
   PlaneLanding,
   ShoppingBag,
+  Store,
   TrainFront,
   UtensilsCrossed,
 } from 'lucide-react-native';
@@ -16,6 +17,8 @@ const TINTS: Record<string, TintName> = {
   restaurant: 'sun',
   train: 'sky',
   hotel: 'mint',
+  taxi: 'sun',
+  shopping: 'mint',
 };
 
 // Local encounters (local-<city>-<place>) have their own ids, so they're tinted by their icon.
@@ -25,6 +28,7 @@ const ICON_TINTS: Record<string, TintName> = {
   CarTaxiFront: 'sky',
   UtensilsCrossed: 'sun',
   ShoppingBag: 'sun',
+  Store: 'mint',
   BedDouble: 'mint',
   Landmark: 'mint',
 };
@@ -35,7 +39,16 @@ export function scenarioTint(id: string, index = 0, icon?: string): TintName {
   return TINTS[id] ?? (icon ? ICON_TINTS[icon] : undefined) ?? FALLBACK_TINTS[index % FALLBACK_TINTS.length];
 }
 
-export type SceneKind = 'airport' | 'restaurant' | 'train' | 'hotel' | 'market' | 'taxi' | 'landmark' | 'harbor';
+export type SceneKind =
+  | 'airport'
+  | 'restaurant'
+  | 'train'
+  | 'hotel'
+  | 'market'
+  | 'shop'
+  | 'taxi'
+  | 'landmark'
+  | 'harbor';
 
 const SCENE_KINDS: Record<string, SceneKind> = {
   PlaneLanding: 'airport',
@@ -43,6 +56,7 @@ const SCENE_KINDS: Record<string, SceneKind> = {
   TrainFront: 'train',
   BedDouble: 'hotel',
   ShoppingBag: 'market',
+  Store: 'shop',
   CarTaxiFront: 'taxi',
   Landmark: 'landmark',
 };
@@ -67,6 +81,8 @@ export function ScenarioIcon({ name, ...props }: IconProps & { name: string }) {
       return <PlaneLanding {...props} />;
     case 'ShoppingBag':
       return <ShoppingBag {...props} />;
+    case 'Store':
+      return <Store {...props} />;
     case 'CarTaxiFront':
       return <CarTaxiFront {...props} />;
     case 'Landmark':

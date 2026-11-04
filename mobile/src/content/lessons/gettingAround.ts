@@ -11,6 +11,7 @@ export const GETTING_AROUND: Unit = {
     "China's high-speed trains and huge metro systems are some of the best in the world. Here's how to ride them, and how to talk to a taxi driver.",
   canDo: ['Tell a taxi driver where to go and where to stop', 'Take the metro and change lines', 'Buy a train ticket'],
   buildsOn: ['numbers', 'money', 'directions'],
+  encounterId: 'taxi',
   lessons: [
     {
       id: 'taxi-didi',

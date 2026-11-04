@@ -518,7 +518,7 @@ def test_every_example_scene_is_in_the_prompt() -> None:
     system = prompts.encounter_system()
     for scene in prompts.EXAMPLE_SCENES:
         assert f'<scene example="{scene}">' in system
-    assert all(scenario.id in {"airport", "restaurant", "train", "hotel"} for scenario in SCENARIOS)
+    assert all(scenario.id in {"airport", "restaurant", "train", "hotel", "taxi", "shopping"} for scenario in SCENARIOS)
 
 
 def test_generic_goals() -> None:

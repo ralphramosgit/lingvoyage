@@ -5,6 +5,8 @@ import httpx
 import pytest
 
 from app import tutor
+from app.config import get_settings
+from app.errors import ApiError
 from app.scenarios import get_scenario
 from app.tutor import (
     OPENING_MESSAGE,
@@ -18,6 +20,7 @@ from app.tutor import (
     ending_problems,
     finalize_reply,
     generate_reply,
+    gloss_learner_line,
     is_closing,
     line_problems,
     merge_goal_ids,
@@ -252,7 +255,7 @@ def test_system_prompt_follows_the_script_and_keeps_roles_apart() -> None:
 
 
 def test_script_never_gives_the_character_a_travelers_question() -> None:
-    for scenario_id in ("airport", "restaurant", "train", "hotel"):
+    for scenario_id in ("airport", "restaurant", "train", "hotel", "taxi", "shopping"):
         scenario = _scenario(scenario_id)
         for step in scenario.scene_outline:
             # Only the part after "You" is the character's line.
@@ -371,13 +374,15 @@ def test_ending_problems() -> None:
 class _FakeClient:
     """Stands in for anthropic.Anthropic: hands out queued replies (or errors) and records the calls."""
 
-    def __init__(self, *results: CharacterReply | Exception) -> None:
+    def __init__(self, *results: CharacterReply | Phrase | Exception) -> None:
         self.results = list(results)
         self.systems: list[str] = []
+        self.calls: list[dict[str, object]] = []
         self.messages = SimpleNamespace(parse=self._parse)
 
     def _parse(self, **kwargs: object) -> SimpleNamespace:
         self.systems.append(str(kwargs["system"]))
+        self.calls.append(kwargs)
         result = self.results.pop(0)
         if isinstance(result, Exception):
             raise result
@@ -471,3 +476,36 @@ def test_system_prompt_knows_the_traveler_is_already_in_the_city() -> None:
 
 def test_system_prompt_with_no_progress_says_none() -> None:
     assert "Goals already completed: none" in build_system_prompt(_scenario("hotel"), [])
+
+
+# --- gloss: what the learner said, before they send it -----------------------
+
+
+def test_gloss_spells_out_the_learners_line_with_the_gloss_model(monkeypatch: pytest.MonkeyPatch) -> None:
+    client = _FakeClient(Phrase(hanzi="太贵了！\U0001f62e", pinyin="Tài guì le!", english="That's too expensive!"))
+    _use_client(monkeypatch, client)
+    gloss = gloss_learner_line(_scenario("shopping"), "太贵了！")
+    assert gloss == Phrase(hanzi="太贵了！", pinyin="Tài guì le!", english="That's too expensive!")
+    call = client.calls[0]
+    assert call["model"] == get_settings().anthropic_gloss_model
+    assert call["messages"] == [{"role": "user", "content": "太贵了！"}]
+    assert call["output_format"] is Phrase
+    assert "小周" in client.systems[0] and "Silk Market" in client.systems[0] and "Don't correct them" in client.systems[0]
+
+
+def test_gloss_retries_once_when_claude_is_busy(monkeypatch: pytest.MonkeyPatch) -> None:
+    request = httpx.Request("POST", "https://api.anthropic.com/v1/messages")
+    client = _FakeClient(
+        anthropic.APITimeoutError(request=request), Phrase(hanzi="", pinyin="Qù Wàitān.", english="To the Bund.")
+    )
+    _use_client(monkeypatch, client)
+    gloss = gloss_learner_line(_scenario("taxi"), "去外滩。")
+    assert gloss.hanzi == "去外滩。" and gloss.english == "To the Bund."
+    assert len(client.calls) == 2
+
+
+def test_gloss_without_a_translation_is_an_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    _use_client(monkeypatch, _FakeClient(Phrase(hanzi="去外滩。", pinyin="", english=" ")))
+    with pytest.raises(ApiError) as raised:
+        gloss_learner_line(_scenario("taxi"), "去外滩。")
+    assert raised.value.code == "translate_failed"
