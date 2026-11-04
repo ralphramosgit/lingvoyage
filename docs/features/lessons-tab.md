@@ -56,7 +56,7 @@ Course
 2. **One idea per lesson.** One pattern, a handful of words. If a lesson needs two patterns, it's two lessons.
 3. **Things come back.** Trip units reuse the basics on purpose: `在哪里？` is taught in Your first sentences, then shows up again at the airport, the hotel and the metro. Each trip unit lists which basics it builds on.
 4. **Every trip unit ends at an encounter**, where one exists. The lesson is practice; the encounter is the real thing.
-5. **Encouraging, never punishing.** No lives, no failing a lesson. A wrong answer gets a hint and another try, like the current practice lessons.
+5. **Encouraging, never punishing.** No lives, no failing a lesson. A wrong answer gets a hint and another try, like the current practice lessons. The one exception is **challenge mode** ([section 4.6](#46-challenge-mode)), which the learner turns on themselves: it adds a hull that misses damage, for those who want the pressure. It's off by default.
 6. **A little immersive.** Each unit opens with a short scene (“You've just landed in Chengdu…”), and nearly every lesson has a culture note on how things are done in China: paying by QR code, two hands for a passport, never standing chopsticks up in rice. Part 3 goes deeper on manners, meals and festivals.
 
 ---
@@ -400,7 +400,7 @@ Start here: the basics
 Reuse the player from the encounter practice lessons, as #12 describes: **Learn → Practice → Done**.
 
 - **Learn** (`LessonIntro`): the pattern, examples, words and a tip, every item with a speaker button. Header shows "Lesson 2 of 4".
-- **Practice** (`ExerciseStep`): one question at a time, with a progress bar. A wrong answer shows a hint and allows another try. Respects the **Show pinyin** setting, as it does now. With **Hear words as you tap** on (Profile, on by default), every Chinese option, word tile and match item plays when tapped, and the answer plays once it's found (right, or shown after two misses), so questions with English options get their Chinese too. Listening options stay silent, since hearing each one would give the answer away. When taps come quickly, only the last one plays.
+- **Practice** (`ExerciseStep`): one question at a time. The progress bar is a voyage (`VoyageTrack`): the boat, with the seagull pal on deck, sails toward an island with a flag as questions are answered, and docks there on the wrap-up. A wrong answer shows a hint and allows another try. Respects the **Show pinyin** setting, as it does now. With **Hear words as you tap** on (Profile, on by default), every Chinese option, word tile and match item plays when tapped, and the answer plays once it's found (right, or shown after two misses), so questions with English options get their Chinese too. Listening options stay silent, since hearing each one would give the answer away. When taps come quickly, only the last one plays.
 - **Done** (`LessonComplete`): the cheer and summary, then **Next lesson** (the next unfinished lesson in the unit), or **Checkpoint** when the unit's lessons are all done. **Now try it for real** shows only when the unit has an `encounterId`.
 - **Exit** (X) goes back to the unit screen. Leaving partway saves nothing: the lesson starts over next time. Lessons are short enough that this is fine.
 - The "Start encounter" shortcut in the header shows only for units with an encounter.
@@ -408,7 +408,7 @@ Reuse the player from the encounter practice lessons, as #12 describes: **Learn 
 ### 4.4 The checkpoint
 
 - 9 questions: a match-the-pairs warm-up built from the unit's words, then 8 drawn from its lessons, at least one from each lesson and the rest at random, in a mixed order. Picked again each time, so a second go isn't identical.
-- Same player and same rules as a lesson: hints, retries, no failing. It skips the Learn step.
+- Same player and same rules as a lesson: hints, retries, no failing (unless challenge mode is on, [4.6](#46-challenge-mode)). It skips the Learn step.
 - The Done screen shows the first-try score. When the checkpoint and all lessons are done, the unit counts as done and the Done screen says so ("Unit complete!").
 
 ### 4.5 States
@@ -418,6 +418,29 @@ Reuse the player from the encounter practice lessons, as #12 describes: **Learn 
 | Lesson | Not done · Done (tick) |
 | Checkpoint | Not done · Done (tick, with best first-try score) |
 | Unit | Coming soon (locked) · Not started · In progress ("2 of 4") · Done (all lessons and the checkpoint) |
+
+### 4.6 Challenge mode
+
+Added in #61. A switch on the Quiz tab and in Profile settings (the same setting, `challengeMode`, off by default). It applies everywhere the lesson player runs: lessons, checkpoints, quizzes and the encounter practice lessons.
+
+| Rule | Why |
+|---|---|
+| The boat starts with **5 hull points**, shown as a hull bar (`HullBar`) under the voyage | A visible stake, without a timer |
+| **Each miss costs 1**: a wrong Check or a wrong pair | Feedback the moment it happens |
+| **A question costs at most 2**, the same as the misses before its answer is shown | One hard question can't sink the boat on its own |
+| **3 right first time in a row patches a leak** (+1, up to 5) | A way back, so one bad patch doesn't doom the round |
+| **Hints are free** | Asking for help is the point, not a penalty |
+| At 0 the boat **sinks** | |
+
+- **As the hull drops**, the boat sits lower in the water and lists more, rocks hard on each hit (with a heavy haptic), and the seagull looks worried at 2 or less. The hull bar goes green, then yellow, then red.
+- **When it sinks** (`Shipwreck`): the boat goes under and the seagull flies up to safety ("加油！ Jiāyóu! You can do it!"). Then **What sank the boat**: the Chinese of every missed question (for a match, the item paired wrong), each with a play button. Then **Retry**, **Review the lesson first** (lessons only, back to the learn step) and **Leave for now**.
+- **Retry** starts a new round with a full hull and the **missed questions first**, while their answers are fresh, then the rest in order.
+- **A sunk round saves nothing.** The lesson, checkpoint or quiz counts as done only when the boat reaches port, the same as finishing it without challenge mode.
+- **The wrap-up** adds "Made it to port with 3 of 5 hull left", or "Flawless voyage" with a full hull.
+- **Off:** the boat still sails to port, but never takes damage, and there's no hull bar.
+- **Accessibility:** hits, patches and the sinking are announced after the question's own feedback (queued, not cut off). With Reduce Motion on, nothing rocks or sinks: the boat moves straight to its place, and the shipwreck opens on its end (the sea, and the seagull in the air).
+
+The rules live in `src/lib/voyage.ts` (`HULL`, `REPAIR_STREAK`, `hit`, `sailOn`, `retryOrder`), apart from the screens, so they're easy to tune.
 
 ---
 

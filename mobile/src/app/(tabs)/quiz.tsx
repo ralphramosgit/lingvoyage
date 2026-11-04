@@ -4,6 +4,7 @@ import { ScrollView, type ScrollViewInstance, StyleSheet, View } from 'react-nat
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ChallengeModeCard } from '@/components/quiz/ChallengeModeCard';
 import { QuizCard } from '@/components/quiz/QuizCard';
 import { QuizNavBar } from '@/components/quiz/QuizNavBar';
 import { QuizUnitMenu } from '@/components/quiz/QuizUnitMenu';
@@ -108,6 +109,7 @@ export default function QuizScreen() {
           style={styles.flex}
           contentContainerStyle={[styles.column, styles.content]}
           showsVerticalScrollIndicator={false}>
+          <ChallengeModeCard />
           {/* Re-keyed so a new section or unit fades in. */}
           <Animated.View key={shown === 'units' ? unit.id : shown} entering={FadeIn.duration(motion.base)} style={styles.group}>
             <View style={styles.groupTitle}>
@@ -170,7 +172,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   column: { width: '100%', maxWidth: layout.maxContentWidth, alignSelf: 'center', paddingHorizontal: layout.screenPadding },
   navBar: { backgroundColor: colors.bg, borderBottomWidth: 1, borderBottomColor: colors.line },
-  content: { paddingTop: spacing.xl, paddingBottom: spacing.xxxl },
+  content: { gap: spacing.xl, paddingTop: spacing.xl, paddingBottom: spacing.xxxl },
   group: { gap: spacing.md },
   groupTitle: { gap: 2 },
   list: { gap: spacing.md },

@@ -16,6 +16,7 @@ export const art = {
   sea: '#38BDF8',
   seaDeep: colors.sky500,
   seaFoam: '#E0F2FE',
+  sand: '#F6DDA8',
 
   gullWing: '#C9D7E5',
   gullTip: '#43566C',

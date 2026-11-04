@@ -10,16 +10,13 @@ import { Text } from '@/components/Text';
 import type { UnitExercise } from '@/content/lessons/types';
 import { errorMessage } from '@/lib/api';
 import { playPhrase } from '@/lib/audio';
-import { hasBlank, isBuildRight, pickOne, RIGHT_MESSAGES, shuffled, WRONG_MESSAGES } from '@/lib/lessons';
+import { hasBlank, isBuildRight, MISSES_BEFORE_REVEAL, pickOne, RIGHT_MESSAGES, shuffled, WRONG_MESSAGES } from '@/lib/lessons';
 import { colors, layout, motion, radii, spacing } from '@/theme/theme';
 import type { KeyPhrase } from '@/types/api';
 
 import { BuildAnswer } from './BuildAnswer';
 import { ChoiceAnswer } from './ChoiceAnswer';
 import { MatchAnswer } from './MatchAnswer';
-
-/** After this many misses the answer is shown, so nobody gets stuck. */
-const MISSES_BEFORE_REVEAL = 2;
 
 type Status = 'answering' | 'missed' | 'right' | 'revealed';
 
@@ -42,6 +39,7 @@ export function ExerciseStep({
   tapToHear,
   bottomInset,
   onAudioError,
+  onMiss,
   onDone,
 }: {
   exercise: UnitExercise;
@@ -51,6 +49,8 @@ export function ExerciseStep({
   tapToHear: boolean;
   bottomInset: number;
   onAudioError: (message: string) => void;
+  /** Called on every miss, with the Chinese that was missed: the answer, or the match item paired wrong. */
+  onMiss: (phrase: KeyPhrase) => void;
   /** Called on Continue, with whether the first check was right. */
   onDone: (firstTry: boolean) => void;
 }) {
@@ -134,6 +134,8 @@ export function ExerciseStep({
       setStatus('missed');
       AccessibilityInfo.announceForAccessibility(`${nudge} Hint: ${exercise.hint}`);
     }
+    // After this question's own announcement, so the hull's queues behind it.
+    onMiss(exercise.solution);
   };
 
   const tryAgain = () => {
@@ -141,9 +143,10 @@ export function ExerciseStep({
     setStatus('answering');
   };
 
-  const missPair = () => {
+  const missPair = (pair: KeyPhrase) => {
     setMisses((count) => count + 1);
     setHintShown(true);
+    onMiss(pair);
   };
 
   let lineState: 'building' | 'right' | 'missed' = 'building';
