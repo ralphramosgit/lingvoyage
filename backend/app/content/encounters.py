@@ -30,7 +30,14 @@ from app.locations.models import ContentItem, Fact
 from app.locations.store import PackStore
 from app.research.trace import Trace
 from app.scenarios import LocalRef, ScenarioDefinition, Source, get_scenario
-from app.tutor import asks_travelers_question, question_count
+from app.tutor import (
+    asks_travelers_question,
+    characters_part,
+    coaches,
+    question_count,
+    says_goodbye,
+    yes_no_questions,
+)
 
 MAX_SCENES = 6
 MAX_PARALLEL = 3
@@ -51,7 +58,6 @@ MIN_DISHES_OFFERED = 2  # a restaurant script names this many real dishes before
 OFFER_WITHIN_STEPS = 3
 # A step the traveler may or may not take ("If the traveler asks where the restroom is, you: ..."): no question needed.
 _SIDE_STEP_RE = re.compile(r"^\s*if\b", re.IGNORECASE)
-_GOODBYE_RE = re.compile(r"再见|一路平安")
 _GOING_WORDS = r"(?:go|goes|going|get|gets|getting|head|heads|heading|travel|travels|ride)\s+(?:in)?to"
 
 Icon = Literal["PlaneLanding", "BedDouble", "UtensilsCrossed", "TrainFront", "ShoppingBag", "CarTaxiFront", "Landmark"]
@@ -270,18 +276,31 @@ def check_encounter(
 
 
 def outline_question_problems(outline: list[str]) -> list[str]:
-    """The character asks one question at a time, and every reply between the opening and the goodbye asks one,
-    so the scene leads the traveler on to the next goal (the hand-written scenes' "Then ask: ...")."""
+    """The character asks one open question at a time, and every reply between the opening and the goodbye asks
+    one, so the scene leads the traveler on to the next goal (the hand-written scenes' "Then ask: ...")."""
     problems: list[str] = []
     for number, step in enumerate(outline, start=1):
-        count = question_count(" ".join(checks.chinese_runs(step)))
+        yours = " ".join(checks.chinese_runs(characters_part(step)))
+        count = question_count(yours)
         if count > 1:
             problems.append(f'step {number} asks {count} questions ("{step}"); ask one, so the learner answers one thing at a time')
-        elif count == 0 and 1 < number < len(outline) and not _SIDE_STEP_RE.match(step) and not _GOODBYE_RE.search(step):
+        elif count == 0 and 1 < number < len(outline) and not _SIDE_STEP_RE.match(step) and not says_goodbye(yours):
             problems.append(
                 f'step {number} ("{step}") doesn\'t ask the traveler anything. Except for side steps ("If the traveler '
                 'asks ...") and the goodbye, end every reply with one short question that leads to the next goal, like '
-                '"Then ask: 你要买票吗？" before they ask the price, or "Then ask: 还需要什么吗？"'
+                '"Then ask: 你还想知道什么？" before they ask the price, or "Then ask: 还需要什么？"'
+            )
+        if coaches(yours):
+            problems.append(
+                f'step {number} ("{step}") tells the traveler what to say or ask. The character never coaches (no '
+                "你想知道…吗？, 你要问…吗？ or 你可以说…): it invites the traveler's question with 你还想知道什么？"
+            )
+        elif yes_no := yes_no_questions(yours):
+            problems.append(
+                f'step {number} asks a yes/no question ("{yes_no[0]}"): a beginner answers just 要 or 对, which does no '
+                "goal. Ask an open question (什么, 哪儿, 几, 多少, 怎么) or a choice (A还是B？) whose answer is the next "
+                'goal: "你要去哪儿？" before they say where they\'re going, "你坐地铁还是出租车？" before they choose, '
+                '"你还想知道什么？" before they ask the price'
             )
     return problems
 

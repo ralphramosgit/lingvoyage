@@ -303,6 +303,14 @@ def _two_questions_in_a_step(draft: EncounterDraft) -> None:
     draft.scene_outline[2] = "The traveler orders a dish. You: 好！要辣吗？喝什么？"
 
 
+def _yes_no_question(draft: EncounterDraft) -> None:
+    draft.scene_outline[2] = "The traveler orders a dish. You: 好！ Then ask: 要辣吗？"
+
+
+def _coaching_question(draft: EncounterDraft) -> None:
+    draft.scene_outline[2] = "The traveler orders a dish. You: 好！ Then ask: 你想知道多少钱吗？"
+
+
 @pytest.mark.parametrize(
     ("breaks", "problem"),
     [
@@ -325,6 +333,8 @@ def _two_questions_in_a_step(draft: EncounterDraft) -> None:
         (_going_to_the_city_in_english, "already in Chengdu"),
         (_no_leading_question, "doesn't ask the traveler anything"),
         (_two_questions_in_a_step, "step 3 asks 2 questions"),
+        (_yes_no_question, 'step 3 asks a yes/no question ("要辣吗？")'),
+        (_coaching_question, "step 3 (\"The traveler orders a dish. You: 好！ Then ask: 你想知道多少钱吗？\") tells the traveler what"),
     ],
 )
 def test_checks_catch_problems(breaks: Callable[[EncounterDraft], None], problem: str) -> None:
@@ -354,6 +364,12 @@ def test_places_in_the_city_are_fine_destinations() -> None:
 def test_hand_written_scripts_lead_to_every_goal() -> None:
     for scenario in SCENARIOS:
         assert encounters.outline_question_problems(scenario.scene_outline) == [], scenario.id
+
+
+def test_only_the_characters_part_of_a_step_is_checked() -> None:
+    # The traveler's yes/no question is theirs to ask; the character's question is the open one.
+    step = "The traveler asks 我坐十号线吗？ You: 对，坐十号线。 Then ask: 你还想知道什么？"
+    assert encounters.outline_question_problems(["You open: 你好！你要去哪儿？", step, "The traveler says thanks. You: 再见！"]) == []
 
 
 def test_hard_words_are_fine_when_a_lesson_teaches_them() -> None:
@@ -523,7 +539,9 @@ def test_the_prompt_asks_for_goals_from_the_place() -> None:
 
 def test_the_prompt_asks_for_a_script_that_leads_to_the_goals() -> None:
     system = prompts.encounter_system()
-    assert 'every reply of the character ends with "Then ask:" and one short question that sets up the next goal' in system
+    assert 'every reply of the character ends with "Then ask:" and one short question whose answer is the next goal' in system
+    assert "never a yes/no question (…吗？, 要不要, 有没有, 好吗)" in system
+    assert "the character never says it first: it may name the thing (你可以坐地铁。), then invites the question" in system
     assert "never the city itself: in Beijing, never 我要去北京" in system
     airport = prompts.encounter_message("airport", "airport", "Shuangliu Airport", CHENGDU, [])
     assert "They're already in Chengdu" in airport

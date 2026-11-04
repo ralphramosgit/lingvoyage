@@ -158,9 +158,9 @@ SCENARIOS: list[ScenarioDefinition] = [
             "You open: 你好！欢迎来成都！你找什么？",
             "The traveler asks where their luggage is (or says 行李). You: 你的行李在三号转盘，在那里。 Then ask: 你要去哪里？",
             "The traveler says they want to go to their hotel. You: 好！哪个酒店？",
-            "The traveler names the hotel. You: 熊猫酒店，好的！你坐巴士还是滴滴？",
-            "The traveler asks where the bus or the DiDi is (or picks one). You: 巴士在五号门外面。 or "
-            "滴滴在二号门外面。 Then ask: 还需要什么吗？",
+            "The traveler names the hotel. You: 熊猫酒店在市中心。你可以坐巴士，也可以坐滴滴。 Then ask: 你还想知道什么？",
+            "The traveler asks where the bus or the DiDi is. You: 巴士在五号门外面。 or 滴滴在二号门外面。 "
+            "Then ask: 还需要什么？",
             "If the traveler asks where the restroom is, you: 厕所在二号门旁边。",
             "The traveler says thank you. You: 不客气！再见！",
         ],
@@ -210,10 +210,10 @@ SCENARIOS: list[ScenarioDefinition] = [
         ),
         scene_outline=[
             "You open: 你好！几位？",
-            "The traveler says how many people. You: 请坐！你要吃什么？我们有牛肉面和饺子。",
-            "The traveler orders a dish. You: 好！要辣吗？",
-            "The traveler answers about the spice. You: 好。喝什么？我们有可乐和茶。",
-            "The traveler orders a drink, or says no. You bring the food: 来了！好吃吗？",
+            "The traveler says how many people. You: 请坐！我们有牛肉面和饺子。你要吃什么？",
+            "The traveler orders a dish. You: 好！要辣的还是不辣的？",
+            "The traveler answers about the spice. You: 好。我们有可乐和茶。你喝什么？",
+            "The traveler orders a drink, or says no. You bring the food: 来了！还要什么？",
             "The traveler asks for the bill or the price. You add up only what they ordered at the menu prices "
             "and say it in 块 (one bowl of beef noodles is 二十五块, beef noodles and a cola is 三十块). "
             "Then ask how they'll pay: 微信还是现金？",
@@ -265,10 +265,10 @@ SCENARIOS: list[ScenarioDefinition] = [
         ),
         scene_outline=[
             "You open: 你好！你要去哪里？",
-            "The traveler says Hangzhou, or politely asks what time the train to Hangzhou leaves. "
-            "You: 去杭州的火车下午三点半出发。 Then ask: 你有票吗？",
-            "The traveler says they have a ticket. You: 好！你要找检票口吗？",
-            "The traveler asks where to board. You: 在二楼，B12检票口。 Then ask: 还有问题吗？",
+            "The traveler says they're going to Hangzhou. You: 去杭州，好！ Then ask: 你想知道什么？",
+            "The traveler politely asks what time the train to Hangzhou leaves. You: 去杭州的火车下午三点半出发。 "
+            "Then ask: 你还想知道什么？",
+            "The traveler asks where to board. You: 在二楼，B12检票口。 Then ask: 还有什么问题？",
             "If the traveler asks where the restroom is, you: 洗手间在二楼，B12左边。",
             "The traveler says thank you and goodbye. You: 不客气！一路平安！",
         ],
@@ -317,13 +317,13 @@ SCENARIOS: list[ScenarioDefinition] = [
             "The wifi password is chengdu2026."
         ),
         scene_outline=[
-            "You open: 你好！欢迎！你有预订吗？",
+            "You open: 你好！欢迎！有什么可以帮你？",
             "The traveler says they have a reservation. You: 好。你叫什么名字？",
-            "The traveler gives their name. You: 好。请给我你的护照，好吗？",
+            "The traveler gives their name. You: 好。你的护照呢？",
             "The traveler hands over their passport. You: 谢谢！这是你的房卡，房间是八零八，在八楼。 "
-            "Then ask: 你要吃早餐吗？",
-            "The traveler asks what time breakfast is (or says yes). You: 早餐七点到十点，在二楼。 Then ask: 你要用WiFi吗？",
-            "The traveler asks for the wifi password (or says yes). You: 密码是 chengdu2026。 Then ask: 还需要什么吗？",
+            "Then ask: 还有什么问题？",
+            "The traveler asks what time breakfast is. You: 早餐七点到十点，在二楼。 Then ask: 你还想知道什么？",
+            "The traveler asks for the wifi password. You: 密码是 chengdu2026。 Then ask: 还需要什么？",
             "The traveler says thank you. You: 不客气！再见！",
         ],
         lessons=HOTEL_LESSONS,

@@ -12,7 +12,7 @@ from app.locations import retrieve
 from app.locations.models import ContentItem, Fact, FactDraft
 from app.locations.store import InMemoryPackStore, StoreError
 from app.scenarios import LocalRef, ScenarioDefinition, get_scenario
-from app.tutor import TutorReply
+from app.tutor import CharacterReply, TutorReply
 
 RESTAURANT = get_scenario("restaurant")
 assert RESTAURANT is not None
@@ -223,10 +223,11 @@ def test_the_block_goes_last_in_the_prompt() -> None:
 
 def test_generate_reply_sends_the_facts(monkeypatch: pytest.MonkeyPatch) -> None:
     systems: list[str] = []
-    reply = TutorReply(
+    reply = CharacterReply(
         learner_hanzi="有没有素菜？", learner_pinyin="Yǒu méiyǒu sùcài?", learner_english="Any vegetarian dishes?",
-        hanzi="有，素炒青菜，二十二块。", pinyin="Yǒu, sù chǎo qīng cài, èrshí'èr kuài.", english="Yes, stir-fried greens, 22 yuan.",
-        feedback="", corrected_hanzi="", corrected_pinyin="", suggestions=[], completed_goal_ids=[], scenario_complete=False,
+        goals_done=[], hanzi="有，素炒青菜，二十二块。", pinyin="Yǒu, sù chǎo qīng cài, èrshí'èr kuài.",
+        english="Yes, stir-fried greens, 22 yuan.", feedback="", corrected_hanzi="", corrected_pinyin="", suggestions=[],
+        scenario_complete=False,
     )
 
     def parse(**kwargs: Any) -> Any:
