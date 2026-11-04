@@ -12,6 +12,7 @@ export const colors = {
   ink: '#0B1F33', // primary text, icon on yellow
   inkMuted: '#4B5D70', // secondary text, pinyin
   line: '#D9E6F2', // borders, dividers
+  lineStrong: '#BBD0E4', // outlines for cards that must stand out from the page (scene cards)
   surface: '#FFFFFF',
   bg: '#F5FAFF',
   success: '#16A34A',
@@ -91,6 +92,14 @@ export const shadows = {
     shadowRadius: 20,
     shadowOffset: { width: 0, height: 8 },
     elevation: 6,
+  },
+  // Cards stacked in a list: a tighter, darker shadow, so each one reads as its own card.
+  lifted: {
+    shadowColor: '#0B1F33',
+    shadowOpacity: 0.16,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 5,
   },
 } as const satisfies Record<string, ViewStyle>;
 

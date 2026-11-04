@@ -2,7 +2,20 @@ import { sceneKind } from '@/lib/scenarioVisuals';
 import type { Scenario } from '@/types/api';
 
 export type HairStyle = 'short' | 'side' | 'bob' | 'long' | 'ponytail' | 'bun';
-export type Outfit = 'blazer' | 'suit' | 'uniform' | 'apron' | 'chef' | 'vest' | 'polo' | 'guide' | 'hoodie';
+export type Outfit =
+  | 'blazer'
+  | 'suit'
+  | 'uniform'
+  | 'apron'
+  | 'chef'
+  | 'vest'
+  | 'polo'
+  | 'guide'
+  | 'hoodie'
+  /** A collared shirt and tie, like a city taxi driver's. */
+  | 'shirt'
+  /** A T-shirt with a panda on it, like the ones sold at a market stall. */
+  | 'tee';
 export type Hat = 'none' | 'cap' | 'chef' | 'bandana' | 'bucket';
 
 export type ChibiLook = {
@@ -23,8 +36,16 @@ const SKINS = ['#FFE3CC', '#FAD6B8', '#F3C6A0', '#E9B48A'];
 const HAIR_COLORS = ['#1F1B24', '#2B2027', '#3B2A25', '#4A3326'];
 const GRAY_HAIR = '#8A8F98';
 
-// The four built-in scenes get hand-picked looks.
+// The built-in scenes get hand-picked looks.
 const BUILT_IN: Record<string, ChibiLook> = {
+  taxi: {
+    skin: SKINS[3], hair: 'side', hairColor: GRAY_HAIR, outfit: 'shirt', color: '#DCEBFA', accent: '#1E3A8A',
+    hat: 'none', glasses: false, elder: true,
+  },
+  shopping: {
+    skin: SKINS[0], hair: 'bob', hairColor: HAIR_COLORS[2], outfit: 'tee', color: '#E5484D', accent: '#FFFFFF',
+    hat: 'none', glasses: false, elder: false,
+  },
   airport: {
     skin: SKINS[0], hair: 'ponytail', hairColor: HAIR_COLORS[0], outfit: 'blazer', color: '#1E3A5F', accent: '#0EA5E9',
     hat: 'none', glasses: false, elder: false,
@@ -108,6 +129,9 @@ export function lookFor(scenario: Pick<Scenario, 'id' | 'icon' | 'character'>): 
     hat = 'bucket';
     color = '#E5484D';
     accent = '#FACC15';
+  } else if (kind === 'shop' || /shop assistant|sales|店员|售货/.test(role)) {
+    outfit = 'tee';
+    accent = '#FFFFFF';
   } else if (/vendor|seller|shopkeeper|owner|stall|老板/.test(role) || kind === 'market' || kind === 'restaurant') {
     outfit = 'apron';
     hat = elder || seed % 3 !== 0 ? 'none' : 'bandana';

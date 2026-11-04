@@ -214,7 +214,10 @@ function FeedbackCard({ feedback }: { feedback: NonNullable<LearnerMessage['feed
               </Text>
             ) : null}
           </View>
-          <SpeakerButton text={feedback.corrected_hanzi} label="Play the corrected line" size={36} />
+          <View style={styles.correctionActions}>
+            <SpeakerButton text={feedback.corrected_hanzi} label="Play the corrected line" size={36} />
+            <SpeakerButton text={feedback.corrected_hanzi} slow label="Play the corrected line slowly" size={36} />
+          </View>
         </View>
       ) : null}
     </Animated.View>
@@ -324,6 +327,7 @@ const styles = StyleSheet.create({
   },
   feedbackRow: { flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start' },
   correction: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  correctionActions: { flexDirection: 'row', gap: spacing.sm },
   correctionDivider: { borderTopWidth: 1, borderTopColor: '#FDE68A', paddingTop: spacing.sm },
   thinking: { flexDirection: 'row', gap: 6, paddingVertical: spacing.lg, alignItems: 'center' },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.sky500 },

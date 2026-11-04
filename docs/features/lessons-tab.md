@@ -205,7 +205,7 @@ You'll be able to: ask the way, understand left, right and straight on, and find
 
 #### Unit 12. Getting around
 
-Encounter: none yet ("Taking a taxi" is coming soon on Encounters; add `encounterId` when it ships) · Builds on: Numbers, Money, Asking directions
+Encounter: Taking a taxi (`taxi`) · Builds on: Numbers, Money, Asking directions
 
 | # | Lesson | Pattern | Key words and phrases |
 |---|---|---|---|
@@ -215,7 +215,7 @@ Encounter: none yet ("Taking a taxi" is coming soon on Encounters; add `encounte
 
 #### Unit 13. Shopping
 
-Encounter: none yet ("Shopping at a market" is coming soon) · Builds on: Your first sentences, Money
+Encounter: Shopping at a market (`shopping`) · Builds on: Your first sentences, Money
 
 | # | Lesson | Pattern | Key words and phrases |
 |---|---|---|---|

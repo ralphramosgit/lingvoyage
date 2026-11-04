@@ -1,5 +1,4 @@
 import { router } from 'expo-router';
-import { CarTaxiFront, ShoppingBag } from 'lucide-react-native';
 import { useState } from 'react';
 import { RefreshControl, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -9,7 +8,7 @@ import { FormMessage } from '@/components/FormMessage';
 import { LocalEncounters } from '@/components/pack/LocalEncounters';
 import { type SceneView, SceneToggle } from '@/components/pack/SceneToggle';
 import { PalHero } from '@/components/PalHero';
-import { LockedScenarioCard, ScenarioCard } from '@/components/ScenarioCard';
+import { ScenarioCard } from '@/components/ScenarioCard';
 import { Screen } from '@/components/Screen';
 import { SkeletonCard } from '@/components/SkeletonCard';
 import { Text } from '@/components/Text';
@@ -96,16 +95,6 @@ function DefaultScenes({ completedScenarioIds }: { completedScenarioIds: Set<str
           </Animated.View>
         ))}
       </View>
-
-      <Text variant="heading" style={styles.sectionTitle}>
-        On the horizon
-      </Text>
-      <Animated.View
-        entering={FadeInDown.duration(motion.base).delay(((scenarios?.length ?? 3) + 1) * motion.stagger)}
-        style={styles.list}>
-        <LockedScenarioCard title="Shopping at a market" icon={ShoppingBag} />
-        <LockedScenarioCard title="Taking a taxi" icon={CarTaxiFront} />
-      </Animated.View>
     </>
   );
 }

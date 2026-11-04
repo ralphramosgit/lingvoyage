@@ -12,7 +12,7 @@ def test_scenarios_lists_public_fields_only(client: TestClient) -> None:
     assert response.status_code == 200
     data = response.json()
 
-    assert [s["id"] for s in data] == ["airport", "restaurant", "train", "hotel"]
+    assert [s["id"] for s in data] == ["airport", "restaurant", "train", "hotel", "taxi", "shopping"]
     for scenario in data:
         assert "scene_details" not in scenario
         assert "scene_outline" not in scenario
@@ -93,6 +93,8 @@ def test_built_in_characters_have_a_gender_and_age() -> None:
         "restaurant": ("female", "older"),
         "train": ("male", "young"),
         "hotel": ("male", "older"),
+        "taxi": ("male", "older"),
+        "shopping": ("female", "young"),
     }
 
 

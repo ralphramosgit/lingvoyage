@@ -12,6 +12,7 @@ import { PressableScale } from './PressableScale';
 import { Text } from './Text';
 
 const ART_HEIGHT = 128;
+const CARD_BORDER = 1.5;
 
 /** A scene to pick: its place drawn across the top with the character in it, then what it's about. */
 export function ScenarioCard({
@@ -32,27 +33,30 @@ export function ScenarioCard({
       accessibilityLabel={`${scenario.title}. ${scenario.subtitle}. ${scenario.city}, with ${character.name_english}, ${scenario.minutes} minutes.${completed ? ' Completed.' : ''}`}
       accessibilityHint="Opens the encounter"
       style={styles.card}>
-      <View style={styles.art}>
-        <SceneBackdrop scene={sceneKind(scenario.icon)} />
-        <Chibi look={lookFor(scenario)} size={ART_HEIGHT - 8} animated={false} style={styles.character} />
-        {completed ? (
-          <View style={styles.done}>
-            <Check size={14} color="#FFFFFF" strokeWidth={3} />
-            <Text variant="tiny" color="#FFFFFF">
-              Done
+      {/* Clipped inside, not on the card itself: on iOS a view that clips its content loses its shadow. */}
+      <View style={styles.clip}>
+        <View style={styles.art}>
+          <SceneBackdrop scene={sceneKind(scenario.icon)} />
+          <Chibi look={lookFor(scenario)} size={ART_HEIGHT - 8} animated={false} style={styles.character} />
+          {completed ? (
+            <View style={styles.done}>
+              <Check size={14} color="#FFFFFF" strokeWidth={3} />
+              <Text variant="tiny" color="#FFFFFF">
+                Done
+              </Text>
+            </View>
+          ) : null}
+        </View>
+
+        <View style={styles.body}>
+          <View style={styles.flex}>
+            <Text variant="subheading">{scenario.title}</Text>
+            <Text variant="caption" color={colors.inkMuted} numberOfLines={1}>
+              with {character.name_english} · {scenario.minutes} min
             </Text>
           </View>
-        ) : null}
-      </View>
-
-      <View style={styles.body}>
-        <View style={styles.flex}>
-          <Text variant="subheading">{scenario.title}</Text>
-          <Text variant="caption" color={colors.inkMuted} numberOfLines={1}>
-            with {character.name_english} · {scenario.minutes} min
-          </Text>
+          <ChevronRight size={20} color={colors.inkMuted} />
         </View>
-        <ChevronRight size={20} color={colors.inkMuted} />
       </View>
     </PressableScale>
   );
@@ -78,10 +82,18 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
     borderRadius: radii.card,
-    overflow: 'hidden',
-    ...shadows.card,
+    borderWidth: CARD_BORDER,
+    borderColor: colors.lineStrong,
+    ...shadows.lifted,
   },
-  art: { height: ART_HEIGHT, backgroundColor: colors.sky100, overflow: 'hidden' },
+  clip: { borderRadius: radii.card - CARD_BORDER, overflow: 'hidden' },
+  art: {
+    height: ART_HEIGHT,
+    backgroundColor: colors.sky100,
+    overflow: 'hidden',
+    borderBottomWidth: 1,
+    borderBottomColor: colors.lineStrong,
+  },
   character: { position: 'absolute', bottom: -6, left: spacing.lg },
   done: {
     position: 'absolute',

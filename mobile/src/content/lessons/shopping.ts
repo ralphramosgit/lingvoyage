@@ -11,6 +11,7 @@ export const SHOPPING: Unit = {
     "From night markets to giant malls, shopping in China is an event. Here's how to find what you want, in your size, and leave politely if you don't buy.",
   canDo: ['Ask if they have something', 'Ask for another size or color', "Say you're just looking, or that you'll take it"],
   buildsOn: ['first-sentences', 'money'],
+  encounterId: 'shopping',
   lessons: [
     {
       id: 'have-it',

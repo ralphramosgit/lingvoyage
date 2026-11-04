@@ -38,8 +38,11 @@ export type LearnerMessage = {
   feedback: Feedback | null;
 };
 
-/** What the learner typed, or the transcript of their recording that they checked before sending. */
-export type TurnInput = { type: 'text' | 'voice'; text: string };
+/**
+ * What the learner typed, or the transcript of their recording that they checked before sending. `gloss`: its
+ * translation, if they looked at it first, shown under their message until the character's reply brings one.
+ */
+export type TurnInput = { type: 'text' | 'voice'; text: string; gloss?: Gloss };
 
 type RetryAction = { type: 'start' } | { type: 'turn'; input: TurnInput; learnerId: string };
 
@@ -100,7 +103,7 @@ function reducer(state: State, action: Action): State {
         const hasFeedback = reply.feedback.trim() !== '' || reply.corrected_hanzi.trim() !== '';
         return {
           ...message,
-          gloss: glossFrom(reply),
+          gloss: glossFrom(reply) ?? message.gloss,
           pending: false,
           failed: false,
           feedback: hasFeedback
@@ -231,7 +234,7 @@ export function useConversation(scenario: Scenario | null, options: { autoPlay: 
             kind: 'learner',
             source: input.type,
             text: input.text,
-            gloss: null,
+            gloss: input.gloss ?? null,
             pending: true,
             failed: false,
             feedback: null,

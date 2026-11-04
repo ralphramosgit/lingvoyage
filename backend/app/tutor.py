@@ -17,6 +17,7 @@ from app.scenarios import ScenarioDefinition
 logger = logging.getLogger("lingvoyage.tutor")
 
 MAX_TOKENS = 2000
+GLOSS_MAX_TOKENS = 1000
 REQUEST_TIMEOUT_SECONDS = 15.0
 MAX_HISTORY_LINES = 30
 MAX_SUGGESTIONS = 3
@@ -490,3 +491,54 @@ def generate_reply(
     learner_lines = [line.text for line in history if line.role == "learner"] + ([learner_text] if learner_text else [])
     suggestions = drop_asked_questions(scenario, reply.suggestions, learner_lines)
     return finalize_reply(reply.model_copy(update={"suggestions": suggestions}), scenario, completed)
+
+
+# ---------------------------------------------------------------------------
+# Gloss: what the learner said into the mic, spelled out before they send it
+# ---------------------------------------------------------------------------
+
+
+def build_gloss_system(scenario: ScenarioDefinition) -> str:
+    character = scenario.character
+    return f"""A beginner Mandarin learner, whose first language is English, is role-playing a traveler talking to {character.name_hanzi} ({character.role.lower()}) at {scenario.setting} in {scenario.city}. They just spoke into the microphone, and speech recognition wrote down what it heard. Before they send it, show them what they said:
+- "hanzi": their words in Simplified Chinese exactly as written, keeping their words and mistakes (write any pinyin as characters, leave English words as they are).
+- "pinyin": pinyin for "hanzi" with tone marks, words separated by spaces, punctuation kept.
+- "english": a natural English translation of what they said. If a word was misheard, translate what they most likely meant in this scene.
+Don't correct them, answer them or add comments. Never use emojis."""
+
+
+def gloss_learner_line(scenario: ScenarioDefinition, text: str) -> Phrase:
+    """The learner's checked transcript in pinyin and English, so they know what they're about to send."""
+    client = _get_client()
+    for attempt in (1, 2):
+        try:
+            # No temperature / top_p / top_k: Claude Haiku 5.5 rejects sampling parameters.
+            response = client.messages.parse(
+                model=get_settings().anthropic_gloss_model,
+                max_tokens=GLOSS_MAX_TOKENS,
+                system=build_gloss_system(scenario),
+                messages=[{"role": "user", "content": text}],
+                output_config={"effort": "low"},
+                output_format=Phrase,
+            )
+        except anthropic.APIError as error:
+            if attempt == 1 and _is_retryable(error):
+                logger.warning("Claude overloaded or timed out on a gloss; retrying once")
+                continue
+            logger.exception("Claude gloss request failed")
+            raise _map_error(error)
+        except pydantic.ValidationError:
+            logger.exception("Claude returned JSON that doesn't match Phrase")
+            raise ApiError(502, "translate_failed", "Couldn't translate that. Try again.")
+
+        gloss = response.parsed_output
+        if gloss is None or not gloss.english.strip():
+            logger.error("Claude returned no gloss (stop_reason=%s)", response.stop_reason)
+            raise ApiError(502, "translate_failed", "Couldn't translate that. Try again.")
+        return Phrase(
+            hanzi=strip_emojis(gloss.hanzi) or text,
+            pinyin=strip_emojis(gloss.pinyin),
+            english=strip_emojis(gloss.english),
+        )
+
+    raise ApiError(503, "tutor_busy", "Translation is busy right now. Try again in a moment.")

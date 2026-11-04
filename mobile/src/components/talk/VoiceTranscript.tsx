@@ -1,4 +1,4 @@
-import { CircleAlert, CircleCheck, RotateCcw } from 'lucide-react-native';
+import { CircleAlert, CircleCheck, Languages, RotateCcw } from 'lucide-react-native';
 import { type ReactNode, useEffect, useRef } from 'react';
 import { ActivityIndicator, ScrollView, type ScrollViewInstance, StyleSheet, View } from 'react-native';
 import Animated, {
@@ -12,15 +12,27 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { Button } from '@/components/Button';
+import { PressableScale } from '@/components/PressableScale';
 import { Text } from '@/components/Text';
 import type { LiveStatus } from '@/hooks/useLiveTranscript';
+import type { DraftTranslation } from '@/hooks/useVoiceDraft';
 import { colors, motion, radii, spacing } from '@/theme/theme';
+
+/** The transcript's translation, shown under it before sending when the learner asks for it. */
+export type TranscriptTranslation = {
+  open: boolean;
+  /** null until it's been asked for. */
+  state: DraftTranslation | null;
+  showPinyin: boolean;
+  onToggle: () => void;
+  onRetry: () => void;
+};
 
 /** What the mic heard, shown in the input bar: live while recording, then the transcript to check. */
 export type VoiceTranscriptState =
   | { phase: 'listening'; text: string; live: LiveStatus }
   | { phase: 'checking'; text: string }
-  | { phase: 'ready'; text: string }
+  | { phase: 'ready'; text: string; translation?: TranscriptTranslation }
   | { phase: 'failed'; message: string; onRetry?: () => void };
 
 // About four lines of hanzi; longer transcripts scroll, newest words in view.
@@ -37,6 +49,69 @@ function PulseDot() {
 
   const style = useAnimatedStyle(() => ({ opacity: opacity.get() }));
   return <Animated.View style={[styles.liveDot, style]} />;
+}
+
+function Translation({ translation }: { translation: TranscriptTranslation }) {
+  const { open, state, showPinyin, onToggle, onRetry } = translation;
+
+  let body: ReactNode = null;
+  if (open && state?.status === 'done') {
+    body = (
+      <>
+        {showPinyin && state.gloss.pinyin ? (
+          <Text variant="caption" color={colors.sky700} selectable>
+            {state.gloss.pinyin}
+          </Text>
+        ) : null}
+        <Text variant="body" color={colors.ink} selectable>
+          {state.gloss.english}
+        </Text>
+      </>
+    );
+  } else if (open && state?.status === 'failed') {
+    body = (
+      <View style={styles.translationRow}>
+        <Text variant="caption" color="#991B1B" style={styles.flex}>
+          {state.message}
+        </Text>
+        <PressableScale onPress={onRetry} accessibilityRole="button" accessibilityLabel="Try the translation again" style={styles.link}>
+          <Text variant="label" color={colors.sky700}>
+            Try again
+          </Text>
+        </PressableScale>
+      </View>
+    );
+  } else if (open) {
+    body = (
+      <View style={styles.translationRow}>
+        <ActivityIndicator size="small" color={colors.sky700} />
+        <Text variant="caption" color={colors.inkMuted}>
+          Translating...
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.translation}>
+      {body ? (
+        <Animated.View entering={FadeIn.duration(motion.fast)} style={styles.translationBody}>
+          {body}
+        </Animated.View>
+      ) : null}
+      <PressableScale
+        onPress={onToggle}
+        accessibilityRole="button"
+        accessibilityLabel={open ? 'Hide translation' : 'Show translation of what you said'}
+        accessibilityState={{ expanded: open }}
+        style={[styles.link, styles.translationToggle]}>
+        <Languages size={16} color={colors.sky700} />
+        <Text variant="label" color={colors.sky700}>
+          {open ? 'Hide translation' : 'Show translation'}
+        </Text>
+      </PressableScale>
+    </View>
+  );
 }
 
 function listeningPlaceholder(live: LiveStatus): string {
@@ -129,6 +204,7 @@ export function VoiceTranscript({ state }: { state: VoiceTranscriptState }) {
         onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}>
         {body}
       </ScrollView>
+      {state.phase === 'ready' && state.translation ? <Translation translation={state.translation} /> : null}
       {state.phase === 'failed' && state.onRetry ? (
         <Button label="Try again" icon={RotateCcw} size="md" variant="secondary" onPress={state.onRetry} style={styles.retry} />
       ) : null}
@@ -148,6 +224,18 @@ const styles = StyleSheet.create({
   scroll: { maxHeight: MAX_TEXT_HEIGHT, flexGrow: 0 },
   liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.danger },
   retry: { alignSelf: 'flex-start', marginTop: spacing.xs },
+  flex: { flex: 1 },
+  translation: { gap: spacing.xs },
+  translationBody: {
+    gap: 2,
+    marginTop: spacing.xs,
+    paddingTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: '#BAE6FD',
+  },
+  translationRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  link: { minHeight: 32, justifyContent: 'center' },
+  translationToggle: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, alignSelf: 'flex-start' },
 });
 
 const PANEL_LOOK = StyleSheet.create({

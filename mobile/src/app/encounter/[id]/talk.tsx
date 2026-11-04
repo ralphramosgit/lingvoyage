@@ -63,6 +63,8 @@ export default function TalkScreen() {
   const [goalsOpen, setGoalsOpen] = useState(false);
   const [suggestionsPref, setSuggestionsPref] = useState<boolean | null>(null);
   const [englishOverrides, setEnglishOverrides] = useState<Record<string, boolean>>({});
+  // The voice transcript's translation before sending: shown when asked for, or always with "Show English" on.
+  const [draftEnglishPref, setDraftEnglishPref] = useState<boolean | null>(null);
   const [permissionCard, setPermissionCard] = useState<'denied' | 'blocked' | null>(null);
   const [sheetVisible, setSheetVisible] = useState(false);
   const [keyboardOpen, setKeyboardOpen] = useState(false);
@@ -187,6 +189,14 @@ export default function TalkScreen() {
     }
   }, [live, recorder, voice]);
 
+  // Fetch the transcript's translation once it's ready, if it's to be shown.
+  const draftEnglishOn = draftEnglishPref ?? settings.autoEnglish;
+  const readyDraft = voice.draft?.status === 'ready' ? voice.draft : null;
+  const translateDraft = voice.translate;
+  useEffect(() => {
+    if (draftEnglishOn && readyDraft && !readyDraft.translation) translateDraft();
+  }, [draftEnglishOn, readyDraft, translateDraft]);
+
   // Auto-stop at 30 seconds.
   useEffect(() => {
     if (recorder.isRecording && recorder.elapsedMs >= MAX_RECORDING_MS) void stopRecording();
@@ -195,6 +205,7 @@ export default function TalkScreen() {
   const startRecording = async () => {
     if (!scenario || recorder.status !== 'idle' || thinking || complete) return;
     voice.clear();
+    setDraftEnglishPref(null);
     setHint(null);
     const result = await recorder.start();
     if (result === 'denied' || result === 'blocked') setPermissionCard(result);
@@ -218,9 +229,9 @@ export default function TalkScreen() {
 
   const onSendVoice = async () => {
     if (voice.draft?.status !== 'ready' || thinking || complete) return;
-    const { text } = voice.draft;
+    const { text, translation } = voice.draft;
     voice.clear();
-    await send({ type: 'voice', text });
+    await send({ type: 'voice', text, gloss: translation?.status === 'done' ? translation.gloss : undefined });
   };
 
   const onSendText = async () => {
@@ -243,6 +254,7 @@ export default function TalkScreen() {
     setGoalsOpen(false);
     setDraft('');
     voice.clear();
+    setDraftEnglishPref(null);
     progressSaved.current = false;
     previousGoalCount.current = 0;
     reset();
@@ -280,8 +292,19 @@ export default function TalkScreen() {
   let transcript: VoiceTranscriptState | null = null;
   if (recorder.isRecording) transcript = { phase: 'listening', text: live.text, live: live.status };
   else if (voice.draft?.status === 'checking') transcript = { phase: 'checking', text: voice.draft.preview };
-  else if (voice.draft?.status === 'ready') transcript = { phase: 'ready', text: voice.draft.text };
-  else if (voice.draft?.status === 'failed') {
+  else if (voice.draft?.status === 'ready') {
+    transcript = {
+      phase: 'ready',
+      text: voice.draft.text,
+      translation: {
+        open: draftEnglishOn,
+        state: voice.draft.translation,
+        showPinyin: settings.showPinyin,
+        onToggle: () => setDraftEnglishPref(!draftEnglishOn),
+        onRetry: voice.translate,
+      },
+    };
+  } else if (voice.draft?.status === 'failed') {
     transcript = { phase: 'failed', message: voice.draft.message, onRetry: voice.draft.canRetry ? voice.retry : undefined };
   }
 

@@ -188,6 +188,30 @@ function Outfit({ look }: { look: ChibiLook }) {
           <Path d="M22 92 L34 92" stroke={look.accent} strokeWidth={3} strokeLinecap="round" />
         </>
       );
+    case 'shirt':
+      return (
+        <>
+          <Path d="M40.5 73 L50 79.5 L45 85.5 Z M59.5 73 L50 79.5 L55 85.5 Z" fill={art.white} {...thin} />
+          <Path d="M47.6 79.2 L52.4 79.2 L53.2 82.6 L46.8 82.6 Z" fill={look.accent} {...thin} strokeWidth={1.2} />
+          <Path d="M47 82.6 L53 82.6 L55.5 96 L50 101 L44.5 96 Z" fill={look.accent} {...thin} strokeWidth={1.2} />
+          <Path d="M46.5 89 L53.5 86.5 M45.7 93.5 L54.3 90.5" stroke="rgba(255,255,255,0.45)" strokeWidth={1.2} />
+          <Rect x={62} y={86} width={10} height={8} rx={1.5} fill="none" {...thin} strokeWidth={1.2} />
+          <Path d="M64.5 87 L64.5 82.5" stroke={look.accent} strokeWidth={1.8} strokeLinecap="round" />
+        </>
+      );
+    case 'tee':
+      return (
+        <>
+          <Path d="M41 73.5 Q50 81 59 73.5" fill="none" {...thin} strokeWidth={1.8} />
+          <Circle cx={45.2} cy={85.2} r={2.6} fill={art.eye} />
+          <Circle cx={54.8} cy={85.2} r={2.6} fill={art.eye} />
+          <Circle cx={50} cy={90} r={7} fill={art.white} {...thin} strokeWidth={1.2} />
+          <Ellipse cx={47.3} cy={89.6} rx={1.6} ry={2.2} fill={art.eye} />
+          <Ellipse cx={52.7} cy={89.6} rx={1.6} ry={2.2} fill={art.eye} />
+          <Ellipse cx={50} cy={93} rx={1.2} ry={0.8} fill={art.eye} />
+          <Path d="M23 89 L27 98 M77 89 L73 98" stroke="rgba(0,0,0,0.18)" strokeWidth={1.4} strokeLinecap="round" />
+        </>
+      );
     case 'guide':
       return (
         <>

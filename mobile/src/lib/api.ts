@@ -7,6 +7,8 @@ import type {
   Scenario,
   TranscribeRequest,
   TranscribeResponse,
+  TranslateRequest,
+  TranslateResponse,
   TtsResponse,
   TurnRequest,
   TurnResponse,
@@ -108,6 +110,8 @@ export const api = {
   liveToken: () => request<LiveTokenResponse>('POST', '/speech/live-token', { auth: true }),
   transcribe: (body: TranscribeRequest, signal?: AbortSignal) =>
     request<TranscribeResponse>('POST', '/speech/transcribe', { body, auth: true, signal }),
+  translate: (body: TranslateRequest, signal?: AbortSignal) =>
+    request<TranslateResponse>('POST', '/speech/translate', { body, auth: true, signal }),
   startConversation: (scenarioId: string, signal?: AbortSignal) =>
     request<TurnResponse>('POST', '/conversation/start', { body: { scenario_id: scenarioId }, auth: true, signal }),
   sendTurn: (body: TurnRequest, signal?: AbortSignal) =>

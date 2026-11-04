@@ -1,6 +1,6 @@
 import { type ComponentType, useState } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
-import Svg, { Circle, Defs, Ellipse, G, LinearGradient, Path, Rect, Stop, Text as SvgText } from 'react-native-svg';
+import Svg, { Circle, ClipPath, Defs, Ellipse, G, LinearGradient, Path, Rect, Stop, Text as SvgText } from 'react-native-svg';
 
 import type { SceneKind } from '@/lib/scenarioVisuals';
 
@@ -411,53 +411,333 @@ function Building({ x, y, width, color }: { x: number; y: number; width: number;
   );
 }
 
+// A made-up QR code, the way taxis and stalls show one to pay with: three corner squares and a scatter of dots.
+const QR_DOTS = [
+  [4, 0], [5, 1], [4, 2], [0, 4], [2, 4], [3, 4], [5, 4], [7, 4], [1, 5], [4, 5], [6, 5], [8, 5],
+  [4, 6], [6, 6], [8, 6], [5, 7], [7, 7], [4, 8], [6, 8], [8, 8],
+];
+
+function QrCode({ x, y, size }: { x: number; y: number; size: number }) {
+  const cell = size / 9;
+  return (
+    <G>
+      {[
+        [0, 0],
+        [6, 0],
+        [0, 6],
+      ].map(([col, row]) => (
+        <G key={`${col}-${row}`}>
+          <Rect x={x + col * cell} y={y + row * cell} width={cell * 3} height={cell * 3} fill={art.board} />
+          <Rect x={x + (col + 0.5) * cell} y={y + (row + 0.5) * cell} width={cell * 2} height={cell * 2} fill={art.white} />
+          <Rect x={x + (col + 1) * cell} y={y + (row + 1) * cell} width={cell} height={cell} fill={art.board} />
+        </G>
+      ))}
+      {QR_DOTS.map(([col, row]) => (
+        <Rect key={`${col}-${row}`} x={x + col * cell} y={y + row * cell} width={cell} height={cell} fill={art.board} />
+      ))}
+    </G>
+  );
+}
+
+const WINDSHIELD = 'M52 150 Q200 132 348 150 L392 438 Q200 424 8 438 Z';
+const SEAT_COVER = '#F1E8D5';
+const SEAT_TRIM = '#D8C9A8';
+
+/** A front seat seen from the back seat: headrest, posts, and a lace-trimmed cover like many taxis have. */
+function FrontSeat({ x, width }: { x: number; width: number }) {
+  const mid = x + width / 2;
+  const scallops = Math.floor((width - 24) / 14);
+  return (
+    <G>
+      <Path d={`M${mid - 9} 552 L${mid - 9} 574 M${mid + 9} 552 L${mid + 9} 574`} stroke="#9AA3AE" strokeWidth={4} />
+      <Rect x={x + 38} y={494} width={width - 76} height={62} rx={20} fill={SEAT_COVER} {...line} />
+      <Rect x={x} y={568} width={width} height={180} rx={28} fill={SEAT_COVER} {...line} />
+      <Path
+        d={`M${x + 12} 590 ${Array.from({ length: scallops }, () => 'q7 9 14 0').join(' ')}`}
+        stroke={SEAT_TRIM}
+        strokeWidth={2}
+        fill="none"
+      />
+      {[612, 636, 660, 684, 708].map((cy) =>
+        Array.from({ length: Math.floor((width - 30) / 22) }, (_, col) => (
+          <Circle key={`${cy}-${col}`} cx={x + 24 + col * 22 + (cy % 48 === 12 ? 0 : 11)} cy={cy} r={2} fill={SEAT_TRIM} opacity={0.7} />
+        )),
+      )}
+    </G>
+  );
+}
+
+/** Inside a taxi, from the back seat: the street through the windshield, the meter, and the seats in front. */
 function Taxi() {
   return (
     <>
-      <Sky id="taxi-sky" from="#A9DEFB" to="#EEF8FF" />
-      <Circle cx={320} cy={112} r={34} fill="#FDE68A" />
-      <Cloud x={40} y={120} />
-      <Cloud x={220} y={200} scale={0.6} />
-      <Building x={-10} y={260} width={96} color="#C7DDF0" />
-      <Building x={92} y={320} width={84} color="#B3CDE6" />
-      <Building x={182} y={230} width={100} color="#D6E4F2" />
-      <Building x={288} y={300} width={124} color="#BBD3EA" />
-      {[54, 206, 352].map((cx) => (
-        <G key={cx}>
-          <Rect x={cx - 4} y={470} width={8} height={52} fill={art.woodDark} />
-          <Circle cx={cx} cy={458} r={26} fill={art.leaf} {...line} strokeWidth={2} />
-          <Circle cx={cx - 14} cy={472} r={16} fill={art.leafDark} />
-        </G>
-      ))}
-      <Rect x={0} y={522} width={W} height={40} fill={art.stone} />
-      <Rect x={0} y={556} width={W} height={8} fill={art.stoneDark} />
-      <Rect x={0} y={564} width={W} height={156} fill="#9AA8B6" />
-      {[20, 120, 220, 320].map((x) => (
-        <Rect key={x} x={x} y={676} width={60} height={8} rx={4} fill={art.white} opacity={0.85} />
-      ))}
-      <G transform="translate(0 60)">
+      {/* The cab's roof lining, with the dome light. */}
+      <Rect width={W} height={H} fill="#D9D2C6" />
+      <Rect x={150} y={36} width={100} height={30} rx={12} fill="#FFF6D6" stroke="#C4BBAD" strokeWidth={2} />
+
+      {/* The street ahead, seen through the windshield. */}
+      <Defs>
+        <ClipPath id="taxi-glass">
+          <Path d={WINDSHIELD} />
+        </ClipPath>
+      </Defs>
+      <G clipPath="url(#taxi-glass)">
+        <Gradient id="taxi-sky" from="#A9DEFB" to="#EEF8FF" />
+        <Rect y={120} width={W} height={330} fill="url(#taxi-sky)" />
+        <Circle cx={312} cy={206} r={24} fill="#FDE68A" />
+        <Cloud x={56} y={178} scale={0.8} />
+        <Cloud x={228} y={226} scale={0.55} />
+        <Building x={-10} y={262} width={92} color="#C7DDF0" />
+        <Building x={78} y={300} width={70} color="#B3CDE6" />
+        <Building x={152} y={252} width={44} color="#A9C4DE" />
+        <Building x={252} y={244} width={78} color="#D6E4F2" />
+        <Building x={322} y={292} width={90} color="#BBD3EA" />
+        <Rect y={338} width={W} height={112} fill="#CBD5DF" />
+        <Path d="M-30 440 L184 338 L216 338 L430 440 Z" fill="#7D8996" />
+        <Path d="M-30 440 L184 338 M430 440 L216 338" stroke={art.white} strokeWidth={2.5} opacity={0.85} />
         <Path
-          d="M58 584 L58 556 Q60 542 80 538 L122 535 L152 503 Q158 497 168 497 L262 497 Q274 497 282 505 L312 535 L332 540 Q344 544 344 560 L344 584 Z"
-          fill={art.sun}
-          {...line}
-          strokeWidth={3}
+          d="M199 344 L201 344 L201.6 352 L198.4 352 Z M197.8 362 L202.2 362 L203.2 376 L196.8 376 Z M196 396 L204 396 L205.6 420 L194.4 420 Z"
+          fill={art.white}
+          opacity={0.9}
         />
-        <Path d="M158 507 L134 535 L198 535 L198 507 Z" fill="#BFE3F8" {...line} strokeWidth={2.5} />
-        <Path d="M208 507 L208 535 L292 535 L270 507 Z" fill="#BFE3F8" {...line} strokeWidth={2.5} />
-        <Rect x={182} y={480} width={50} height={18} rx={5} fill={art.white} {...line} strokeWidth={2.5} />
-        <SvgText x={207} y={494} fontSize={11} fontWeight="700" fill={art.board} textAnchor="middle">
-          TAXI
-        </SvgText>
-        <Rect x={60} y={560} width={282} height={7} fill="#16A34A" />
-        <Path d="M203 537 L203 580" stroke={art.outline} strokeWidth={2} />
-        <Rect x={330} y={548} width={12} height={8} rx={3} fill={art.white} {...line} strokeWidth={1.6} />
-        {[118, 284].map((cx) => (
-          <G key={cx}>
-            <Circle cx={cx} cy={586} r={22} fill="#2B3440" {...line} strokeWidth={3} />
-            <Circle cx={cx} cy={586} r={9} fill="#CBD5E1" />
+        {[
+          [50, 0.9],
+          [352, 1],
+        ].map(([cx, scale]) => (
+          <G key={cx} transform={`translate(${cx} 0) scale(${scale} 1)`}>
+            <Rect x={-4} y={318} width={8} height={44} fill={art.woodDark} />
+            <Circle cx={0} cy={310} r={26} fill={art.leaf} {...line} strokeWidth={2} />
+            <Circle cx={-12} cy={322} r={14} fill={art.leafDark} />
           </G>
         ))}
+        <Path d="M118 300 L118 352" stroke="#64748B" strokeWidth={4} />
+        <Rect x={82} y={278} width={72} height={26} rx={4} fill="#1D4ED8" stroke={art.white} strokeWidth={2} />
+        <SvgText x={118} y={296} fontSize={12} fontWeight="700" fill={art.white} textAnchor="middle">
+          市中心 →
+        </SvgText>
+        {/* A car ahead */}
+        <Rect x={182} y={348} width={36} height={16} rx={5} fill="#BFE3F8" {...line} strokeWidth={2} />
+        <Rect x={174} y={358} width={52} height={26} rx={7} fill={art.scarf} {...line} strokeWidth={2} />
+        <Rect x={178} y={366} width={8} height={5} rx={2} fill={art.lantern} />
+        <Rect x={214} y={366} width={8} height={5} rx={2} fill={art.lantern} />
+        <Rect x={192} y={372} width={16} height={7} rx={1.5} fill={art.white} />
+        <Rect x={178} y={383} width={10} height={6} rx={2} fill="#1F2933" />
+        <Rect x={212} y={383} width={10} height={6} rx={2} fill="#1F2933" />
       </G>
+      <Path d={WINDSHIELD} fill="none" stroke="#4A5360" strokeWidth={9} strokeLinejoin="round" />
+
+      {/* The rear-view mirror, with a red knot hung for luck. */}
+      <Path d="M200 128 L200 164" stroke="#4A5360" strokeWidth={5} />
+      <Rect x={146} y={160} width={108} height={28} rx={11} fill="#2F3742" {...line} />
+      <Rect x={153} y={166} width={94} height={16} rx={7} fill="#9FC3DD" />
+      <Path d="M162 179 L176 168 M172 180 L186 169" stroke={art.white} strokeWidth={2} opacity={0.6} strokeLinecap="round" />
+      <Path d="M200 188 L200 211" stroke={art.lantern} strokeWidth={2} />
+      <Circle cx={200} cy={212} r={3.5} fill={art.gold} {...line} strokeWidth={1.2} />
+      <Path d="M200 216 L214 230 L200 244 L186 230 Z" fill={art.lantern} {...line} strokeWidth={1.6} />
+      <Path d="M193 223 L207 237 M207 223 L193 237" stroke={art.gold} strokeWidth={1.4} />
+      <Path d="M196 244 L195 266 M200 244 L200 270 M204 244 L205 266" stroke={art.lantern} strokeWidth={2.4} strokeLinecap="round" />
+
+      {/* The dashboard: steering wheel on the driver's side, the phone's map, and the meter. */}
+      <Path d="M0 448 Q200 414 400 448 L400 580 L0 580 Z" fill="#3A4350" {...line} />
+      <Path d="M14 452 Q200 422 386 452" stroke="#5B6675" strokeWidth={3} fill="none" />
+      <Circle cx={96} cy={520} r={58} fill="none" stroke="#1F252D" strokeWidth={13} />
+      <Path d="M44 520 L148 520 M96 520 L96 578" stroke="#1F252D" strokeWidth={10} />
+      <Circle cx={96} cy={520} r={14} fill="#2B323C" stroke="#1F252D" strokeWidth={3} />
+      <Rect x={192} y={496} width={16} height={12} rx={2} fill="#2B323C" />
+      <Rect x={176} y={434} width={48} height={66} rx={7} fill="#111827" {...line} strokeWidth={2} />
+      <Rect x={180} y={439} width={40} height={56} rx={4} fill="#DDF1E4" />
+      <Path d="M180 470 L220 458 M196 439 L204 495" stroke={art.white} strokeWidth={3} />
+      <Path d="M187 488 Q196 472 203 467 T214 448" stroke={art.scarf} strokeWidth={3} fill="none" strokeLinecap="round" />
+      <Circle cx={214} cy={449} r={4} fill={art.lantern} {...line} strokeWidth={1.2} />
+      <Rect x={262} y={444} width={106} height={46} rx={7} fill="#161B22" {...line} />
+      <Rect x={270} y={450} width={90} height={26} rx={3} fill="#2A0D0F" />
+      <SvgText x={274} y={461} fontSize={8} fontWeight="700" fill="#FF9EA1">
+        金额
+      </SvgText>
+      <SvgText x={355} y={471} fontSize={19} fontWeight="700" fill="#FF5A5F" textAnchor="end">
+        30.00
+      </SvgText>
+      {[276, 296, 316, 336].map((x) => (
+        <Rect key={x} x={x} y={480} width={14} height={5} rx={2} fill="#3B4552" />
+      ))}
+
+      {/* The front seats, and the QR code on the back of one to pay with. */}
+      <Rect x={186} y={588} width={28} height={140} fill="#2A313A" />
+      <Circle cx={200} cy={600} r={9} fill="#1F252D" />
+      <FrontSeat x={18} width={168} />
+      <FrontSeat x={214} width={168} />
+      <Rect x={258} y={604} width={80} height={98} rx={7} fill={art.white} {...line} />
+      <SvgText x={298} y={622} fontSize={12} fontWeight="700" fill="#15803D" textAnchor="middle">
+        扫码付款
+      </SvgText>
+      <QrCode x={274} y={632} size={48} />
+    </>
+  );
+}
+
+function PandaFace({ cx, cy, r }: { cx: number; cy: number; r: number }) {
+  return (
+    <G>
+      <Circle cx={cx - r * 0.72} cy={cy - r * 0.68} r={r * 0.38} fill={art.eye} />
+      <Circle cx={cx + r * 0.72} cy={cy - r * 0.68} r={r * 0.38} fill={art.eye} />
+      <Circle cx={cx} cy={cy} r={r} fill={art.white} stroke={art.outline} strokeWidth={1.2} />
+      <Ellipse cx={cx - r * 0.38} cy={cy - r * 0.05} rx={r * 0.24} ry={r * 0.32} fill={art.eye} />
+      <Ellipse cx={cx + r * 0.38} cy={cy - r * 0.05} rx={r * 0.24} ry={r * 0.32} fill={art.eye} />
+      <Ellipse cx={cx} cy={cy + r * 0.42} rx={r * 0.17} ry={r * 0.11} fill={art.eye} />
+    </G>
+  );
+}
+
+const HANGER = '#8A6A4A';
+
+/** A panda T-shirt on a hanger, hooked on a rail 20 above `y`. */
+function TShirt({ cx, y, color }: { cx: number; y: number; color: string }) {
+  return (
+    <G>
+      <Path d={`M${cx} ${y - 10} L${cx} ${y - 14} Q${cx} ${y - 20} ${cx + 5} ${y - 19}`} fill="none" stroke={HANGER} strokeWidth={2} strokeLinecap="round" />
+      <Path
+        d={`M${cx - 10} ${y} Q${cx} ${y + 7} ${cx + 10} ${y} L${cx + 26} ${y + 8} L${cx + 21} ${y + 22} L${cx + 15} ${y + 19} L${cx + 15} ${y + 58} L${cx - 15} ${y + 58} L${cx - 15} ${y + 19} L${cx - 21} ${y + 22} L${cx - 26} ${y + 8} Z`}
+        fill={color}
+        {...line}
+        strokeWidth={2}
+      />
+      <Path d={`M${cx - 16} ${y + 3} L${cx} ${y - 10} L${cx + 16} ${y + 3}`} fill="none" stroke={HANGER} strokeWidth={2.2} strokeLinejoin="round" />
+      <PandaFace cx={cx} cy={y + 35} r={8} />
+    </G>
+  );
+}
+
+/** A silk scarf hanging from the rail at 172, folded over it. */
+function Scarf({ x, color }: { x: number; color: string }) {
+  return (
+    <G>
+      <Path
+        d={`M${x} 176 C${x + 5} 216 ${x - 4} 262 ${x + 1} 318 L${x + 25} 318 C${x + 20} 262 ${x + 29} 216 ${x + 24} 176 Z`}
+        fill={color}
+        {...line}
+        strokeWidth={2}
+      />
+      <Path
+        d={`M${x + 6} 200 C${x + 8} 230 ${x + 3} 262 ${x + 7} 300 M${x + 17} 200 C${x + 19} 230 ${x + 15} 262 ${x + 19} 300`}
+        stroke={art.gold}
+        strokeWidth={1.6}
+        fill="none"
+        opacity={0.8}
+      />
+      {[4, 9, 14, 19, 24].map((dx) => (
+        <Path key={dx} d={`M${x + dx} 318 L${x + dx} 328`} stroke={color} strokeWidth={2} strokeLinecap="round" />
+      ))}
+      <Rect x={x - 1} y={166} width={26} height={12} rx={4} fill={color} {...line} strokeWidth={2} />
+    </G>
+  );
+}
+
+function PriceTag({ x, y, label }: { x: number; y: number; label: string }) {
+  return (
+    <G>
+      <Path d={`M${x} 172 L${x} ${y}`} stroke={art.outline} strokeWidth={1.4} />
+      <Rect x={x - 17} y={y} width={34} height={17} rx={3} fill={art.white} {...line} strokeWidth={1.6} />
+      <SvgText x={x} y={y + 12.5} fontSize={10} fontWeight="700" fill={art.board} textAnchor="middle">
+        {label}
+      </SvgText>
+    </G>
+  );
+}
+
+const SHIRT_ROWS = [
+  { rail: 172, shirts: [art.white, art.lantern, art.white] },
+  { rail: 276, shirts: [art.lantern, art.white, art.lantern] },
+];
+const SCARVES = ['#2563EB', art.lantern, '#60A5FA', '#B91C1C', '#2563EB'];
+// Stacked on the counter, bottom first.
+const FOLDED_SHIRTS = [
+  { y: 438, color: art.lantern, width: 84 },
+  { y: 422, color: art.white, width: 78 },
+  { y: 406, color: art.lantern, width: 84 },
+];
+
+/** A stall in a market hall like Beijing's Silk Market: panda T-shirts, silk scarves, a calculator for bargaining. */
+function Shop() {
+  return (
+    <>
+      <Rect width={W} height={H} fill="#FFF3E2" />
+      {/* The hall's ceiling and lights */}
+      <Rect width={W} height={66} fill="#EAE2D5" />
+      {[70, 200, 330].map((cx) => (
+        <G key={cx}>
+          <Ellipse cx={cx} cy={76} rx={46} ry={12} fill="#FFF6D6" opacity={0.75} />
+          <Rect x={cx - 26} y={52} width={52} height={14} rx={7} fill="#FFFBEB" stroke="#D9CFBF" strokeWidth={2} />
+        </G>
+      ))}
+
+      {/* The stall's sign: silk scarves and T-shirts */}
+      <Rect x={44} y={90} width={312} height={54} rx={9} fill={art.lantern} {...line} />
+      <Rect x={52} y={98} width={296} height={38} rx={6} fill="none" stroke={art.gold} strokeWidth={2} />
+      <SvgText x={200} y={126} fontSize={24} fontWeight="700" fill={art.gold} textAnchor="middle">
+        丝巾 · T恤
+      </SvgText>
+
+      {SHIRT_ROWS.map(({ rail, shirts }) => (
+        <G key={rail}>
+          <Rect x={22} y={rail - 3} width={184} height={6} rx={3} fill={art.woodDark} />
+          {shirts.map((color, index) => (
+            <TShirt key={index} cx={58 + index * 56} y={rail + 20} color={color} />
+          ))}
+        </G>
+      ))}
+      <PriceTag x={202} y={184} label="¥150" />
+
+      <Rect x={222} y={169} width={164} height={6} rx={3} fill={art.woodDark} />
+      {SCARVES.map((color, index) => (
+        <Scarf key={index} x={230 + index * 30} color={color} />
+      ))}
+      <PriceTag x={366} y={338} label="¥120" />
+
+      {/* The counter: folded T-shirts, the calculator, the QR code to pay with, panda toys and a paper fan */}
+      <Rect x={-4} y={456} width={W + 8} height={20} fill={art.woodLight} {...line} />
+      <Rect x={0} y={476} width={W} height={134} fill={art.wood} />
+      {[0, 1, 2, 3].map((index) => (
+        <Rect key={index} x={16 + index * 96} y={492} width={80} height={100} rx={7} fill="none" stroke={art.woodDark} strokeWidth={3} />
+      ))}
+      {FOLDED_SHIRTS.map(({ y, color, width }) => (
+        <G key={y}>
+          <Rect x={60 - width / 2} y={y} width={width} height={17} rx={3} fill={color} {...line} strokeWidth={1.8} />
+          <Path d={`M${70 - width / 2} ${y + 9} L${50 + width / 2} ${y + 9}`} stroke="rgba(0,0,0,0.15)" strokeWidth={1.4} />
+        </G>
+      ))}
+      <Rect x={116} y={402} width={62} height={54} rx={7} fill="#2B3440" {...line} />
+      <Rect x={123} y={409} width={48} height={15} rx={2} fill="#C7E6C1" />
+      <SvgText x={167} y={421} fontSize={11} fontWeight="700" fill="#1F2937" textAnchor="end">
+        150
+      </SvgText>
+      {[0, 1, 2].map((col) =>
+        [0, 1].map((row) => (
+          <Rect key={`${col}-${row}`} x={124 + col * 16} y={430 + row * 12} width={13} height={8} rx={2} fill="#CBD5E1" />
+        )),
+      )}
+      <Path d="M194 452 L246 452 L250 457 L190 457 Z" fill="#94A3B8" />
+      <Rect x={194} y={380} width={52} height={72} rx={5} fill={art.white} {...line} />
+      <Rect x={194} y={380} width={52} height={15} rx={5} fill="#16A34A" />
+      <SvgText x={220} y={392} fontSize={10} fontWeight="700" fill={art.white} textAnchor="middle">
+        扫码
+      </SvgText>
+      <QrCode x={201} y={402} size={38} />
+      <Path d="M330 456 L308 428 A30 30 0 0 1 352 428 Z" fill={art.sun} {...line} strokeWidth={1.6} />
+      <Path d="M330 456 L316 426 M330 456 L330 422 M330 456 L344 426" stroke={art.beakShade} strokeWidth={1.4} />
+      {[284, 372].map((cx) => (
+        <G key={cx}>
+          <Ellipse cx={cx - 13} cy={446} rx={6} ry={8} fill={art.eye} />
+          <Ellipse cx={cx + 13} cy={446} rx={6} ry={8} fill={art.eye} />
+          <Ellipse cx={cx} cy={441} rx={16} ry={15} fill={art.white} {...line} strokeWidth={1.6} />
+          <PandaFace cx={cx} cy={416} r={13} />
+        </G>
+      ))}
+
+      <Rect x={0} y={610} width={W} height={110} fill="#E8DFD1" />
+      {[0, 80, 160, 240, 320].map((x) => (
+        <Path key={x} d={`M${x} 610 L${x - 30} 720`} stroke="#D6CBB8" strokeWidth={2} />
+      ))}
+      <Path d="M0 662 L400 662" stroke="#D6CBB8" strokeWidth={2} />
     </>
   );
 }
@@ -544,6 +824,7 @@ const SCENES: Record<SceneKind, ComponentType> = {
   train: Train,
   hotel: Hotel,
   market: Market,
+  shop: Shop,
   taxi: Taxi,
   landmark: Landmark,
   harbor: Harbor,
@@ -556,7 +837,8 @@ const FOCUS_Y: Record<SceneKind, number> = {
   train: 560,
   hotel: 190,
   market: 420,
-  taxi: 570,
+  shop: 270,
+  taxi: 422,
   landmark: 430,
   harbor: 380,
 };
