@@ -30,7 +30,7 @@ from app.locations.models import ContentItem, Fact
 from app.locations.store import PackStore
 from app.research.trace import Trace
 from app.scenarios import LocalRef, ScenarioDefinition, Source, get_scenario
-from app.tutor import asks_travelers_question
+from app.tutor import asks_travelers_question, question_count
 
 MAX_SCENES = 6
 MAX_PARALLEL = 3
@@ -49,6 +49,10 @@ _GREETING_RE = re.compile(r"你好|您好|欢迎")
 _PAYING_RE = re.compile(r"买单|结账|付钱|付款|扫码|扫这里|微信|支付宝|现金|pay|bill", re.IGNORECASE)
 MIN_DISHES_OFFERED = 2  # a restaurant script names this many real dishes before the traveler orders
 OFFER_WITHIN_STEPS = 3
+# A step the traveler may or may not take ("If the traveler asks where the restroom is, you: ..."): no question needed.
+_SIDE_STEP_RE = re.compile(r"^\s*if\b", re.IGNORECASE)
+_GOODBYE_RE = re.compile(r"再见|一路平安")
+_GOING_WORDS = r"(?:go|goes|going|get|gets|getting|head|heads|heading|travel|travels|ride)\s+(?:in)?to"
 
 Icon = Literal["PlaneLanding", "BedDouble", "UtensilsCrossed", "TrainFront", "ShoppingBag", "CarTaxiFront", "Landmark"]
 Kind = Literal["airport", "getting_around", "restaurant", "hot_spot"]
@@ -237,6 +241,7 @@ def check_encounter(
                 problems.append(f'"{line}" is too long for a beginner; split or shorten it (about 25 characters at most)')
             if question := asks_travelers_question(scenario, line):
                 problems.append(f'the character says the traveler\'s line "{question}" in "{line}"; key phrases are the traveler\'s')
+    problems += outline_question_problems(scenario.scene_outline)
 
     if not 2 <= len(scenario.lessons) <= 3:
         problems.append(f"there are {len(scenario.lessons)} lessons; write 2")
@@ -254,6 +259,38 @@ def check_encounter(
         spoken, allowed, "Not taught in the lessons' words: use simpler words, or teach them in a lesson's words."
     )
     return problems
+
+
+def outline_question_problems(outline: list[str]) -> list[str]:
+    """The character asks one question at a time, and every reply between the opening and the goodbye asks one,
+    so the scene leads the traveler on to the next goal (the hand-written scenes' "Then ask: ...")."""
+    problems: list[str] = []
+    for number, step in enumerate(outline, start=1):
+        count = question_count(" ".join(checks.chinese_runs(step)))
+        if count > 1:
+            problems.append(f'step {number} asks {count} questions ("{step}"); ask one, so the learner answers one thing at a time')
+        elif count == 0 and 1 < number < len(outline) and not _SIDE_STEP_RE.match(step) and not _GOODBYE_RE.search(step):
+            problems.append(
+                f'step {number} ("{step}") doesn\'t ask the traveler anything. Except for side steps ("If the traveler '
+                'asks ...") and the goodbye, end every reply with one short question that leads to the next goal, like '
+                '"Then ask: 你要买票吗？" before they ask the price, or "Then ask: 还需要什么吗？"'
+            )
+    return problems
+
+
+def going_to_the_city(scenario: ScenarioDefinition, city: City) -> list[str]:
+    """The traveler going to the city they're already in (我要去北京 at Beijing's airport), so the character asks
+    if they want to go there. A place in the city is fine (去北京南站, go to Beijing South Station)."""
+    chinese = re.compile(rf"去{re.escape(city.hanzi)}(?=[吗吧呢了]|[^㐀-鿿A-Za-z0-9]|$)")
+    english = re.compile(rf"\b{_GOING_WORDS}\s+{re.escape(city.name)}\b(?![ \t]+[A-Za-z]|['’]s)", re.IGNORECASE)
+    hits = [text for text in _scene_texts(scenario) if chinese.search(text) or english.search(text)]
+    if not hits:
+        return []
+    listed = "; ".join(f'"{text[:80]}"' for text in dict.fromkeys(hits))
+    return [
+        f"the traveler is already in {city.name}, so they never go to {city.name} ({city.hanzi}) itself: {listed}. Where "
+        "they're going is a place in the city, such as the city center (市中心), a station, their hotel or a sight"
+    ]
 
 
 def visit_flow_problems(scenario: ScenarioDefinition, facts: list[Fact], kind: str) -> list[str]:
@@ -301,6 +338,7 @@ def build_encounter(
         return None, validation_problems(error, "scene")
     problems = check_encounter(scenario, facts, get_scenario(plan.template))
     problems += visit_flow_problems(scenario, facts, plan.kind)
+    problems += going_to_the_city(scenario, city)
     return (None, problems) if problems else (scenario, [])
 
 

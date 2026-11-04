@@ -319,7 +319,7 @@ SCENARIOS: list[ScenarioDefinition] = [
         scene_outline=[
             "You open: 你好！欢迎！你有预订吗？",
             "The traveler says they have a reservation. You: 好。你叫什么名字？",
-            "The traveler gives their name. You: 好。请给我你的护照。",
+            "The traveler gives their name. You: 好。请给我你的护照，好吗？",
             "The traveler hands over their passport. You: 谢谢！这是你的房卡，房间是八零八，在八楼。 "
             "Then ask: 你要吃早餐吗？",
             "The traveler asks what time breakfast is (or says yes). You: 早餐七点到十点，在二楼。 Then ask: 你要用WiFi吗？",

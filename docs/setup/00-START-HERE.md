@@ -17,7 +17,7 @@ iPhone (Expo Go)
   ├── Supabase Auth ......... sign up / log in, profile, progress (direct from the app)
   └── Lingvoyage API (Python) .. one backend you own, running on your PC now, AWS Lambda later
          ├── ElevenLabs Speech-to-Text (Scribe v2) .. your voice  -> text
-         ├── Claude API (Haiku 5.5) ................. the character's brain (reply, corrections, hints)
+         ├── Claude API (Sonnet 5.5) ................ the character's brain (reply, corrections, hints)
          └── ElevenLabs Text-to-Speech (Flash v2.5) .. reply text -> Mandarin voice
 ```
 
@@ -36,7 +36,7 @@ The secret keys (ElevenLabs, Claude) only ever live on the backend. The phone on
 | Voice conversation | **Record, upload, reply** (push-to-talk) | ElevenLabs' real-time voice-agent SDK for React Native needs native WebRTC modules that Expo Go doesn't include. Push-to-talk works in Expo Go today and feels like the Speak app's Free Talk. |
 | Backend | **Python FastAPI** | Your stack choice. Runs locally with one command, deploys to Lambda unchanged. |
 | Cloud | **AWS Lambda + Function URL** | Cheapest AWS option: 1 million requests a month are always free, and there's no server to pay for when nobody's using it. (AWS App Runner stopped taking new customers in April 2026.) |
-| AI brain | **Claude Haiku 5.5** | Fast and cheap (from $0.10 per million input tokens), returns strict JSON so the app always gets Chinese, pinyin, English, feedback and hints in a predictable shape. |
+| AI brain | **Claude Sonnet 5.5** | Follows each scene's script and leads the learner to its goals (Haiku 5.5 was faster and cheaper but lost the thread, issue #65), and returns strict JSON so the app always gets Chinese, pinyin, English, feedback and hints in a predictable shape. |
 
 ---
 
@@ -48,7 +48,7 @@ The secret keys (ElevenLabs, Claude) only ever live on the backend. The phone on
 | Expo | Free | Everyone who runs the app | 01 |
 | Supabase | Free plan | One owner, invite teammates | 02 |
 | ElevenLabs | Free plan works for testing (10,000 credits/month); Starter if you want Voice Library voices | One owner | 03 |
-| Anthropic (Claude API) | Pay as you go; a $5 credit lasts a long time on Haiku | One owner | 04 |
+| Anthropic (Claude API) | Pay as you go; a chat turn is about a cent | One owner | 04 |
 | AWS | Free plan with sign-up credits | One owner | 07 |
 
 ---

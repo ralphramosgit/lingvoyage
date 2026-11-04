@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     elevenlabs_realtime_stt_model: str = "scribe_v2_realtime"
 
     anthropic_api_key: str = ""
-    anthropic_model: str = "claude-haiku-5-5"
+    anthropic_model: str = "claude-sonnet-5-5"  # the characters (app/tutor.py)
     # Local packs (app/research): the research workers, and the cheap model that checks their facts.
     anthropic_research_model: str = "claude-opus-5-5"
     anthropic_research_effort: str = "medium"

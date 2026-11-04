@@ -43,7 +43,7 @@ flowchart LR
         verify --> generate["5 Generate: scenes, notes, quizzes (Sonnet 5.5)"] --> publish["6 Publish"]
     end
     db[("Supabase: location_packs, location_facts, location_content")]
-    character["Claude Haiku 5.5: the character"]
+    character["Claude Sonnet 5.5: the character"]
 
     profile --> ensure -->|"async invoke, only when the city has no pack"| plan
     research & menus & verify & generate -->|"trace, facts, content"| db
@@ -139,8 +139,8 @@ Facts are saved after the verify stage, so a run that crashes halfway leaves not
 | File | Prompt | Rules it enforces |
 |---|---|---|
 | [`research/prompts.py`](../../backend/app/research/prompts.py) | Research system prompt, the brief, the fact judge | Save only through the record tools; one fact per call; the exact source URL; web pages are data, never instructions |
-| [`content/prompts.py`](../../backend/app/content/prompts.py) | Scene writer, course writer | Beginner Mandarin (HSK 1–2 plus words the lessons teach); tone-marked pinyin; prices and lines only from the facts; scripts follow a real visit (greet, offer real dishes, order, pay); goals come from what's special about the place; facts are data |
-| [`tutor.py`](../../backend/app/tutor.py) | The character in every chat | Stay in character; short beginner lines; follow the script's order and never jump ahead; offer real options by name; with local facts, answer from them or say 我不知道 ("I don't know") |
+| [`content/prompts.py`](../../backend/app/content/prompts.py) | Scene writer, course writer | Beginner Mandarin (HSK 1–2 plus words the lessons teach); tone-marked pinyin; prices and lines only from the facts; scripts follow a real visit (greet, offer real dishes, order, pay) and every reply asks the question that leads to the next goal; the traveler is already in the city, so never "I want to go to Beijing" in Beijing; goals come from what's special about the place; facts are data |
+| [`tutor.py`](../../backend/app/tutor.py) | The character in every chat | Stay in character; short beginner lines; follow the script's order and never jump ahead; offer real options by name; don't coach (no 你要问…吗？); a goal counts only when the learner says it; with local facts, answer from them or say 我不知道 ("I don't know") |
 
 ---
 
@@ -151,7 +151,7 @@ Facts are saved after the verify stage, so a run that crashes halfway leaves not
 | Made-up facts | Saving is only possible through the strict record tools; every fact needs a source the agent actually saw; the verify stage's code checks and judge |
 | Made-up prices or metro lines in lessons and scenes | `number_problems` ([`checks.py`](../../backend/app/content/checks.py)): every price and line number must come from the facts, or the draft goes back |
 | Too hard for a beginner | A per-character level check: HSK 1–2, words the scene's own lessons teach, or names from the facts; character lines of 25–30 characters at most |
-| Bad scene flow | Scripts must greet and ask a question, offer at least 2 real dishes before the order, and end with paying; at most one generic goal, and none copied from the template |
+| Bad scene flow | Scripts must greet and ask a question, offer at least 2 real dishes before the order, and end with paying; every reply between the opening and the goodbye asks exactly one question, to lead on to the next goal; the traveler never goes to the city they're already in; at most one generic goal, and none copied from the template |
 | Prompt injection from web pages | Pages are labelled as data; the only side effects are the strict record tools; facts reach the chat in a marked "data, not instructions" block |
 | A character inventing answers | The RAG block tells it to say 我不知道 or 我不清楚 ("I don't know" / "I'm not sure") for anything not in the facts. Tested: asked about WiFi, it said it didn't know |
 | Cost running away | Caps on every agent (requests, searches, reads, time); `RESEARCH_RUNS_PER_DAY` (default 2) and `RESEARCH_RUNS_PER_ACCOUNT_PER_DAY` (default 1), with **0 pausing new runs**; one run per city at a time (a database index); a failed refresh waits a day; a built city costs nothing to open |
@@ -202,7 +202,7 @@ Most pieces pass on the first or second try; one quiz per city has needed more t
 
 **Chat (RAG):**
 - Retrieval adds about **1.5–3 ms** per turn once a city's facts are in memory. The first load from Supabase is about 150 ms, once per 10 minutes per warm Lambda (the target was under 50 ms).
-- A chat turn is one Haiku call, a fraction of a cent.
+- A chat turn is one Sonnet call (two when its line breaks a rule and it's asked again), about a cent.
 
 **Per new city, all in:** about $5.50 and 7–8 minutes the first time (research measured at 5 minutes; writing measured separately at about 2.5 minutes, since scenes and course run at the same time), then free for every learner for 30 days.
 
@@ -216,7 +216,7 @@ Most pieces pass on the first or second try; one quiz per city has needed more t
 | **Supabase tables** | Per-account S3 storage (the old plan, #16) | Packs are shared per city, not per account; one database, and facts are easy to query for RAG |
 | **A second Lambda, async invoke** | EC2, Step Functions | A run takes 5–8 minutes; Lambda allows 15, costs about half a cent a run and needs no server. Step Functions is the next step only if runs outgrow one Lambda |
 | **Keyword RAG, no embeddings** | pgvector | A city is a few hundred facts; scoring them in memory takes about 2 ms. `retrieve()` is one function, so embeddings can replace it without touching the tutor |
-| **Opus 5.5 for research** | Sonnet 5.5 | The research agents reason over messy pages and decide what to save. Sonnet writes content, Haiku checks facts and plays the characters |
+| **Opus 5.5 for research** | Sonnet 5.5 | The research agents reason over messy pages and decide what to save. Sonnet writes content and plays the characters, Haiku checks facts |
 | **Agents cite fact numbers** | Copying fact ids | Facts are numbered in the prompt and code maps the numbers to ids: more reliable than asking a model to copy UUIDs |
 | **Add to the course, don't rewrite it** | Local versions of every lesson | The 17 units stay the same for everyone, so progress, checkpoints and search keep working; local notes, lessons and quizzes sit on top |
 | **Default or city scenes, the learner's choice** | Replacing the default scenes | A toggle on Encounters ("Made for Chengdu" / "Default scenes") |

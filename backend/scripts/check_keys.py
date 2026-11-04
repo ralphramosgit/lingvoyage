@@ -167,7 +167,7 @@ def check_claude() -> None:
         report("Claude", False, "401 invalid API key", "Re-copy ANTHROPIC_API_KEY (guide 04).")
         return
     except anthropic.NotFoundError:
-        report("Claude", False, f"model '{settings.anthropic_model}' not found", "ANTHROPIC_MODEL should be claude-haiku-5-5.")
+        report("Claude", False, f"model '{settings.anthropic_model}' not found", "ANTHROPIC_MODEL should be claude-sonnet-5-5.")
         return
     except anthropic.APIStatusError as error:
         report("Claude", False, f"HTTP {error.status_code}: {error.message}", "A low credit balance shows up here (guide 04).")

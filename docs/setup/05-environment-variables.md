@@ -73,7 +73,7 @@ ELEVENLABS_STT_MODEL=scribe_v2
 
 # Claude API (SECRET)
 ANTHROPIC_API_KEY=sk-ant-xxxxxxxxxxxxxxxx
-ANTHROPIC_MODEL=claude-haiku-5-5
+ANTHROPIC_MODEL=claude-sonnet-5-5
 ```
 
 No quotes needed around values. No spaces around `=`.

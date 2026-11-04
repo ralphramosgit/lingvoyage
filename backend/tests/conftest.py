@@ -16,7 +16,7 @@ TEST_ENV = {
     "ELEVENLABS_TTS_MODEL": "eleven_flash_v2_5",
     "ELEVENLABS_STT_MODEL": "scribe_v2",
     "ANTHROPIC_API_KEY": "sk-ant-test",
-    "ANTHROPIC_MODEL": "claude-haiku-5-5",
+    "ANTHROPIC_MODEL": "claude-sonnet-5-5",
     "ANTHROPIC_RESEARCH_MODEL": "claude-opus-5-5",
     "ANTHROPIC_RESEARCH_EFFORT": "medium",
     "ANTHROPIC_VERIFIER_MODEL": "claude-haiku-5-5",

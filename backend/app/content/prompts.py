@@ -26,6 +26,8 @@ What a scene contains (the examples at the end show each field):
 - key_phrases: 4 to 6 of the traveler's own lines, with pinyin and English.
 - scene_details: the concrete facts the character answers with: dishes with prices, lines, fares, ticket prices, hours, which door or exit. In English with the Chinese names. Mark numbers from low-confidence facts with "about".
 - scene_outline: the scene beat by beat, in the order a real visit goes. The first step starts "You open:" with a greeting and the first question of the visit (你好！几位？). Each later step says in English what the traveler does, then the character's answer after "You:". Keep the ordinary steps of the visit in the script even when they aren't goals: at a restaurant, the greeting and how many people, then offering two or three real dishes by name before the traveler orders (我们有麻婆豆腐和回锅肉), then the order, any special requests, and paying at the end. List the goals in the order they happen in the script.
+- The script leads the traveler from goal to goal, like the examples: every reply of the character ends with "Then ask:" and one short question that sets up the next goal (你要找检票口吗？ before the traveler asks where to board, 你要买票吗？ before they ask the price, 还需要什么吗？ when nothing else fits). The only exceptions are the goodbye and side steps the traveler may skip, which start "If the traveler ...". The opening question sets up the first goal.
+- The traveler is already in the city. Where they're going is a place in it (the city center, a station, their hotel or a sight), never the city itself: in Beijing, never 我要去北京 or "I want to go to Beijing", anywhere in the scene or its lessons.
 - lessons: 2 practice lessons. Each teaches one sentence pattern ([slots] in square brackets) and up to 8 words, then has 4 to 6 questions mixing "choice" and "build". In a build question the tiles, joined together, spell the solution's characters exactly (leave out punctuation), and extra_tiles never repeat an answer tile. In a choice question, answer is the index of the right option, and ＿＿ marks a gap.
 
 Beginner rules:
@@ -45,7 +47,8 @@ KIND_BRIEFS = {
     "airport": (
         "The traveler has just landed at {place}. Build the scene around getting into the city the way the facts "
         "describe: the real line or link (its number or name), where to find it, the fare and the time, and anything "
-        "special the facts mention (two airports, a card or an app to pay with)."
+        "special the facts mention (two airports, a card or an app to pay with). They're already in {city}: if they say "
+        "where they're going, it's their hotel or the city center, not {city}."
     ),
     "getting_around": (
         "The traveler is getting around {city}. Build the scene around a real trip from the facts: which line goes "

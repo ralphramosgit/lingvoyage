@@ -15,7 +15,7 @@ iPhone (Expo Go)
   ├── Supabase Auth + Postgres ..... sign up / log in, profile, progress, destination
   └── Lingvoyage API (FastAPI) ..... AWS Lambda lingvoyage-api (or uvicorn on your PC)
          ├── ElevenLabs Speech-to-Text (Scribe v2)
-         ├── Claude API (Haiku 5.5) .. the characters, with the city's facts (RAG)
+         ├── Claude API (Sonnet 5.5) . the characters, with the city's facts (RAG)
          ├── ElevenLabs Text-to-Speech (Flash v2.5)
          └── City packs ─ async ─> Research worker (AWS Lambda lingvoyage-research)
                 ├── Claude Opus 5.5 + web search: 4 research agents at once
