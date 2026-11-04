@@ -112,8 +112,8 @@ The words you see while recording come from ElevenLabs realtime Speech to Text, 
 | -------------------------------------- | -------------------------------------------------------------------------------------------- |
 | 401                                    | Wrong `ANTHROPIC_API_KEY`.                                                                   |
 | 400 "credit balance is too low"        | Add credit at platform.claude.com > Settings > Billing.                                      |
-| 400 mentioning `temperature` / `top_p` | Don't send sampling parameters to Claude Haiku 5.5; remove them from `backend/app/tutor.py`. |
-| 404 model                              | Model name must be exactly `claude-haiku-5-5`.                                               |
+| 400 mentioning `temperature` / `top_p` | Don't send sampling parameters to Claude 5.5 models; remove them from `backend/app/tutor.py`. |
+| 404 model                              | Model name must be exactly `claude-sonnet-5-5`.                                              |
 | 529 overloaded                         | Temporary. The backend retries once; try again.                                              |
 
 ## AWS Lambda

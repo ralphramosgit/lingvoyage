@@ -1,9 +1,9 @@
 # 04. Claude API (the character's brain)
 
-ElevenLabs gives the character a voice, but something has to decide **what the character says**, notice your mistakes and suggest what to say next. That's the LLM. Lingvoyage uses **Claude Haiku 5.5** (`claude-haiku-5-5`):
+ElevenLabs gives the character a voice, but something has to decide **what the character says**, notice your mistakes and suggest what to say next. That's the LLM. Lingvoyage uses **Claude Sonnet 5.5** (`claude-sonnet-5-5`):
 
-- Fastest current Claude model, built for high-volume, latency-sensitive work.
-- Cheap: from $0.10 per million input tokens and $0.50 per million output tokens. One conversation turn costs a small fraction of a cent.
+- Follows each scene's script and leads the learner to its goals, with accurate hints and feedback. Claude Haiku 5.5 is faster and much cheaper, but in testing it looped on the same question with a hesitant learner and repeated hints for things already asked (issue #65).
+- $2 per million input tokens and $10 per million output tokens: one conversation turn is about a cent, and a reply takes about 3 to 4 seconds.
 - Supports **structured outputs**, so every reply comes back as strict JSON: Chinese characters, pinyin, English, feedback, three suggested replies, and which scenario goals you've completed. The app never has to guess how to parse it.
 
 The key is used **only by the backend**.
@@ -33,7 +33,7 @@ $headers = @{
   "anthropic-version" = "2023-06-01"
 }
 $body = @{
-  model      = "claude-haiku-5-5"
+  model      = "claude-sonnet-5-5"
   max_tokens = 300
   messages   = @(@{ role = "user"; content = "Teach me how to say 'one bowl of beef noodles' in Mandarin. Give pinyin." })
 } | ConvertTo-Json -Depth 5
@@ -49,7 +49,7 @@ Errors:
 
 - **401**: wrong key.
 - **400 "credit balance is too low"**: add credit in Billing.
-- **404 model not found**: check the model name is exactly `claude-haiku-5-5`.
+- **404 model not found**: check the model name is exactly `claude-sonnet-5-5`.
 
 ## 4. Settings the backend uses (for reference)
 
@@ -57,10 +57,10 @@ You don't need to do anything here; Claude Code builds it. Good to know if you t
 
 | Setting | Value | Why |
 |---|---|---|
-| Model | `claude-haiku-5-5` (env `ANTHROPIC_MODEL`) | Fast and cheap. Swap to `claude-sonnet-5-5` if you want smarter corrections. |
-| Effort | `low` | Lowest latency; right for short conversational turns. |
+| Model | `claude-sonnet-5-5` (env `ANTHROPIC_MODEL`) | Keeps to the scene and its goals. `claude-haiku-5-5` costs about a twentieth as much and is about a second faster, but loses the thread more often. |
+| Effort | `low` | Lowest latency; at `low`, Sonnet skips thinking on most short conversational turns. |
 | Structured output | JSON schema via `output_config.format` | Guaranteed shape for the app. |
-| `temperature`, `top_p`, `top_k` | **Not sent** | Claude Haiku 5.5 rejects requests that set them. |
+| `temperature`, `top_p`, `top_k` | **Not sent** | Claude Sonnet 5.5 and Haiku 5.5 reject requests that set them. |
 | `max_tokens` | about 2000 | Thinking counts toward this limit, so leave room. |
 
 ---

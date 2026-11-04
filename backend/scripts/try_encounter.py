@@ -6,7 +6,7 @@ Run from backend/ with the virtual environment active:
     python scripts/try_encounter.py local-chengdu-chen-mapo-tofu --api https://xxxx.lambda-url.us-west-2.on.aws
 
 Type Chinese, pinyin or English and press Enter. An empty line ends the scene. Each turn is one
-tutor call (Haiku, a fraction of a cent) plus a voice line the script ignores.
+tutor call (Sonnet, about a cent) plus a voice line the script ignores.
 """
 
 import argparse

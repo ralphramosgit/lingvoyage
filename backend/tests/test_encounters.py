@@ -274,6 +274,22 @@ def _generic_goals(draft: EncounterDraft) -> None:
     draft.goals[2].label = "Say thank you"
 
 
+def _going_to_the_city(draft: EncounterDraft) -> None:
+    draft.key_phrases[0] = DraftPhrase(hanzi="我要去成都。", pinyin="Wǒ yào qù Chéngdū.", english="I want to go to Chengdu.")
+
+
+def _going_to_the_city_in_english(draft: EncounterDraft) -> None:
+    draft.scene_outline[1] = "The traveler says they want to go to Chengdu. " + draft.scene_outline[1].split(". ", 1)[1]
+
+
+def _no_leading_question(draft: EncounterDraft) -> None:
+    draft.scene_outline[2] = "The traveler orders a dish. You: 好！"
+
+
+def _two_questions_in_a_step(draft: EncounterDraft) -> None:
+    draft.scene_outline[2] = "The traveler orders a dish. You: 好！要辣吗？喝什么？"
+
+
 @pytest.mark.parametrize(
     ("breaks", "problem"),
     [
@@ -292,6 +308,10 @@ def _generic_goals(draft: EncounterDraft) -> None:
         (_no_menu_offered, "offer at least 2 real dishes"),
         (_no_paying, "must end with paying"),
         (_generic_goals, "Keep at most one"),
+        (_going_to_the_city, "already in Chengdu"),
+        (_going_to_the_city_in_english, "already in Chengdu"),
+        (_no_leading_question, "doesn't ask the traveler anything"),
+        (_two_questions_in_a_step, "step 3 asks 2 questions"),
     ],
 )
 def test_checks_catch_problems(breaks: Callable[[EncounterDraft], None], problem: str) -> None:
@@ -300,6 +320,27 @@ def test_checks_catch_problems(breaks: Callable[[EncounterDraft], None], problem
     scenario, problems = encounters.build_encounter(draft, noodle_plan(), CHENGDU, "local-chengdu", "pack-1")
     assert scenario is None
     assert any(problem in item for item in problems), problems
+
+
+def test_side_steps_and_the_goodbye_need_no_question() -> None:
+    draft = good_draft()
+    draft.scene_outline.insert(-1, "If the traveler asks where the restroom is, you: 洗手间在后面。")
+    scenario, problems = encounters.build_encounter(draft, noodle_plan(), CHENGDU, "local-chengdu", "pack-1")
+    assert scenario is not None, problems
+
+
+def test_places_in_the_city_are_fine_destinations() -> None:
+    scenario, _ = encounters.build_encounter(good_draft(), noodle_plan(), CHENGDU, "local-chengdu", "pack-1")
+    assert scenario is not None
+    for text in ("我要去成都东站。", "去成都的熊猫基地", "The traveler wants to go to Chengdu East Station.", "Welcome to Chengdu!"):
+        assert encounters.going_to_the_city(scenario.model_copy(update={"subtitle": text}), CHENGDU) == [], text
+    for text in ("你要去成都吗？", "I want to go to Chengdu.", "They're heading to Chengdu"):
+        assert encounters.going_to_the_city(scenario.model_copy(update={"subtitle": text}), CHENGDU), text
+
+
+def test_hand_written_scripts_lead_to_every_goal() -> None:
+    for scenario in SCENARIOS:
+        assert encounters.outline_question_problems(scenario.scene_outline) == [], scenario.id
 
 
 def test_hard_words_are_fine_when_a_lesson_teaches_them() -> None:
@@ -465,4 +506,12 @@ def test_the_prompt_asks_for_goals_from_the_place() -> None:
     assert "Don't copy its goals" in message and "only for the style" in message
     assert "choosing the broth" in prompts.KIND_BRIEFS["restaurant"]
     assert "At most one goal may be a generic step" in prompts.encounter_system()
+
+
+def test_the_prompt_asks_for_a_script_that_leads_to_the_goals() -> None:
+    system = prompts.encounter_system()
+    assert 'every reply of the character ends with "Then ask:" and one short question that sets up the next goal' in system
+    assert "never the city itself: in Beijing, never 我要去北京" in system
+    airport = prompts.encounter_message("airport", "airport", "Shuangliu Airport", CHENGDU, [])
+    assert "They're already in Chengdu" in airport
 

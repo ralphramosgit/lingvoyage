@@ -282,6 +282,14 @@ def test_line_problems_finds_a_role_swap_and_a_second_question() -> None:
     assert len(line_problems(airport, "好！你要去哪里？巴士在哪里？")) == 2
 
 
+def test_line_problems_finds_coaching() -> None:
+    train = _scenario("train")
+    for line in ("好的。你要问几点出发吗？", "门票多少钱，你想问吗？", "你可以说：我有票。"):
+        assert len(line_problems(train, line)) == 1, line
+    for line in ("你想问什么？", "你要去哪里？", "你要找检票口吗？"):
+        assert line_problems(train, line) == [], line
+
+
 class _FakeClient:
     """Stands in for anthropic.Anthropic: hands out queued replies (or errors) and records the calls."""
 
@@ -347,6 +355,12 @@ def test_first_reply_is_kept_if_the_second_is_no_better(monkeypatch: pytest.Monk
     client = _FakeClient(_reply(hanzi="好！要辣吗？喝什么？"), _reply(hanzi="几位？要辣吗？"))
     _use_client(monkeypatch, client)
     assert generate_reply(_scenario("restaurant"), [], [], "你好").hanzi == "好！要辣吗？喝什么？"
+
+
+def test_system_prompt_knows_the_traveler_is_already_in_the_city() -> None:
+    prompt = build_system_prompt(_scenario("airport"), [])
+    assert "The traveler is already in Chengdu: never ask if they want to go to Chengdu" in prompt
+    assert "A bare yes or no, a greeting or a word about something else doesn't do a goal either." in prompt
 
 
 def test_system_prompt_with_no_progress_says_none() -> None:
