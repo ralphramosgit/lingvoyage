@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import {
   Award,
   ChevronRight,
+  Ear,
   Eye,
   Languages,
   LogOut,
@@ -38,6 +39,7 @@ const SETTING_ROWS: { key: keyof Settings; label: string; description: string; i
   { key: 'showPinyin', label: 'Show pinyin', description: 'Under every Chinese line', icon: Languages },
   { key: 'autoEnglish', label: 'Show English automatically', description: 'Otherwise tap to reveal', icon: Eye },
   { key: 'autoPlay', label: 'Auto-play voice', description: 'Hear each reply as it arrives', icon: Volume2 },
+  { key: 'tapToHear', label: 'Hear words as you tap', description: 'Answers, tiles and pairs in lessons and quizzes', icon: Ear },
 ];
 
 export default function ProfileScreen() {

@@ -31,11 +31,14 @@ type Side = 'zh' | 'en';
 export function MatchAnswer({
   pairs,
   showPinyin,
+  onSay,
   onMiss,
   onComplete,
 }: {
   pairs: KeyPhrase[];
   showPinyin: boolean;
+  /** Plays a Chinese item: each one tapped, and each pair once it's matched. */
+  onSay: (hanzi: string) => void;
   onMiss: () => void;
   onComplete: () => void;
 }) {
@@ -76,11 +79,19 @@ export function MatchAnswer({
   const pick = (side: Side, index: number) => {
     if (wrong || matched.includes(index)) return;
     if (!selected || selected.side === side) {
-      setSelected(selected?.side === side && selected.index === index ? null : { side, index });
+      const unselect = selected?.side === side && selected.index === index;
+      setSelected(unselect ? null : { side, index });
+      if (side === 'zh' && !unselect) onSay(pairs[index].hanzi);
       return;
     }
-    if (side === 'zh') tryPair(index, selected.index);
-    else tryPair(selected.index, index);
+    if (side === 'zh') {
+      onSay(pairs[index].hanzi);
+      tryPair(index, selected.index);
+    } else {
+      // English finishes the pair: hear the Chinese once it's a match.
+      if (selected.index === index) onSay(pairs[index].hanzi);
+      tryPair(selected.index, index);
+    }
   };
 
   const stateOf = (side: Side, index: number): ItemState => {

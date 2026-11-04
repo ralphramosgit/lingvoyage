@@ -5,12 +5,15 @@ export type Settings = {
   showPinyin: boolean;
   autoEnglish: boolean;
   autoPlay: boolean;
+  /** Lessons and quizzes: play the Chinese of each option, tile or pair as it's tapped, and the answer once it's found. */
+  tapToHear: boolean;
 };
 
 export const DEFAULT_SETTINGS: Settings = {
   showPinyin: true,
   autoEnglish: false,
   autoPlay: true,
+  tapToHear: true,
 };
 
 const STORAGE_KEY = 'lingvoyage.settings.v1';

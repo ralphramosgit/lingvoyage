@@ -400,7 +400,7 @@ Start here: the basics
 Reuse the player from the encounter practice lessons, as #12 describes: **Learn → Practice → Done**.
 
 - **Learn** (`LessonIntro`): the pattern, examples, words and a tip, every item with a speaker button. Header shows "Lesson 2 of 4".
-- **Practice** (`ExerciseStep`): one question at a time, with a progress bar. A wrong answer shows a hint and allows another try. Respects the **Show pinyin** setting, as it does now.
+- **Practice** (`ExerciseStep`): one question at a time, with a progress bar. A wrong answer shows a hint and allows another try. Respects the **Show pinyin** setting, as it does now. With **Hear words as you tap** on (Profile, on by default), every Chinese option, word tile and match item plays when tapped, and the answer plays once it's found (right, or shown after two misses), so questions with English options get their Chinese too. Listening options stay silent, since hearing each one would give the answer away. When taps come quickly, only the last one plays.
 - **Done** (`LessonComplete`): the cheer and summary, then **Next lesson** (the next unfinished lesson in the unit), or **Checkpoint** when the unit's lessons are all done. **Now try it for real** shows only when the unit has an `encounterId`.
 - **Exit** (X) goes back to the unit screen. Leaving partway saves nothing: the lesson starts over next time. Lessons are short enough that this is fine.
 - The "Start encounter" shortcut in the header shows only for units with an encounter.
@@ -571,7 +571,7 @@ export type Unit = {
 ## 10. Non-functional requirements
 
 - **Works offline.** Lesson content is part of the app, so lessons open and run without internet. Audio needs internet the first time each phrase plays, and shows a friendly message when it can't load (`SpeakerButton`'s `onError`).
-- **Audio costs credits.** The first play of each phrase is a paid text-to-speech call; replays are free. Only play when someone taps, never preload a list. Listen questions play on a tap too.
+- **Audio costs credits.** The first play of each phrase is a paid text-to-speech call; replays are free. Only play when someone taps, never preload a list. Listen questions play on a tap too, and so do options, tiles and pairs (plus the answer after Check), unless Hear words as you tap is off.
 - **Accessibility.** Headers marked as headers, every button and row labeled, progress bars with values, touch targets at least `layout.minTouchTarget`. Right and wrong are shown with an icon as well as a color.
 - **Small phones.** Looks right on an iPhone SE. Long English wraps instead of being cut off.
 - **Expo Go.** No new libraries expected. If one is needed, ask first: it must work in Expo Go and be added with `npx expo install`.

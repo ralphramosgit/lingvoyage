@@ -220,13 +220,19 @@ export function phraseKey(text: string, rate = 1): string {
   return `phrase:${rate}:${text}`;
 }
 
+// Bumped on every playPhrase, so quick taps (word tiles, answer options) play only the last one, even
+// when an earlier phrase's first download finishes after it.
+let latestPhrase = 0;
+
 /** Plays a phrase via POST /tts, from the on-device cache when it's been played before. */
 export async function playPhrase(text: string, options: { rate?: number } = {}) {
   const rate = options.rate ?? 1;
   const key = phraseKey(text, rate);
+  const request = (latestPhrase += 1);
   setPlayback({ loadingKey: key });
   try {
     const uri = await phraseUri(text.trim());
+    if (request !== latestPhrase) return;
     await playUri(uri, { rate, key });
   } finally {
     if (playback.loadingKey === key) setPlayback({ loadingKey: null });

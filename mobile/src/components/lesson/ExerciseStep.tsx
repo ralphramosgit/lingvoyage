@@ -8,6 +8,8 @@ import { Button } from '@/components/Button';
 import { SpeakerButton } from '@/components/SpeakerButton';
 import { Text } from '@/components/Text';
 import type { UnitExercise } from '@/content/lessons/types';
+import { errorMessage } from '@/lib/api';
+import { playPhrase } from '@/lib/audio';
 import { hasBlank, isBuildRight, pickOne, RIGHT_MESSAGES, shuffled, WRONG_MESSAGES } from '@/lib/lessons';
 import { colors, layout, motion, radii, spacing } from '@/theme/theme';
 import type { KeyPhrase } from '@/types/api';
@@ -37,6 +39,7 @@ export function ExerciseStep({
   exercise,
   isLast,
   showPinyin,
+  tapToHear,
   bottomInset,
   onAudioError,
   onDone,
@@ -44,6 +47,8 @@ export function ExerciseStep({
   exercise: UnitExercise;
   isLast: boolean;
   showPinyin: boolean;
+  /** Play the Chinese of each option, tile or pair as it's tapped, and the answer once it's found. */
+  tapToHear: boolean;
   bottomInset: number;
   onAudioError: (message: string) => void;
   /** Called on Continue, with whether the first check was right. */
@@ -67,10 +72,32 @@ export function ExerciseStep({
   const answered = status === 'right' || status === 'revealed';
   const ready = exercise.kind === 'build' ? picked.length > 0 : selected !== null;
 
+  const say = (text: string) => {
+    if (!tapToHear || !text.trim()) return;
+    playPhrase(text).catch((error: unknown) => onAudioError(errorMessage(error, "Couldn't play that phrase.")));
+  };
+
+  // Question types with English options get their Chinese here, once it's answered.
+  const sayAnswer = () => {
+    if (exercise.kind !== 'match') say(exercise.solution.hanzi);
+  };
+
+  // Listening options stay silent: hearing each one would give the answer away.
+  const select = (index: number) => {
+    setSelected(index);
+    if (exercise.kind === 'choice') say(exercise.options[index].hanzi);
+  };
+
+  const pick = (index: number) => {
+    setPicked((current) => [...current, index]);
+    say(bank[index].hanzi);
+  };
+
   const cheer = () => {
     const message = pickOne(RIGHT_MESSAGES);
     setMessage(message);
     setStatus('right');
+    sayAnswer();
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     AccessibilityInfo.announceForAccessibility(message);
   };
@@ -99,6 +126,7 @@ export function ExerciseStep({
     if (nextMisses >= MISSES_BEFORE_REVEAL) {
       setMessage("Here's the answer");
       setStatus('revealed');
+      sayAnswer();
       AccessibilityInfo.announceForAccessibility(`Here's the answer: ${exercise.solution.english}`);
     } else {
       const nudge = pickOne(WRONG_MESSAGES);
@@ -181,11 +209,11 @@ export function ExerciseStep({
             locked={!answering}
             showRight={answered}
             showPinyin={showPinyin}
-            onSelect={setSelected}
+            onSelect={select}
           />
         ) : null}
         {exercise.kind === 'match' ? (
-          <MatchAnswer pairs={exercise.pairs} showPinyin={showPinyin} onMiss={missPair} onComplete={cheer} />
+          <MatchAnswer pairs={exercise.pairs} showPinyin={showPinyin} onSay={say} onMiss={missPair} onComplete={cheer} />
         ) : null}
         {exercise.kind === 'build' ? (
           <BuildAnswer
@@ -194,7 +222,7 @@ export function ExerciseStep({
             state={lineState}
             locked={!answering}
             showPinyin={showPinyin}
-            onPick={(index) => setPicked((current) => [...current, index])}
+            onPick={pick}
             onUnpick={(index) => setPicked((current) => current.filter((item) => item !== index))}
           />
         ) : null}
