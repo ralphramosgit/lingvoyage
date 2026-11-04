@@ -38,7 +38,7 @@ export type UnitLesson = Omit<Lesson, 'exercises'> & {
   culture?: CultureNote;
 };
 
-export type PartId = 'basics' | 'trip' | 'culture';
+export type PartId = 'basics' | 'trip' | 'culture' | 'cities';
 
 export type Part = {
   id: PartId;
@@ -64,6 +64,8 @@ export type Unit = {
   buildsOn?: string[];
   /** The matching encounter, e.g. 'airport'. */
   encounterId?: string;
+  /** City units: the city's slug (backend/app/locations/cities.py), so the learner's destination is marked. */
+  city?: string;
   /** An Essentials page with the reference for this unit. */
   essentials?: { label: string; href: Href };
   /** [] = coming soon. */

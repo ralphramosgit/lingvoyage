@@ -19,6 +19,7 @@ COURSE_UNITS: dict[str, str] = {
     "sounds": "How Chinese works",
     "hello": "Hello and thank you",
     "first-sentences": "Your first sentences",
+    "quick-answers": "Quick answers",
     "about-you": "About you",
     "numbers": "Numbers",
     "money": "Money",
@@ -33,6 +34,10 @@ COURSE_UNITS: dict[str, str] = {
     "manners": "Manners and etiquette",
     "table": "At the table",
     "luck": "Luck, gifts and festivals",
+    "beijing": "Beijing",
+    "shanghai": "Shanghai",
+    "chengdu": "Chengdu",
+    "chongqing": "Chongqing",
 }
 
 QuizIcon = Literal["TrainFront", "UtensilsCrossed", "Landmark"]

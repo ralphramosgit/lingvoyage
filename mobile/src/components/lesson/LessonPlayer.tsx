@@ -159,6 +159,7 @@ export function LessonPlayer({
           exercise={exercises[index]}
           isLast={index + 1 === total}
           showPinyin={settings.showPinyin}
+          tapToHear={settings.tapToHear}
           bottomInset={insets.bottom}
           onAudioError={setAudioError}
           onDone={onExerciseDone}
